@@ -7,6 +7,12 @@ import { getFunctions } from 'firebase/functions';
 // Firebase configuration from environment variables
 // Vite uses import.meta.env for environment variables
 // Variables must be prefixed with VITE_ to be exposed to the client
+
+// Debug: Log available env vars (only in development)
+if (import.meta.env.DEV) {
+  console.log('Available VITE_ env vars:', Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')));
+}
+
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -28,18 +34,22 @@ const requiredEnvVars = [
 ];
 
 const missingVars = requiredEnvVars.filter(
-  varName => !import.meta.env[varName]
+  varName => !import.meta.env[varName] || import.meta.env[varName] === ''
 );
 
 if (missingVars.length > 0) {
-  console.error(
-    'Missing Firebase environment variables:',
-    missingVars.join(', ')
-  );
+  // More detailed error message
+  console.error('=== FIREBASE CONFIGURATION ERROR ===');
+  console.error('Missing Firebase environment variables:', missingVars.join(', '));
+  console.error('Available env vars:', Object.keys(import.meta.env).filter(key => key.startsWith('VITE_')));
+  console.error('Environment mode:', import.meta.env.MODE);
+  console.error('Is production:', import.meta.env.PROD);
+  console.error('====================================');
   console.error(
     'For local development: Create a .env.local file with your Firebase configuration.\n' +
     'For Vercel: Add these variables in Vercel Dashboard > Settings > Environment Variables.\n' +
-    'Make sure all variables are prefixed with VITE_ and enabled for Production environment.'
+    'Make sure all variables are prefixed with VITE_ and enabled for Production environment.\n' +
+    'After adding variables, you MUST redeploy (not just rebuild).'
   );
   throw new Error(
     `Missing required Firebase environment variables: ${missingVars.join(', ')}. ` +
