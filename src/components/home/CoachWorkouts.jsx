@@ -42,13 +42,24 @@ export default function CoachWorkouts({ user }) {
   const navigate = useNavigate();
 
   const loadWorkouts = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+    
+    if (!user.email) {
+      console.error('User email is missing:', user);
+      setLoadError('שגיאה: כתובת אימייל חסרה. אנא התחבר מחדש.');
+      setIsLoading(false);
+      return;
+    }
     
     const cacheKey = `workouts_${user.email}`;
     const cachedData = workoutCache.get(cacheKey);
     
     if (cachedData && Date.now() - cachedData.timestamp < CACHE_DURATION) {
-      setCoachWorkouts(cachedData.data);
+      const cachedWorkouts = Array.isArray(cachedData.data) ? cachedData.data : [];
+      setCoachWorkouts(cachedWorkouts);
       setIsLoading(false);
       return;
     }
@@ -58,22 +69,49 @@ export default function CoachWorkouts({ user }) {
     
     try {
       const workouts = await withRetry(async () => {
-        return await PreMadeWorkout.filter(
+        const result = await PreMadeWorkout.filter(
           { target_user_email: user.email, is_accepted: false },
           '-created_date'
         );
+        
+        // Ensure result is an array
+        if (!Array.isArray(result)) {
+          console.warn('PreMadeWorkout.filter returned non-array:', result);
+          return [];
+        }
+        
+        return result;
       });
+      
+      // Validate workouts is an array before caching
+      const validWorkouts = Array.isArray(workouts) ? workouts : [];
       
       // Cache the results
       workoutCache.set(cacheKey, {
-        data: workouts,
+        data: validWorkouts,
         timestamp: Date.now()
       });
       
-      setCoachWorkouts(workouts);
+      setCoachWorkouts(validWorkouts);
     } catch (error) {
       console.error('Error loading coach workouts:', error);
-      setLoadError('שגיאה בטעינת אימונים מהמאמן');
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        stack: error.stack
+      });
+      
+      // Provide more specific error messages
+      let errorMessage = 'שגיאה בטעינת אימונים מהמאמן';
+      if (error.message?.includes('permission') || error.code === 'permission-denied') {
+        errorMessage = 'אין הרשאה לטעון אימונים. אנא פנה למאמן.';
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = 'שגיאת רשת. בדוק את החיבור לאינטרנט.';
+      } else if (error.message?.includes('429') || error.message?.includes('Rate limit')) {
+        errorMessage = 'יותר מדי בקשות. נסה שוב בעוד רגע.';
+      }
+      
+      setLoadError(errorMessage);
     } finally {
       setIsLoading(false);
     }
