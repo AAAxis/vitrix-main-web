@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Info, Search, Save, Loader2, CheckCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -266,7 +266,7 @@ export default function ExerciseLibrary() {
                 <DialogContent className="max-w-md" dir="rtl">
                     <DialogHeader>
                         <DialogTitle className="text-lg">{selectedExercise?.name_he}</DialogTitle>
-                        <p className="text-sm text-slate-500">{selectedExercise?.name_en}</p>
+                        <DialogDescription className="text-sm text-slate-500">{selectedExercise?.name_en}</DialogDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
                         <div>

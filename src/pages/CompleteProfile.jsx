@@ -177,16 +177,20 @@ export default function CompleteProfile() {
             };
 
             await User.updateMyUserData(updateData);
+            
+            // Show success message briefly, then navigate
             setSuccess('הפרופיל עודכן בהצלחה!');
             
+            // Navigate after a short delay to show success message
+            // Keep isSaving true during navigation to maintain spinner
             setTimeout(() => {
                 navigate(createPageUrl('Contract'));
-            }, 1500);
+                // Don't set isSaving to false here - let the component unmount handle it
+            }, 800);
             
         } catch (error) {
             console.error('Error updating profile:', error);
             setError('שגיאה בשמירת הפרופיל. אנא נסה שוב.');
-        } finally {
             setIsSaving(false);
         }
     };
