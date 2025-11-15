@@ -53,7 +53,11 @@ export default function ContractEditor() {
             // Convert commitments string back to array, filtering out empty lines
             const updatedData = {
                 ...contract,
-                commitments: contract.commitments.split('\n').filter(line => line.trim() !== '')
+                commitments: (contract.commitments && typeof contract.commitments === 'string' 
+                    ? contract.commitments.split('\n').filter(line => line.trim() !== '')
+                    : Array.isArray(contract.commitments) 
+                        ? contract.commitments 
+                        : [])
             };
             await ContractContent.update(contract.id, updatedData);
             setSuccess('החוזה עודכן בהצלחה!');

@@ -5,7 +5,7 @@ import {
   updateProfile,
   getAdditionalUserInfo
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, getDocs, query, where, collection } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, getDocs, query, where, collection, orderBy, limit } from 'firebase/firestore';
 import { auth, googleProvider, db } from './firebaseConfig';
 
 // User entity class that mimics Base44 User API
@@ -112,6 +112,63 @@ class FirebaseUser {
       }));
     } catch (error) {
       console.error('Error listing users:', error);
+      throw error;
+    }
+  }
+
+  // Filter users (mimics FirebaseEntity filter API)
+  async filter(filters = {}, orderByField = null, limitCount = null) {
+    try {
+      const usersRef = collection(db, 'users');
+      let q = query(usersRef);
+      
+      // Known array fields that need array-contains
+      const arrayFields = ['group_names'];
+      
+      // Apply filters
+      Object.keys(filters).forEach(key => {
+        const filterValue = filters[key];
+        
+        // Handle special operators like $in
+        if (filterValue && typeof filterValue === 'object' && filterValue.$in) {
+          // For array fields, use array-contains for single value or array-contains-any for multiple
+          if (arrayFields.includes(key)) {
+            if (filterValue.$in.length === 1) {
+              q = query(q, where(key, 'array-contains', filterValue.$in[0]));
+            } else {
+              // For multiple values, we'd need array-contains-any, but Firestore has limitations
+              // For now, filter client-side if needed, or use the first value
+              q = query(q, where(key, 'array-contains', filterValue.$in[0]));
+            }
+          } else {
+            // For non-array fields, use 'in' operator
+            q = query(q, where(key, 'in', filterValue.$in));
+          }
+        } else {
+          // Simple equality filter
+          q = query(q, where(key, '==', filterValue));
+        }
+      });
+      
+      // Apply ordering
+      if (orderByField) {
+        const direction = orderByField.startsWith('-') ? 'desc' : 'asc';
+        const field = orderByField.startsWith('-') ? orderByField.slice(1) : orderByField;
+        q = query(q, orderBy(field, direction));
+      }
+      
+      // Apply limit
+      if (limitCount) {
+        q = query(q, limit(limitCount));
+      }
+      
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+    } catch (error) {
+      console.error('Error filtering users:', error);
       throw error;
     }
   }

@@ -63,11 +63,14 @@ const PAGES = {
 }
 
 function _getCurrentPage(url) {
+    if (!url || typeof url !== 'string') {
+        return Object.keys(PAGES)[0]; // Return default page if url is invalid
+    }
     if (url.endsWith('/')) {
         url = url.slice(0, -1);
     }
     let urlLastPart = url.split('/').pop();
-    if (urlLastPart.includes('?')) {
+    if (urlLastPart && urlLastPart.includes('?')) {
         urlLastPart = urlLastPart.split('?')[0];
     }
 

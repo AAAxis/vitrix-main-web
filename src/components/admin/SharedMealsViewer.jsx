@@ -378,7 +378,7 @@ export default function SharedMealsViewer() {
     const userEmailsForAlbum = [userGroup.user.email]; // This album is for a single user
     const datesWithMealsForUser = Object.keys(allUserMeals).filter(key => 
         key.startsWith(userGroup.user.email) && (allUserMeals[key] || []).length > 0 // Ensure allUserMeals[key] is not null/undefined
-    ).map(key => key.split('_')[1]).sort((a,b) => new Date(b) - new Date(a)); // sort descending
+    ).map(key => key && typeof key === 'string' ? key.split('_')[1] : null).filter(Boolean).sort((a,b) => new Date(b) - new Date(a)); // sort descending
 
     if (datesWithMealsForUser.length > 0) {
       const firstDateString = datesWithMealsForUser[0]; // e.g., "2023-10-26"
@@ -693,7 +693,12 @@ export default function SharedMealsViewer() {
     const allDatesForUser = new Set();
     for (const key in allUserMeals) {
       if (key.startsWith(`${userEmailInAlbum}_`) && allUserMeals[key].length > 0) {
-        allDatesForUser.add(key.split('_')[1]); // Add date part (yyyy-MM-dd)
+        if (key && typeof key === 'string') {
+          const datePart = key.split('_')[1];
+          if (datePart) {
+            allDatesForUser.add(datePart); // Add date part (yyyy-MM-dd)
+          }
+        }
       }
     }
 
@@ -850,8 +855,9 @@ export default function SharedMealsViewer() {
                                 {/* Daily Summary Row */}
                                 <div className="text-sm text-slate-600 mt-1">
                                   {dateUsers.map(userEmail => {
+                                      if (!userEmail) return null;
                                       const user = users.find(u => u.email === userEmail);
-                                      const userName = user?.name || userEmail.split('@')[0];
+                                      const userName = user?.name || (userEmail ? userEmail.split('@')[0] : 'משתמש לא ידוע');
                                       
                                       // Pass the actual date string from the dateGroup for summary calculation
                                       const summary = getDailySummary(actualDate, userEmail);
