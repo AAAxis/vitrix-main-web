@@ -88,32 +88,46 @@ function PagesContent() {
                 
                 
                 <Route path="/Home" element={<Home />} />
+                <Route path="/home" element={<Home />} />
                 
                 <Route path="/Journal" element={<Journal />} />
+                <Route path="/journal" element={<Journal />} />
                 
                 <Route path="/Progress" element={<Progress />} />
+                <Route path="/progress" element={<Progress />} />
                 
                 <Route path="/Export" element={<Export />} />
+                <Route path="/export" element={<Export />} />
                 
                 <Route path="/ExercisesSetup" element={<ExercisesSetup />} />
+                <Route path="/exercisessetup" element={<ExercisesSetup />} />
                 
                 <Route path="/Tracking" element={<Tracking />} />
+                <Route path="/tracking" element={<Tracking />} />
                 
                 <Route path="/AdminDashboard" element={<AdminDashboard />} />
+                <Route path="/admindashboard" element={<AdminDashboard />} />
                 
                 <Route path="/Recipes" element={<Recipes />} />
+                <Route path="/recipes" element={<Recipes />} />
                 
                 <Route path="/UserRegistration" element={<UserRegistration />} />
+                <Route path="/userregistration" element={<UserRegistration />} />
                 
                 <Route path="/CompleteProfile" element={<CompleteProfile />} />
+                <Route path="/completeprofile" element={<CompleteProfile />} />
                 
                 <Route path="/ExerciseLibrary" element={<ExerciseLibrary />} />
+                <Route path="/exerciselibrary" element={<ExerciseLibrary />} />
                 
                 <Route path="/Contract" element={<Contract />} />
+                <Route path="/contract" element={<Contract />} />
                 
                 <Route path="/BoosterEvents" element={<BoosterEvents />} />
+                <Route path="/boosterevents" element={<BoosterEvents />} />
                 
                 <Route path="/Maintenance" element={<Maintenance />} />
+                <Route path="/maintenance" element={<Maintenance />} />
                 
             </Routes>
         </Layout>
