@@ -57,10 +57,10 @@ export const SendEmail = async (emailData) => {
   throw new Error('SendEmail is no longer supported. Please use CoachNotification.create() for notifications.');
 };
 
-// Get OpenRouter API key from Remote Config (with fallback to env var for development)
-const getOpenRouterApiKey = async () => {
+// Get ChatGPT API key from Remote Config (with fallback to env var for development)
+const getChatGPTApiKey = async () => {
   // First, try environment variable (useful for development)
-  const envApiKey = import.meta.env.VITE_OPENROUTER_API_KEY;
+  const envApiKey = import.meta.env.VITE_OPENAI_API_KEY;
   if (envApiKey) {
     return envApiKey;
   }
@@ -68,17 +68,17 @@ const getOpenRouterApiKey = async () => {
   try {
     // Fetch and activate remote config
     await fetchAndActivate(remoteConfig);
-    const apiKeyValue = getValue(remoteConfig, 'openrouter_api_key');
+    const apiKeyValue = getValue(remoteConfig, 'openai_api_key');
     const apiKey = apiKeyValue.asString();
     
     if (!apiKey) {
-      throw new Error('OpenRouter API key not configured in Remote Config');
+      throw new Error('ChatGPT API key not configured in Remote Config');
     }
     
     return apiKey;
   } catch (error) {
     console.error('Error fetching API key from Remote Config:', error);
-    throw new Error('Failed to get OpenRouter API key. Please configure it in Firebase Remote Config or set VITE_OPENROUTER_API_KEY environment variable.');
+    throw new Error('Failed to get ChatGPT API key. Please configure it in Firebase Remote Config or set VITE_OPENAI_API_KEY environment variable.');
   }
 };
 
@@ -223,7 +223,7 @@ export const InvokeLLM = async (params) => {
   }
 };
 
-// Generate Image using DALL-E service (no Cloud Function needed)
+// Generate Image using OpenAI DALL-E API directly (frontend-only, no backend needed)
 export const GenerateImage = async (params) => {
   try {
     // Handle both old format (prompt, options) and new format (object with prompt)
@@ -234,30 +234,81 @@ export const GenerateImage = async (params) => {
       throw new Error('Prompt is required for image generation');
     }
 
-    // Use the DALL-E service endpoint
-    // Default to production URL, can be overridden with env variable
-    const dalleServiceUrl = import.meta.env.VITE_DALLE_SERVICE_URL || 'https://dalle.roamjet.net';
+    // Get API key from Remote Config or environment
+    const apiKey = await getChatGPTApiKey(); // Reuse the same function for OpenAI API key
     
-    const response = await fetch(`${dalleServiceUrl}/generate`, {
+    if (!apiKey) {
+      throw new Error('OpenAI API key is missing. Please configure it in Firebase Remote Config or set VITE_OPENAI_API_KEY environment variable.');
+    }
+
+    // Prepare the request for OpenAI DALL-E API
+    const model = options.model || 'dall-e-3'; // dall-e-2 or dall-e-3
+    const size = options.size || '1024x1024';
+    
+    // DALL-E 3 size validation
+    const validSizes = model === 'dall-e-3' 
+      ? ['1024x1024', '1792x1024', '1024x1792']
+      : ['256x256', '512x512', '1024x1024'];
+    
+    const finalSize = validSizes.includes(size) ? size : '1024x1024';
+
+    const requestBody = {
+      model: model,
+      prompt: prompt,
+      size: finalSize,
+      quality: options.quality || 'standard', // 'standard' or 'hd' (DALL-E 3 only)
+      response_format: 'url'
+    };
+
+    // DALL-E 3 only supports n=1, DALL-E 2 can have multiple images
+    if (model === 'dall-e-2') {
+      requestBody.n = options.n || 1;
+    }
+
+    console.log('Generating image with OpenAI DALL-E:', { 
+      model, 
+      size: finalSize, 
+      promptLength: prompt.length 
+    });
+
+    // Call OpenAI DALL-E API directly
+    const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({
-        prompt,
-        size: options.size || '1024x1024'
-      })
+      body: JSON.stringify(requestBody)
     });
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(`DALL-E service error: ${response.status} ${response.statusText}. ${errorData.error || errorData.details || ''}`);
+      console.error('OpenAI DALL-E API error:', {
+        status: response.status,
+        statusText: response.statusText,
+        error: errorData
+      });
+      throw new Error(`OpenAI DALL-E API error: ${response.status} ${response.statusText}. ${errorData.error?.message || 'Unknown error'}`);
     }
 
     const data = await response.json();
-    return data;
+    console.log('OpenAI DALL-E response received:', { 
+      hasData: !!data.data,
+      imageCount: data.data?.length || 0
+    });
+    
+    // Extract the image URL from the response and return in expected format
+    if (data.data && data.data.length > 0) {
+      const imageData = data.data[0];
+      return {
+        url: imageData.url,
+        revised_prompt: imageData.revised_prompt || prompt
+      };
+    } else {
+      throw new Error('No image data in OpenAI response');
+    }
   } catch (error) {
-    console.error('Error generating image:', error);
+    console.error('Error generating image with OpenAI DALL-E:', error);
     throw error;
   }
 };
