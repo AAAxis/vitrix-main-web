@@ -59,7 +59,7 @@ export const functions = getFunctions(app);
 export const remoteConfig = getRemoteConfig(app);
 remoteConfig.settings.minimumFetchIntervalMillis = 3600000; // 1 hour
 remoteConfig.defaultConfig = {
-  openrouter_api_key: ''
+  openai_api_key: ''
 };
 
 // Configure Google Auth Provider
