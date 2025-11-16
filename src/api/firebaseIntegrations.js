@@ -82,28 +82,75 @@ const getChatGPTApiKey = async () => {
   }
 };
 
-// Invoke LLM using ChatGPT API (no Cloud Function needed)
+// Invoke LLM with fallback system (frontend-first, then backend service)
 export const InvokeLLM = async (params) => {
+  // Handle both old format (prompt, options) and new format (object with prompt)
+  const prompt = typeof params === 'string' ? params : params.prompt;
+  const options = typeof params === 'string' ? {} : params;
+  const responseJsonSchema = options.response_json_schema;
+  
+  if (!prompt) {
+    throw new Error('Prompt is required');
+  }
+
+  console.log('InvokeLLM called with:', { hasPrompt: !!prompt, hasSchema: !!responseJsonSchema });
+
+  // Check if fallback is disabled (for testing or specific use cases)
+  const disableFallback = options.disableFallback || import.meta.env.VITE_DISABLE_CHAT_FALLBACK === 'true';
+  const forceBackend = options.forceBackend || import.meta.env.VITE_FORCE_CHAT_BACKEND === 'true';
+
+  // If forced to use backend, skip frontend attempt
+  if (forceBackend) {
+    console.log('🔧 Forcing backend chat service (configured)...');
+    return await invokeLLMBackend(prompt, options, responseJsonSchema);
+  }
+
+  // Try frontend-first approach (ChatGPT API directly)
   try {
-    // Handle both old format (prompt, options) and new format (object with prompt)
-    const prompt = typeof params === 'string' ? params : params.prompt;
-    const options = typeof params === 'string' ? {} : params;
-    const responseJsonSchema = options.response_json_schema;
+    console.log('🤖 Attempting frontend ChatGPT generation...');
+    const result = await invokeLLMFrontend(prompt, options, responseJsonSchema);
+    console.log('✅ Frontend ChatGPT generation successful');
+    return result;
+  } catch (frontendError) {
+    console.warn('⚠️ Frontend ChatGPT generation failed:', frontendError.message);
     
-    if (!prompt) {
-      throw new Error('Prompt is required');
+    // If fallback is disabled, throw the frontend error
+    if (disableFallback) {
+      console.error('❌ Fallback disabled, throwing frontend error');
+      throw frontendError;
     }
-
-    console.log('InvokeLLM called with:', { hasPrompt: !!prompt, hasSchema: !!responseJsonSchema });
-
-    // Get API key from Remote Config
-    const apiKey = await getChatGPTApiKey();
     
-    if (!apiKey) {
-      throw new Error('ChatGPT API key is missing. Please configure it in Firebase Remote Config or set VITE_OPENAI_API_KEY environment variable.');
+    // Fall back to backend service
+    try {
+      console.log('🔄 Falling back to backend chat service...');
+      const result = await invokeLLMBackend(prompt, options, responseJsonSchema);
+      console.log('✅ Backend chat generation successful (fallback)');
+      return result;
+    } catch (backendError) {
+      console.error('❌ Both frontend and backend chat generation failed');
+      console.error('Frontend error:', frontendError.message);
+      console.error('Backend error:', backendError.message);
+      
+      // Throw a comprehensive error
+      throw new Error(
+        `Chat completion failed on both frontend and backend. ` +
+        `Frontend: ${frontendError.message}. ` +
+        `Backend: ${backendError.message}`
+      );
     }
+  }
+};
 
-    // Prepare the request body for OpenRouter
+// Frontend ChatGPT generation (OpenAI API directly)
+const invokeLLMFrontend = async (prompt, options = {}, responseJsonSchema = null) => {
+  // Get API key from Remote Config
+  const apiKey = await getChatGPTApiKey();
+  
+  if (!apiKey) {
+    throw new Error('ChatGPT API key is missing. Please configure it in Firebase Remote Config or set VITE_OPENAI_API_KEY environment variable.');
+  }
+
+  // Prepare the request body for ChatGPT
     let finalPrompt = prompt;
     
     // If JSON schema is provided, ensure the prompt explicitly requests JSON
@@ -221,94 +268,273 @@ export const InvokeLLM = async (params) => {
   }
 };
 
-// Generate Image using OpenAI DALL-E API directly (frontend-only, no backend needed)
+// Generate Image with fallback system (frontend-first, then backend service)
 export const GenerateImage = async (params) => {
-  try {
-    // Handle both old format (prompt, options) and new format (object with prompt)
-    const prompt = typeof params === 'string' ? params : params.prompt;
-    const options = typeof params === 'string' ? {} : params;
-    
-    if (!prompt) {
-      throw new Error('Prompt is required for image generation');
-    }
-
-    // Get API key from Remote Config or environment
-    const apiKey = await getChatGPTApiKey(); // Reuse the same function for OpenAI API key
-    
-    if (!apiKey) {
-      throw new Error('OpenAI API key is missing. Please configure it in Firebase Remote Config or set VITE_OPENAI_API_KEY environment variable.');
-    }
-
-    // Prepare the request for OpenAI DALL-E API
-    const model = options.model || 'dall-e-3'; // dall-e-2 or dall-e-3
-    const size = options.size || '1024x1024';
-    
-    // DALL-E 3 size validation
-    const validSizes = model === 'dall-e-3' 
-      ? ['1024x1024', '1792x1024', '1024x1792']
-      : ['256x256', '512x512', '1024x1024'];
-    
-    const finalSize = validSizes.includes(size) ? size : '1024x1024';
-
-    const requestBody = {
-      model: model,
-      prompt: prompt,
-      size: finalSize,
-      quality: options.quality || 'standard', // 'standard' or 'hd' (DALL-E 3 only)
-      response_format: 'url'
-    };
-
-    // DALL-E 3 only supports n=1, DALL-E 2 can have multiple images
-    if (model === 'dall-e-2') {
-      requestBody.n = options.n || 1;
-    }
-
-    console.log('Generating image with OpenAI DALL-E:', { 
-      model, 
-      size: finalSize, 
-      promptLength: prompt.length 
-    });
-
-    // Call OpenAI DALL-E API directly
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('OpenAI DALL-E API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorData
-      });
-      throw new Error(`OpenAI DALL-E API error: ${response.status} ${response.statusText}. ${errorData.error?.message || 'Unknown error'}`);
-    }
-
-    const data = await response.json();
-    console.log('OpenAI DALL-E response received:', { 
-      hasData: !!data.data,
-      imageCount: data.data?.length || 0
-    });
-    
-    // Extract the image URL from the response and return in expected format
-    if (data.data && data.data.length > 0) {
-      const imageData = data.data[0];
-      return {
-        url: imageData.url,
-        revised_prompt: imageData.revised_prompt || prompt
-      };
-    } else {
-      throw new Error('No image data in OpenAI response');
-    }
-  } catch (error) {
-    console.error('Error generating image with OpenAI DALL-E:', error);
-    throw error;
+  // Handle both old format (prompt, options) and new format (object with prompt)
+  const prompt = typeof params === 'string' ? params : params.prompt;
+  const options = typeof params === 'string' ? {} : params;
+  
+  if (!prompt) {
+    throw new Error('Prompt is required for image generation');
   }
+
+  // Check if fallback is disabled (for testing or specific use cases)
+  const disableFallback = options.disableFallback || import.meta.env.VITE_DISABLE_DALLE_FALLBACK === 'true';
+  const forceBackend = options.forceBackend || import.meta.env.VITE_FORCE_DALLE_BACKEND === 'true';
+
+  // If forced to use backend, skip frontend attempt
+  if (forceBackend) {
+    console.log('🔧 Forcing backend DALL-E service (configured)...');
+    return await generateImageBackend(prompt, options);
+  }
+
+  // Try frontend-first approach (OpenAI DALL-E API directly)
+  try {
+    console.log('🎨 Attempting frontend DALL-E generation...');
+    const result = await generateImageFrontend(prompt, options);
+    console.log('✅ Frontend DALL-E generation successful');
+    return result;
+  } catch (frontendError) {
+    console.warn('⚠️ Frontend DALL-E generation failed:', frontendError.message);
+    
+    // If fallback is disabled, throw the frontend error
+    if (disableFallback) {
+      console.error('❌ Fallback disabled, throwing frontend error');
+      throw frontendError;
+    }
+    
+    // Fall back to backend service
+    try {
+      console.log('🔄 Falling back to backend DALL-E service...');
+      const result = await generateImageBackend(prompt, options);
+      console.log('✅ Backend DALL-E generation successful (fallback)');
+      return result;
+    } catch (backendError) {
+      console.error('❌ Both frontend and backend DALL-E generation failed');
+      console.error('Frontend error:', frontendError.message);
+      console.error('Backend error:', backendError.message);
+      
+      // Throw a comprehensive error
+      throw new Error(
+        `Image generation failed on both frontend and backend. ` +
+        `Frontend: ${frontendError.message}. ` +
+        `Backend: ${backendError.message}`
+      );
+    }
+  }
+};
+
+// Frontend DALL-E generation (OpenAI API directly)
+const generateImageFrontend = async (prompt, options = {}) => {
+  // Get API key from Remote Config or environment
+  const apiKey = await getChatGPTApiKey(); // Reuse the same function for OpenAI API key
+  
+  if (!apiKey) {
+    throw new Error('OpenAI API key is missing. Please configure it in Firebase Remote Config or set VITE_OPENAI_API_KEY environment variable.');
+  }
+
+  // Prepare the request for OpenAI DALL-E API
+  const model = options.model || 'dall-e-3'; // dall-e-2 or dall-e-3
+  const size = options.size || '1024x1024';
+  
+  // DALL-E 3 size validation
+  const validSizes = model === 'dall-e-3' 
+    ? ['1024x1024', '1792x1024', '1024x1792']
+    : ['256x256', '512x512', '1024x1024'];
+  
+  const finalSize = validSizes.includes(size) ? size : '1024x1024';
+
+  const requestBody = {
+    model: model,
+    prompt: prompt,
+    size: finalSize,
+    quality: options.quality || 'standard', // 'standard' or 'hd' (DALL-E 3 only)
+    response_format: 'url'
+  };
+
+  // DALL-E 3 only supports n=1, DALL-E 2 can have multiple images
+  if (model === 'dall-e-2') {
+    requestBody.n = options.n || 1;
+  }
+
+  console.log('Generating image with OpenAI DALL-E (frontend):', { 
+    model, 
+    size: finalSize, 
+    promptLength: prompt.length 
+  });
+
+  // Call OpenAI DALL-E API directly
+  const response = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    console.error('OpenAI DALL-E API error (frontend):', {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorData
+    });
+    throw new Error(`OpenAI DALL-E API error: ${response.status} ${response.statusText}. ${errorData.error?.message || 'Unknown error'}`);
+  }
+
+  const data = await response.json();
+  console.log('OpenAI DALL-E response received (frontend):', { 
+    hasData: !!data.data,
+    imageCount: data.data?.length || 0
+  });
+  
+  // Extract the image URL from the response and return in expected format
+  if (data.data && data.data.length > 0) {
+    const imageData = data.data[0];
+    return {
+      url: imageData.url,
+      revised_prompt: imageData.revised_prompt || prompt
+    };
+  } else {
+    throw new Error('No image data in OpenAI response');
+  }
+};
+
+// Backend DALL-E generation (fallback service)
+const generateImageBackend = async (prompt, options = {}) => {
+  // Use the DALL-E service endpoint
+  // Default to production URL, can be overridden with env variable
+  const dalleServiceUrl = import.meta.env.VITE_DALLE_SERVICE_URL || 'https://dalle.roamjet.net';
+  
+  console.log('Generating image with backend DALL-E service:', { 
+    serviceUrl: dalleServiceUrl,
+    promptLength: prompt.length 
+  });
+  
+  const response = await fetch(`${dalleServiceUrl}/generate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      prompt,
+      size: options.size || '1024x1024',
+      model: options.model || 'dall-e-3'
+    })
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(`DALL-E service error: ${response.status} ${response.statusText}. ${errorData.error || errorData.details || ''}`);
+  }
+
+  const data = await response.json();
+  console.log('Backend DALL-E response received:', { 
+    hasUrl: !!data.url,
+    hasRevisedPrompt: !!data.revised_prompt
+  });
+  
+  return {
+    url: data.url,
+    revised_prompt: data.revised_prompt || prompt
+  };
+};
+
+// Backend chat completion (fallback service)
+const invokeLLMBackend = async (prompt, options = {}, responseJsonSchema = null) => {
+  // Use the AI service endpoint
+  // Default to production URL, can be overridden with env variable
+  const aiServiceUrl = import.meta.env.VITE_DALLE_SERVICE_URL || 'https://dalle.roamjet.net';
+  
+  console.log('Generating chat completion with backend AI service:', { 
+    serviceUrl: aiServiceUrl,
+    promptLength: prompt.length 
+  });
+
+  // Prepare messages in OpenAI format
+  let messages = [
+    {
+      role: 'system',
+      content: responseJsonSchema 
+        ? 'You are a helpful assistant that returns responses in JSON format only. Always use English keys in the JSON object (like "workout_title", "workout_description"). However, ALL content values must be in Hebrew if the user requests Hebrew content. Return ONLY valid JSON, no additional text before or after.'
+        : 'You are a helpful assistant. If the user writes in Hebrew, respond in Hebrew. If the user writes in English, respond in English.'
+    },
+    {
+      role: 'user',
+      content: prompt
+    }
+  ];
+
+  const requestBody = {
+    messages: messages,
+    model: options.model || 'gpt-4o-mini',
+    temperature: options.temperature || 0.7,
+    max_tokens: options.max_tokens || 4000
+  };
+
+  // Add response format if JSON schema is provided
+  if (responseJsonSchema) {
+    requestBody.response_format = {
+      type: 'json_object'
+    };
+  }
+  
+  const response = await fetch(`${aiServiceUrl}/chat`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestBody)
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(`AI service error: ${response.status} ${response.statusText}. ${errorData.error || errorData.details || ''}`);
+  }
+
+  const data = await response.json();
+  console.log('Backend chat response received:', { 
+    hasChoices: !!data.choices,
+    choicesLength: data.choices?.length,
+    hasContent: !!data.choices?.[0]?.message?.content
+  });
+  
+  // Extract the content from the response
+  const content = data.choices?.[0]?.message?.content;
+  
+  if (!content) {
+    console.error('No content in backend response:', data);
+    throw new Error('No content in backend chat response. Response structure: ' + JSON.stringify(data));
+  }
+
+  // If JSON schema was requested, parse the JSON response
+  if (responseJsonSchema) {
+    try {
+      const parsedContent = JSON.parse(content);
+      console.log('Successfully parsed JSON response from backend');
+      return { content: parsedContent };
+    } catch (parseError) {
+      console.error('Failed to parse JSON response from backend:', parseError);
+      console.error('Raw content:', content);
+      
+      // Try to extract JSON from the response if it's wrapped in other text
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const parsedContent = JSON.parse(jsonMatch[0]);
+          console.log('Successfully extracted and parsed JSON from backend response');
+          return { content: parsedContent };
+        } catch (extractError) {
+          console.error('Failed to parse extracted JSON from backend:', extractError);
+        }
+      }
+      
+      throw new Error(`Failed to parse JSON response from backend AI: ${parseError.message}. Response preview: ${content.substring(0, 500)}`);
+    }
+  }
+
+  return { content };
 };
 
 // Extract Data From Uploaded File - DEPRECATED: Cloud Function removed due to CORS issues
