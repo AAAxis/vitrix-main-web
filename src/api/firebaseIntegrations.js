@@ -327,8 +327,9 @@ export const GenerateImage = async (params) => {
 
 // Frontend DALL-E generation (OpenAI API directly)
 const generateImageFrontend = async (prompt, options = {}) => {
-  // Get API key from Remote Config or environment
-  const apiKey = await getChatGPTApiKey(); // Reuse the same function for OpenAI API key
+  try {
+    // Get API key from Remote Config or environment
+    const apiKey = await getChatGPTApiKey(); // Reuse the same function for OpenAI API key
   
   if (!apiKey) {
     throw new Error('OpenAI API key is missing. Please configure it in Firebase Remote Config or set VITE_OPENAI_API_KEY environment variable.');
