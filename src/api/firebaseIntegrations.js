@@ -401,6 +401,10 @@ const generateImageFrontend = async (prompt, options = {}) => {
   } else {
     throw new Error('No image data in OpenAI response');
   }
+  } catch (error) {
+    console.error('Error generating image with OpenAI DALL-E (frontend):', error);
+    throw error;
+  }
 };
 
 // Backend DALL-E generation (fallback service)
