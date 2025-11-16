@@ -82,7 +82,7 @@ const getChatGPTApiKey = async () => {
   }
 };
 
-// Invoke LLM using OpenRouter API (no Cloud Function needed)
+// Invoke LLM using ChatGPT API (no Cloud Function needed)
 export const InvokeLLM = async (params) => {
   try {
     // Handle both old format (prompt, options) and new format (object with prompt)
@@ -97,10 +97,10 @@ export const InvokeLLM = async (params) => {
     console.log('InvokeLLM called with:', { hasPrompt: !!prompt, hasSchema: !!responseJsonSchema });
 
     // Get API key from Remote Config
-    const apiKey = await getOpenRouterApiKey();
+    const apiKey = await getChatGPTApiKey();
     
     if (!apiKey) {
-      throw new Error('OpenRouter API key is missing. Please configure it in Firebase Remote Config or set VITE_OPENROUTER_API_KEY environment variable.');
+      throw new Error('ChatGPT API key is missing. Please configure it in Firebase Remote Config or set VITE_OPENAI_API_KEY environment variable.');
     }
 
     // Prepare the request body for OpenRouter
@@ -114,7 +114,7 @@ export const InvokeLLM = async (params) => {
     }
 
     const requestBody = {
-      model: options.model || 'openai/gpt-4o-mini', // Default model, can be overridden
+      model: options.model || 'gpt-4o-mini', // Default model, can be overridden
       messages: [
         {
           role: 'system',
@@ -138,20 +138,18 @@ export const InvokeLLM = async (params) => {
       };
     }
 
-    console.log('Sending request to OpenRouter:', { 
+    console.log('Sending request to ChatGPT:', { 
       model: requestBody.model, 
       hasJsonFormat: !!requestBody.response_format,
       promptLength: finalPrompt.length 
     });
 
-    // Call OpenRouter API
-    const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    // Call ChatGPT API
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
-        'HTTP-Referer': window.location.origin, // Optional: for analytics
-        'X-Title': 'Muscle Up App' // Optional: for analytics
       },
       body: JSON.stringify(requestBody)
     });
@@ -164,16 +162,16 @@ export const InvokeLLM = async (params) => {
       } catch {
         errorData = { error: { message: errorText } };
       }
-      console.error('OpenRouter API error:', {
+      console.error('ChatGPT API error:', {
         status: response.status,
         statusText: response.statusText,
         error: errorData
       });
-      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}. ${errorData.error?.message || errorText}`);
+      throw new Error(`ChatGPT API error: ${response.status} ${response.statusText}. ${errorData.error?.message || errorText}`);
     }
 
     const data = await response.json();
-    console.log('OpenRouter response received:', { 
+    console.log('ChatGPT response received:', { 
       hasChoices: !!data.choices,
       choicesLength: data.choices?.length,
       hasContent: !!data.choices?.[0]?.message?.content
@@ -184,7 +182,7 @@ export const InvokeLLM = async (params) => {
     
     if (!content) {
       console.error('No content in response:', data);
-      throw new Error('No content in OpenRouter response. Response structure: ' + JSON.stringify(data));
+      throw new Error('No content in ChatGPT response. Response structure: ' + JSON.stringify(data));
     }
 
     console.log('Response content length:', content.length);
@@ -218,7 +216,7 @@ export const InvokeLLM = async (params) => {
 
     return { content };
   } catch (error) {
-    console.error('Error invoking LLM via OpenRouter:', error);
+    console.error('Error invoking LLM via ChatGPT:', error);
     throw error;
   }
 };
