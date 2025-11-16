@@ -97,7 +97,7 @@ export const InvokeLLM = async (params) => {
 
   // Check if fallback is disabled (for testing or specific use cases)
   const disableFallback = options.disableFallback || import.meta.env.VITE_DISABLE_CHAT_FALLBACK === 'true';
-  const forceBackend = options.forceBackend || import.meta.env.VITE_FORCE_CHAT_BACKEND === 'true' || true; // Force backend by default
+  const forceBackend = options.forceBackend || import.meta.env.VITE_FORCE_CHAT_BACKEND === 'true'; // Default: try frontend first, fallback to backend
 
   // If forced to use backend, skip frontend attempt
   if (forceBackend) {
@@ -281,7 +281,7 @@ export const GenerateImage = async (params) => {
 
   // Check if fallback is disabled (for testing or specific use cases)
   const disableFallback = options.disableFallback || import.meta.env.VITE_DISABLE_DALLE_FALLBACK === 'true';
-  const forceBackend = options.forceBackend || import.meta.env.VITE_FORCE_DALLE_BACKEND === 'true' || true; // Force backend by default
+  const forceBackend = options.forceBackend || import.meta.env.VITE_FORCE_DALLE_BACKEND === 'true'; // Default: try frontend first, fallback to backend
 
   // If forced to use backend, skip frontend attempt
   if (forceBackend) {
