@@ -116,8 +116,10 @@ export default function AIRecipeBuilder() {
 
             console.log('Recipe data received:', recipeData);
 
-            // Handle nested structure (e.g., {recipe: {...}})
-            if (recipeData.recipe && !recipeData.name) {
+            // Handle nested structure (e.g., {recipe: {...}} or {content: {...}})
+            if (recipeData.content && !recipeData.name) {
+                recipeData = recipeData.content;
+            } else if (recipeData.recipe && !recipeData.name) {
                 recipeData = recipeData.recipe;
             }
 

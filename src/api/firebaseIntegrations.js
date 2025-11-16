@@ -530,12 +530,13 @@ const invokeLLMBackend = async (prompt, options = {}, responseJsonSchema = null)
     throw new Error('No content in backend chat response. Response structure: ' + JSON.stringify(data));
   }
 
-  // If JSON schema was requested, parse the JSON response
+  // If JSON schema was requested, parse the JSON response and return it directly
   if (responseJsonSchema) {
     try {
       const parsedContent = JSON.parse(content);
       console.log('Successfully parsed JSON response from backend');
-      return { content: parsedContent };
+      // Return the parsed content directly (not wrapped) when JSON schema is requested
+      return parsedContent;
     } catch (parseError) {
       console.error('Failed to parse JSON response from backend:', parseError);
       console.error('Raw content:', content);
@@ -546,7 +547,8 @@ const invokeLLMBackend = async (prompt, options = {}, responseJsonSchema = null)
         try {
           const parsedContent = JSON.parse(jsonMatch[0]);
           console.log('Successfully extracted and parsed JSON from backend response');
-          return { content: parsedContent };
+          // Return the parsed content directly (not wrapped) when JSON schema is requested
+          return parsedContent;
         } catch (extractError) {
           console.error('Failed to parse extracted JSON from backend:', extractError);
         }
