@@ -118,10 +118,11 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
     target_user_email: '',
     warmup_description: 'חימום אירובי קל 5-10 דקות, מתיחות דינמיות.',
     warmup_duration: 10,
+    estimated_duration: 60,
+    workout_equipment: '',
     part_1_exercises: [],
     part_2_exercises: [],
     part_3_exercises: [],
-    coach_notes: '',
     is_sent: false,
     sent_date: null,
     scheduled_date: '',
@@ -156,10 +157,11 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
       target_user_email: '', // Always reset target when loading a template
       warmup_description: template.warmup_description || 'חימום אירובי קל 5-10 דקות, מתיחות דינמיות.',
       warmup_duration: template.warmup_duration || 10,
+      estimated_duration: template.estimated_duration || 60,
+      workout_equipment: template.workout_equipment || '',
       part_1_exercises: template.part_1_exercises || [],
       part_2_exercises: template.part_2_exercises || [],
       part_3_exercises: template.part_3_exercises || [],
-      coach_notes: template.coach_notes || '',
       is_sent: false,
       sent_date: null,
       scheduled_date: '',
@@ -331,10 +333,10 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
         part_1_exercises: workoutData.part_1_exercises,
         part_2_exercises: workoutData.part_2_exercises,
         part_3_exercises: workoutData.part_3_exercises,
-        coach_notes: workoutData.coach_notes,
+        workout_equipment: workoutData.workout_equipment || '',
         tags: [],
         difficulty_level: 'בינוני',
-        estimated_duration: 60
+        estimated_duration: workoutData.estimated_duration || 60
       };
 
       await WorkoutTemplate.create(templateData);
@@ -354,10 +356,11 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
       target_user_email: '',
       warmup_description: workout.warmup_description || 'חימום אירובי קל 5-10 דקות, מתיחות דינמיות.',
       warmup_duration: workout.warmup_duration || 10,
+      estimated_duration: workout.estimated_duration || 60,
+      workout_equipment: workout.workout_equipment || '',
       part_1_exercises: workout.part_1_exercises || [],
       part_2_exercises: workout.part_2_exercises || [],
       part_3_exercises: workout.part_3_exercises || [],
-      coach_notes: workout.coach_notes || '',
       is_sent: false,
       sent_date: null,
       scheduled_date: '',
@@ -375,10 +378,11 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
       target_user_email: workout.target_user_email,
       warmup_description: workout.warmup_description || 'חימום אירובי קל 5-10 דקות, מתיחות דינמיות.',
       warmup_duration: workout.warmup_duration || 10,
+      estimated_duration: workout.estimated_duration || 60,
+      workout_equipment: workout.workout_equipment || '',
       part_1_exercises: workout.part_1_exercises || [],
       part_2_exercises: workout.part_2_exercises || [],
       part_3_exercises: workout.part_3_exercises || [],
-      coach_notes: workout.coach_notes || '',
       is_sent: false,
       sent_date: null,
       scheduled_date: workout.scheduled_date || '',
@@ -459,11 +463,6 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
         <h3>תרגילי האימון</h3>
         ${exercisesHtml}
 
-        ${workout.coach_notes ? `
-          <h3>הערות מהמאמן</h3>
-          <p>${workout.coach_notes}</p>
-        ` : ''}
-
         <p>בהצלחה באימון!</p>
       </div>
     `;
@@ -476,10 +475,11 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
       target_user_email: '',
       warmup_description: 'חימום אירובי קל 5-10 דקות, מתיחות דינמיות.',
       warmup_duration: 10,
+      estimated_duration: 60,
+      workout_equipment: '',
       part_1_exercises: [],
       part_2_exercises: [],
       part_3_exercises: [],
-      coach_notes: '',
       is_sent: false,
       sent_date: null,
       scheduled_date: '',
@@ -695,14 +695,53 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                         />
                       </div>
                       <div>
-                        <Label className="text-sm">הערות מהמאמן</Label>
-                        <Textarea
-                          placeholder="הערות כלליות למתאמן..."
-                          value={workoutData.coach_notes}
-                          onChange={e => setWorkoutData({...workoutData, coach_notes: e.target.value})}
-                          rows={3}
-                          className="text-sm"
-                        />
+                        <Label className="text-sm">משך האימון</Label>
+                        <Select 
+                          value={String(workoutData.estimated_duration || 60)} 
+                          onValueChange={(value) => setWorkoutData({...workoutData, estimated_duration: parseInt(value)})}
+                        >
+                          <SelectTrigger className="text-sm">
+                            <SelectValue placeholder="בחר משך אימון" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="1">1 דקה</SelectItem>
+                            <SelectItem value="5">5 דקות</SelectItem>
+                            <SelectItem value="10">10 דקות</SelectItem>
+                            <SelectItem value="15">15 דקות</SelectItem>
+                            <SelectItem value="30">30 דקות</SelectItem>
+                            <SelectItem value="60">1 שעה</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-sm">ציוד נדרש</Label>
+                        <Select 
+                          value={workoutData.workout_equipment || ''} 
+                          onValueChange={(value) => setWorkoutData({...workoutData, workout_equipment: value})}
+                        >
+                          <SelectTrigger className="text-sm">
+                            <SelectValue placeholder="בחר ציוד" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">ללא ציוד</SelectItem>
+                            <SelectItem value="Bodyweight">משקל גוף</SelectItem>
+                            <SelectItem value="Barbell">מוט</SelectItem>
+                            <SelectItem value="Dumbbell">משקולות יד</SelectItem>
+                            <SelectItem value="Kettlebell">כדור משקולת</SelectItem>
+                            <SelectItem value="Machine">מכונה</SelectItem>
+                            <SelectItem value="Cable">כבל</SelectItem>
+                            <SelectItem value="Resistance Band">רצועת התנגדות</SelectItem>
+                            <SelectItem value="Medicine Ball">כדור רפואי</SelectItem>
+                            <SelectItem value="TRX">TRX</SelectItem>
+                            <SelectItem value="Box">קופסה</SelectItem>
+                            <SelectItem value="Pull-up Bar">מוט משיכה</SelectItem>
+                            <SelectItem value="Rower">חתירה</SelectItem>
+                            <SelectItem value="Bike">אופניים</SelectItem>
+                            <SelectItem value="Treadmill">הליכון</SelectItem>
+                            <SelectItem value="Sled">מזחלת</SelectItem>
+                            <SelectItem value="Rings">טבעות</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </CardContent>
@@ -954,12 +993,6 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                           </div>
                         )
                       ))}
-                      {viewedWorkout.coach_notes && (
-                        <div>
-                          <h4 className="font-semibold text-lg mb-2">הערות כלליות מהמאמן</h4>
-                          <p className="p-3 bg-slate-50 rounded-md border text-sm">{viewedWorkout.coach_notes}</p>
-                        </div>
-                      )}
                     </div>
                   </ScrollArea>
                   <DialogFooter className="gap-2 p-4 sm:p-6">
@@ -1106,7 +1139,7 @@ export default function WorkoutCreator({ templateToLoad, onTemplateLoaded, user 
       const prompt = `
 אנתח את הטקסט הבא של אימון והתאם תרגילים מהמאגר הנתון.
 
-חשוב מאוד: כל התוכן חייב להיות בעברית בלבד! כל השדות (workout_title, workout_description, warmup_description, coach_notes, notes) חייבים להיות בעברית.
+חשוב מאוד: כל התוכן חייב להיות בעברית בלבד! כל השדות (workout_title, workout_description, warmup_description, notes) חייבים להיות בעברית.
 
 טקסט האימון:
 ${textWorkout}
@@ -1138,8 +1171,7 @@ ${exercisesList.map(ex => `- ${ex.name_he} (${ex.category}, ${ex.muscle_group}, 
       ]
     }
   ],
-  "unmatched_exercises": ["תרגילים שלא נמצא להם התאמה", "לדוגמה: תרגיל לא קיים"],
-  "coach_notes": "הערות כלליות מומלצות למתאמן בעברית"
+  "unmatched_exercises": ["תרגילים שלא נמצא להם התאמה", "לדוגמה: תרגיל לא קיים"]
 }
 
 זכור: כל הטקסט חייב להיות בעברית! אין להשתמש באנגלית בשום שדה.
@@ -1179,7 +1211,7 @@ ${exercisesList.map(ex => `- ${ex.name_he} (${ex.category}, ${ex.muscle_group}, 
               }
             },
             unmatched_exercises: { type: "array", items: { type: "string" } },
-            coach_notes: { type: "string" }
+            workout_equipment: { type: "string" }
           },
           required: ["workout_title", "parts"] // Added required fields to improve AI response
         }
@@ -1213,10 +1245,10 @@ ${exercisesList.map(ex => `- ${ex.name_he} (${ex.category}, ${ex.muscle_group}, 
         workout_description: processText(response.workout_description, 'workout_description') || '',
         warmup_description: processText(response.warmup_description, 'warmup_description') || 'חימום כללי קל',
         warmup_duration: response.warmup_duration || 10,
+        workout_equipment: response.workout_equipment || '',
         part_1_exercises: [],
         part_2_exercises: [],
-        part_3_exercises: [],
-        coach_notes: processText(response.coach_notes, 'coach_notes') || ''
+        part_3_exercises: []
       };
 
       // Process each part
@@ -1577,13 +1609,6 @@ ${exercisesList.map(ex => `- ${ex.name_he} (${ex.category}, ${ex.muscle_group}, 
                           </div>
                         )
                       ))}
-
-                      {parsedWorkout.coach_notes && (
-                        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                          <p className="text-sm font-medium text-yellow-800">הערות מהמאמן</p>
-                          <p className="text-sm text-yellow-700">{parsedWorkout.coach_notes}</p>
-                        </div>
-                      )}
                     </div>
 
                     <div className="flex gap-2 pt-4">

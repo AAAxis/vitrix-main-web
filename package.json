@@ -10,7 +10,8 @@
     "start": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "seed:workouts": "node scripts/seed-workouts.js"
   },
   "dependencies": {
     "@base44/sdk": "^0.1.2",
