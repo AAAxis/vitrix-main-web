@@ -101,18 +101,39 @@ export const sendFCMNotification = async ({ userId, userEmail, title, body, data
     }
 
     const sendNotificationFunction = httpsCallable(functions, 'sendFCMNotification');
-    const result = await sendNotificationFunction({
-      userId,
-      userEmail,
-      title,
-      body,
-      data: data || {},
-      imageUrl,
-    });
+    
+    try {
+      const result = await sendNotificationFunction({
+        userId,
+        userEmail,
+        title,
+        body,
+        data: data || {},
+        imageUrl,
+      });
 
-    return result.data;
+      return result.data;
+    } catch (firebaseError) {
+      // Handle specific Firebase errors
+      if (firebaseError.code === 'functions/not-found') {
+        throw new Error('sendFCMNotification function not found. Please deploy the Firebase Cloud Function first.');
+      }
+      if (firebaseError.code === 'functions/unauthenticated') {
+        throw new Error('You must be logged in to send notifications.');
+      }
+      if (firebaseError.code === 'functions/permission-denied') {
+        throw new Error('Permission denied. You may not have access to send notifications.');
+      }
+      // Re-throw other errors
+      throw firebaseError;
+    }
   } catch (error) {
     console.error('Error sending FCM notification:', error);
+    console.error('Error details:', {
+      code: error.code,
+      message: error.message,
+      details: error.details
+    });
     throw error;
   }
 };

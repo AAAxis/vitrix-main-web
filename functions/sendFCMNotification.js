@@ -9,7 +9,9 @@ const admin = require('firebase-admin');
 // If not, uncomment the following:
 // admin.initializeApp();
 
-exports.sendFCMNotification = functions.https.onCall(async (data, context) => {
+// Use onCall for automatic CORS handling (recommended)
+// Specify region explicitly to match client configuration
+exports.sendFCMNotification = functions.region('us-central1').https.onCall(async (data, context) => {
   // Verify user is authenticated
   if (!context.auth) {
     throw new functions.https.HttpsError(

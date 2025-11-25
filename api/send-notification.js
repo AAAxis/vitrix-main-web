@@ -1,34 +1,6 @@
 // Vercel serverless function to send FCM notifications to specific users
-import admin from 'firebase-admin';
-
-// Initialize Firebase Admin SDK if not already initialized
-if (!admin.apps.length) {
-  try {
-    // Initialize with service account credentials from environment variable
-    // For Vercel, you should set FIREBASE_SERVICE_ACCOUNT as an environment variable
-    // containing the JSON service account key
-    const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT 
-      ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
-      : null;
-
-    if (!serviceAccount) {
-      console.error('❌ FIREBASE_SERVICE_ACCOUNT environment variable is not set');
-      // Fallback: try to use default credentials (for local development)
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-      });
-    } else {
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-    }
-    console.log('✅ Firebase Admin SDK initialized');
-  } catch (error) {
-    console.error('❌ Error initializing Firebase Admin SDK:', error);
-  }
-}
-
-const db = admin.firestore();
+// Uses FCM REST API directly (no Admin SDK required)
+// Requires FCM_SERVER_KEY environment variable in Vercel
 
 export default async function handler(req, res) {
   // Enable CORS for all origins
@@ -53,7 +25,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { userId, userEmail, title, body, data, imageUrl } = req.body;
+    // Check for FCM Server Key
+    const fcmServerKey = process.env.FCM_SERVER_KEY;
+    if (!fcmServerKey) {
+      res.status(500).json({
+        error: 'FCM Server Key not configured',
+        message: 'FCM_SERVER_KEY environment variable is required. Get it from Firebase Console → Project Settings → Cloud Messaging → Server Key',
+      });
+      return;
+    }
+
+    const { fcmToken, title, body, data, imageUrl } = req.body;
 
     // Validate required fields
     if (!title || !body) {
@@ -64,72 +46,26 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Either userId or userEmail must be provided
-    if (!userId && !userEmail) {
+    // FCM token is required (client should get it from Firestore and pass it)
+    if (!fcmToken) {
       res.status(400).json({ 
-        error: 'Missing user identifier',
-        details: 'Either userId or userEmail must be provided'
+        error: 'Missing FCM token',
+        details: 'fcmToken is required. Get it from Firestore fcm_tokens collection or user document.'
       });
       return;
     }
 
-    console.log(`📤 Sending notification to user: ${userId || userEmail}`);
+    console.log(`📤 Sending notification to token: ${fcmToken.substring(0, 20)}...`);
     console.log(`📝 Title: ${title}`);
     console.log(`📝 Body: ${body}`);
 
-    // Get FCM tokens for the user
-    let fcmTokens = [];
-    
-    if (userId) {
-      // Query by userId
-      const tokensSnapshot = await db.collection('fcm_tokens')
-        .where('userId', '==', userId)
-        .where('active', '==', true)
-        .get();
-      
-      fcmTokens = tokensSnapshot.docs.map(doc => doc.data().token);
-    } else if (userEmail) {
-      // First, get userId from users collection
-      const usersSnapshot = await db.collection('users')
-        .where('email', '==', userEmail)
-        .limit(1)
-        .get();
-      
-      if (usersSnapshot.empty) {
-        res.status(404).json({ 
-          error: 'User not found',
-          details: `No user found with email: ${userEmail}`
-        });
-        return;
-      }
-
-      const userIdFromEmail = usersSnapshot.docs[0].id;
-      
-      // Query by userId
-      const tokensSnapshot = await db.collection('fcm_tokens')
-        .where('userId', '==', userIdFromEmail)
-        .where('active', '==', true)
-        .get();
-      
-      fcmTokens = tokensSnapshot.docs.map(doc => doc.data().token);
-    }
-
-    if (fcmTokens.length === 0) {
-      res.status(404).json({ 
-        error: 'No FCM tokens found',
-        details: `No active FCM tokens found for user: ${userId || userEmail}`
-      });
-      return;
-    }
-
-    console.log(`📱 Found ${fcmTokens.length} FCM token(s) for user`);
-
-    // Prepare notification payload
-    const message = {
+    // Prepare FCM message payload
+    const fcmMessage = {
+      to: fcmToken,
       notification: {
         title: title,
         body: body,
-        ...(imageUrl && { imageUrl: imageUrl }),
+        ...(imageUrl && { image: imageUrl }),
       },
       data: {
         ...(data || {}),
@@ -141,7 +77,7 @@ export default async function handler(req, res) {
           channelId: 'muscleup_notifications',
           sound: 'default',
           priority: 'high',
-          ...(imageUrl && { imageUrl: imageUrl }),
+          ...(imageUrl && { image: imageUrl }),
         },
       },
       apns: {
@@ -158,56 +94,44 @@ export default async function handler(req, res) {
       },
     };
 
-    // Send notifications to all tokens
-    const results = await Promise.allSettled(
-      fcmTokens.map(token => 
-        admin.messaging().send({
-          ...message,
-          token: token,
-        })
-      )
-    );
-
-    // Count successes and failures
-    const successes = results.filter(r => r.status === 'fulfilled').length;
-    const failures = results.filter(r => r.status === 'rejected').length;
-
-    // Log failures
-    results.forEach((result, index) => {
-      if (result.status === 'rejected') {
-        console.error(`❌ Failed to send to token ${index + 1}:`, result.reason);
-        
-        // If token is invalid, mark it as inactive
-        if (result.reason?.code === 'messaging/invalid-registration-token' ||
-            result.reason?.code === 'messaging/registration-token-not-registered') {
-          // Mark token as inactive in Firestore
-          db.collection('fcm_tokens')
-            .where('token', '==', fcmTokens[index])
-            .get()
-            .then(snapshot => {
-              snapshot.docs.forEach(doc => {
-                doc.ref.update({ active: false });
-              });
-            });
-        }
-      }
+    // Send notification using FCM REST API
+    const fcmResponse = await fetch('https://fcm.googleapis.com/fcm/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `key=${fcmServerKey}`,
+      },
+      body: JSON.stringify(fcmMessage),
     });
 
-    if (successes === 0) {
-      res.status(500).json({ 
-        error: 'Failed to send notifications',
-        details: 'All notification attempts failed',
-        failures: failures,
+    const fcmResult = await fcmResponse.json();
+
+    if (!fcmResponse.ok) {
+      console.error('❌ FCM API error:', fcmResult);
+      res.status(fcmResponse.status).json({
+        error: 'FCM API error',
+        message: fcmResult.error || 'Failed to send notification',
+        details: fcmResult,
       });
       return;
     }
 
+    // Check FCM response
+    if (fcmResult.failure === 1) {
+      console.error('❌ FCM send failed:', fcmResult.results);
+      res.status(400).json({
+        error: 'Failed to send notification',
+        message: fcmResult.results[0]?.error || 'Unknown error',
+        details: fcmResult,
+      });
+      return;
+    }
+
+    console.log('✅ Notification sent successfully');
     res.status(200).json({
       success: true,
-      message: `Notification sent successfully`,
-      sent: successes,
-      failed: failures,
-      totalTokens: fcmTokens.length,
+      message: 'Notification sent successfully',
+      fcmResult: fcmResult,
     });
 
   } catch (error) {
@@ -218,4 +142,3 @@ export default async function handler(req, res) {
     });
   }
 }
-

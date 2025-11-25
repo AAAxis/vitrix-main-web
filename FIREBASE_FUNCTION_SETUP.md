@@ -24,18 +24,33 @@ npm install firebase-admin firebase-functions
 
 ### 3. Add the Function
 
-Copy the `sendFCMNotification.js` file to your `functions/index.js` or add it as a separate file and import it.
+**Option A: Add to existing `functions/index.js`**
 
-If using `functions/index.js`, add this code:
+Add this code to your `functions/index.js`:
 
 ```javascript
 const functions = require('firebase-functions');
 const admin = require('firebase-admin');
 
-admin.initializeApp();
+// Initialize Admin if not already done
+if (!admin.apps.length) {
+  admin.initializeApp();
+}
 
-// Copy the sendFCMNotification function code here
-// (from functions/sendFCMNotification.js)
+// Copy the sendFCMNotification function from functions/sendFCMNotification.js
+exports.sendFCMNotification = functions.region('us-central1').https.onCall(async (data, context) => {
+  // ... (copy the entire function code from sendFCMNotification.js)
+});
+```
+
+**Option B: Use the standalone file**
+
+If you have a modular setup, you can import it:
+
+```javascript
+// functions/index.js
+const sendFCMNotification = require('./sendFCMNotification');
+exports.sendFCMNotification = sendFCMNotification.sendFCMNotification;
 ```
 
 ### 4. Deploy the Function
@@ -44,12 +59,21 @@ admin.initializeApp();
 firebase deploy --only functions:sendFCMNotification
 ```
 
+**Important:** Make sure you're in the project root directory when running this command.
+
 ### 5. Verify Deployment
 
-After deployment, the function will be available at:
-`https://us-central1-<your-project-id>.cloudfunctions.net/sendFCMNotification`
+After deployment, check:
+1. Firebase Console → Functions → You should see `sendFCMNotification` listed
+2. The function URL will be: `https://us-central1-muscule-up.cloudfunctions.net/sendFCMNotification`
+3. The client code will automatically call it using `httpsCallable` (no CORS issues)
 
-The client code will automatically call it using `httpsCallable`.
+### 6. Test the Function
+
+After deployment, try sending a notification from the web app. Check:
+- Browser console for any errors
+- Firebase Functions logs in Firebase Console
+- Mobile device for the notification
 
 ## Alternative: Quick Setup
 

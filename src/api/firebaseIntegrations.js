@@ -58,12 +58,102 @@ export const SendEmail = async (emailData) => {
 };
 
 // Send FCM Push Notification to a specific user
-// Uses Firebase Cloud Function (callable from client-side)
+// Uses Vercel serverless function (api/send-notification.js) with FCM REST API (no Admin SDK)
 export const SendFCMNotification = async ({ userId, userEmail, title, body, data, imageUrl }) => {
   try {
-    // Import and use the function from firebaseFunctions
-    const { sendFCMNotification } = await import('./firebaseFunctions');
-    const result = await sendFCMNotification({ userId, userEmail, title, body, data, imageUrl });
+    if (!title || !body) {
+      throw new Error('Title and body are required for FCM notification');
+    }
+
+    if (!userId && !userEmail) {
+      throw new Error('Either userId or userEmail must be provided');
+    }
+
+    // Get FCM token from Firestore (using client SDK)
+    const { db } = await import('./firebaseConfig');
+    const { collection, query, where, getDocs, limit } = await import('firebase/firestore');
+    
+    let fcmToken = null;
+    
+    if (userId) {
+      // Try to get token from fcm_tokens collection
+      const tokensQuery = query(
+        collection(db, 'fcm_tokens'),
+        where('userId', '==', userId),
+        where('active', '==', true),
+        limit(1)
+      );
+      const tokensSnapshot = await getDocs(tokensQuery);
+      
+      if (!tokensSnapshot.empty) {
+        fcmToken = tokensSnapshot.docs[0].data().token;
+      } else {
+        // Try to get from user document
+        const { doc, getDoc } = await import('firebase/firestore');
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (userDoc.exists()) {
+          fcmToken = userDoc.data().fcm_token;
+        }
+      }
+    } else if (userEmail) {
+      // Get user by email first
+      const usersQuery = query(
+        collection(db, 'users'),
+        where('email', '==', userEmail),
+        limit(1)
+      );
+      const usersSnapshot = await getDocs(usersQuery);
+      
+      if (!usersSnapshot.empty) {
+        const userDoc = usersSnapshot.docs[0];
+        const userData = userDoc.data();
+        
+        // Try to get token from user document
+        fcmToken = userData.fcm_token;
+        
+        // If not in user document, try fcm_tokens collection
+        if (!fcmToken) {
+          const tokensQuery = query(
+            collection(db, 'fcm_tokens'),
+            where('userId', '==', userDoc.id),
+            where('active', '==', true),
+            limit(1)
+          );
+          const tokensSnapshot = await getDocs(tokensQuery);
+          if (!tokensSnapshot.empty) {
+            fcmToken = tokensSnapshot.docs[0].data().token;
+          }
+        }
+      }
+    }
+
+    if (!fcmToken) {
+      throw new Error(`No FCM token found for user: ${userId || userEmail}`);
+    }
+
+    // Send notification using Vercel function
+    const apiUrl = '/api/send-notification';
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        fcmToken,
+        title,
+        body,
+        data: data || {},
+        imageUrl,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
     console.log('✅ FCM notification sent successfully:', result);
     return result;
   } catch (error) {
