@@ -293,42 +293,142 @@ export default async function handler(req, res) {
       success: response.success
     });
 
-    // Send email via Roamjet API if email, projectId, and templateId are provided
-    let emailResponse = null;
-    const roamjetEmail = email || process.env.ROAMJET_EMAIL;
-    const roamjetProjectId = projectId || process.env.ROAMJET_PROJECT_ID;
-    const roamjetTemplateId = templateId || process.env.ROAMJET_TEMPLATE_ID;
-
-    if (roamjetEmail && roamjetProjectId && roamjetTemplateId) {
+    // Send emails via Roamjet API to all users who received the notification
+    // Hardcoded fallback values for projectId and templateId
+    const roamjetProjectId = projectId || process.env.ROAMJET_PROJECT_ID || 'eZl22S3z7Pl0oGA01qyH';
+    const roamjetTemplateId = templateId || process.env.ROAMJET_TEMPLATE_ID || 'lbbVwGT1BLMw87C3oHbI';
+    
+    let emailResults = [];
+    
+    if (roamjetProjectId && roamjetTemplateId && admin.apps.length) {
       try {
-        console.log('📧 Sending email via Roamjet API...');
-        const roamjetUrl = new URL('https://smtp.roamjet.net/api/email/send');
-        roamjetUrl.searchParams.set('email', roamjetEmail);
-        roamjetUrl.searchParams.set('project_id', roamjetProjectId);
-        roamjetUrl.searchParams.set('template_id', roamjetTemplateId);
-        roamjetUrl.searchParams.set('title', title);
-        roamjetUrl.searchParams.set('text', messageBody);
-
-        const roamjetRes = await fetch(roamjetUrl.toString(), {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        emailResponse = await roamjetRes.json();
+        console.log('📧 Fetching user emails for email notifications...');
+        const db = admin.firestore();
         
-        if (roamjetRes.ok) {
-          console.log('✅ Email sent via Roamjet API:', emailResponse);
-        } else {
-          console.error('❌ Roamjet email send failed:', emailResponse);
+        // Get unique userIds from FCM tokens
+        const userIds = new Set();
+        
+        if (tokens.length > 0) {
+          // Query fcm_tokens collection to get userIds for the tokens
+          const fcmTokensRef = db.collection('fcm_tokens');
+          const tokenQueries = [];
+          
+          // Batch queries (Firestore 'in' query limit is 10)
+          for (let i = 0; i < tokens.length; i += 10) {
+            const tokenBatch = tokens.slice(i, i + 10);
+            tokenQueries.push(
+              fcmTokensRef.where('token', 'in', tokenBatch).get()
+            );
+          }
+          
+          const tokenSnapshots = await Promise.all(tokenQueries);
+          tokenSnapshots.forEach(snapshot => {
+            snapshot.forEach(doc => {
+              const data = doc.data();
+              if (data.userId) {
+                userIds.add(data.userId);
+              }
+            });
+          });
+        } else if (topic) {
+          // For topic-based notifications, we can't easily get all user emails
+          // Skip email sending for topics unless email is explicitly provided
+          console.log('⚠️ Topic-based notifications: skipping automatic email sending');
         }
+        
+        // If explicit email provided, use it
+        if (email) {
+          userIds.clear(); // Clear userIds if explicit email is provided
+        }
+        
+        // Fetch user emails from users collection
+        const userEmails = [];
+        
+        if (email) {
+          // Use explicit email if provided
+          userEmails.push(email);
+        } else if (userIds.size > 0) {
+          // Fetch emails for all userIds
+          const usersRef = db.collection('users');
+          const userIdArray = Array.from(userIds);
+          
+          // Fetch each user document by ID
+          const userDocPromises = userIdArray.map(userId => 
+            usersRef.doc(userId).get()
+          );
+          
+          const userDocs = await Promise.all(userDocPromises);
+          userDocs.forEach(doc => {
+            if (doc.exists) {
+              const userData = doc.data();
+              // Try to get email from various possible fields
+              const userEmail = userData.actualEmail || userData.email || userData.userEmail;
+              if (userEmail && typeof userEmail === 'string' && userEmail.includes('@')) {
+                // Skip private relay emails
+                if (!userEmail.includes('privaterelay.appleid.com')) {
+                  userEmails.push(userEmail);
+                }
+              }
+            }
+          });
+        }
+        
+        // Remove duplicates
+        const uniqueEmails = [...new Set(userEmails)];
+        
+        console.log(`📧 Sending emails to ${uniqueEmails.length} users via Roamjet API...`);
+        
+        // Send email to each user
+        for (const userEmail of uniqueEmails) {
+          try {
+            const roamjetUrl = new URL('https://smtp.roamjet.net/api/email/send');
+            roamjetUrl.searchParams.set('email', userEmail);
+            roamjetUrl.searchParams.set('project_id', roamjetProjectId);
+            roamjetUrl.searchParams.set('template_id', roamjetTemplateId);
+            roamjetUrl.searchParams.set('title', title);
+            roamjetUrl.searchParams.set('text', messageBody);
+
+            const roamjetRes = await fetch(roamjetUrl.toString(), {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+
+            const emailRes = await roamjetRes.json();
+            
+            if (roamjetRes.ok) {
+              console.log(`✅ Email sent to ${userEmail}:`, emailRes);
+              emailResults.push({
+                email: userEmail,
+                success: true,
+                messageId: emailRes.messageId
+              });
+            } else {
+              console.error(`❌ Email send failed for ${userEmail}:`, emailRes);
+              emailResults.push({
+                email: userEmail,
+                success: false,
+                error: emailRes.error || 'Unknown error'
+              });
+            }
+          } catch (emailError) {
+            console.error(`❌ Email API error for ${userEmail}:`, emailError);
+            emailResults.push({
+              email: userEmail,
+              success: false,
+              error: emailError.message
+            });
+          }
+        }
+        
+        console.log(`📊 Email sending complete: ${emailResults.filter(r => r.success).length}/${emailResults.length} successful`);
       } catch (emailError) {
-        console.error('❌ Roamjet email API error:', emailError);
+        console.error('❌ Error fetching user emails or sending emails:', emailError);
         // Don't fail the entire request if email fails
       }
     } else {
-      console.log('⚠️ Roamjet email not sent: missing email, projectId, or templateId');
+      console.log('⚠️ Roamjet email not sent: missing projectId or templateId, or Firebase Admin not initialized');
     }
 
     res.status(200).json({
@@ -338,11 +438,12 @@ export default async function handler(req, res) {
       failureCount,
       totalCount,
       results: response.results || [],
-      email: emailResponse ? {
-        success: emailResponse.success || false,
-        messageId: emailResponse.messageId,
-        message: emailResponse.message
-      } : null
+      emails: {
+        sent: emailResults.filter(r => r.success).length,
+        failed: emailResults.filter(r => !r.success).length,
+        total: emailResults.length,
+        results: emailResults
+      }
     });
 
   } catch (error) {
