@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { User, WeightEntry, WeeklyTask, Workout, WaterTracking, CalorieTracking, ProgressPicture, WeightReminder, UserGroup, CoachNotification } from '@/api/entities';
 // SendEmail removed - using CoachNotification instead
+import { SendFCMNotification } from '@/api/integrations';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -661,20 +662,24 @@ export default function UserManagement({ initialUserEmail, startInEditMode, admi
       const lastWeightDate = user.measurementSync?.weight?.syncedFromDate;
       const daysSinceLastUpdate = lastWeightDate ? differenceInDays(new Date(), new Date(lastWeightDate)) : 0;
 
+      const notificationTitle = 'תזכורת: עדכון משקל';
+      const notificationMessage = 'המאמן/ת שלך מבקש/ת ממך לעדכן את המשקל שלך באפליקציה.';
+
       await WeightReminder.create({
         user_email: user.email,
         message: 'המאמן/ת מבקש/ת לעדכן את המשקל שלך.',
         reminder_date: new Date().toISOString(),
         days_since_last_update: daysSinceLastUpdate
       });
-      // Create notification instead of sending email
+      
+      // Create notification in Firestore
       await CoachNotification.create({
         user_email: user.email,
         user_name: user.name || user.full_name || 'משתמש לא ידוע',
         coach_email: 'system', // System notification
         notification_type: 'weight_reminder',
-        notification_title: 'תזכורת: עדכון משקל',
-        notification_message: 'המאמן/ת שלך מבקש/ת ממך לעדכן את המשקל שלך באפליקציה.',
+        notification_title: notificationTitle,
+        notification_message: notificationMessage,
         notification_details: {
           days_since_last_update: daysSinceLastUpdate,
           reminder_date: new Date().toISOString()
@@ -682,6 +687,24 @@ export default function UserManagement({ initialUserEmail, startInEditMode, admi
         is_read: false,
         created_date: new Date().toISOString()
       });
+
+      // Send FCM push notification
+      try {
+        await SendFCMNotification({
+          userEmail: user.email,
+          title: notificationTitle,
+          body: notificationMessage,
+          data: {
+            type: 'weight_reminder',
+            user_email: user.email,
+            days_since_last_update: daysSinceLastUpdate.toString()
+          }
+        });
+        console.log('✅ FCM notification sent successfully');
+      } catch (fcmError) {
+        console.error('⚠️ Failed to send FCM notification (notification still created in Firestore):', fcmError);
+        // Don't fail the whole operation if FCM fails - the notification is still in Firestore
+      }
 
       setRemindersSent(prev => ({...prev, [user.id]: true}));
     } catch(err) {

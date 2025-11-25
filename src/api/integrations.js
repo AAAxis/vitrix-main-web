@@ -3,6 +3,7 @@ export {
   Core,
   InvokeLLM,
   SendEmail,
+  SendFCMNotification,
   UploadFile,
   GenerateImage,
   ExtractDataFromUploadedFile,

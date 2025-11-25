@@ -57,6 +57,48 @@ export const SendEmail = async (emailData) => {
   throw new Error('SendEmail is no longer supported. Please use CoachNotification.create() for notifications.');
 };
 
+// Send FCM Push Notification to a specific user
+export const SendFCMNotification = async ({ userId, userEmail, title, body, data, imageUrl }) => {
+  try {
+    if (!title || !body) {
+      throw new Error('Title and body are required for FCM notification');
+    }
+
+    if (!userId && !userEmail) {
+      throw new Error('Either userId or userEmail must be provided');
+    }
+
+    const apiUrl = '/api/send-notification';
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        userId,
+        userEmail,
+        title,
+        body,
+        data: data || {},
+        imageUrl,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('✅ FCM notification sent successfully:', result);
+    return result;
+  } catch (error) {
+    console.error('❌ Error sending FCM notification:', error);
+    throw error;
+  }
+};
+
 // Get ChatGPT API key from Remote Config (with fallback to env var for development)
 const getChatGPTApiKey = async () => {
   // First, try environment variable (useful for development)
@@ -573,6 +615,7 @@ export const Core = {
   UploadPrivateFile,
   CreateFileSignedUrl,
   SendEmail, // DEPRECATED - Use CoachNotification instead
+  SendFCMNotification,
   InvokeLLM,
   GenerateImage,
   ExtractDataFromUploadedFile // DEPRECATED - Cloud Function removed
