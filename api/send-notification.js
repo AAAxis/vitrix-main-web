@@ -91,7 +91,10 @@ export default async function handler(req, res) {
       tokens = [], // Array of FCM tokens
       topic, // Optional: send to topic instead of specific tokens
       data = {}, // Custom data payload
-      imageUrl // Optional image URL
+      imageUrl, // Optional image URL
+      email, // Optional: email for Roamjet API
+      projectId, // Optional: project_id for Roamjet API
+      templateId // Optional: template_id for Roamjet API
     } = requestBody;
 
     console.log('📱 FCM API called with:', {
@@ -290,13 +293,56 @@ export default async function handler(req, res) {
       success: response.success
     });
 
+    // Send email via Roamjet API if email, projectId, and templateId are provided
+    let emailResponse = null;
+    const roamjetEmail = email || process.env.ROAMJET_EMAIL;
+    const roamjetProjectId = projectId || process.env.ROAMJET_PROJECT_ID;
+    const roamjetTemplateId = templateId || process.env.ROAMJET_TEMPLATE_ID;
+
+    if (roamjetEmail && roamjetProjectId && roamjetTemplateId) {
+      try {
+        console.log('📧 Sending email via Roamjet API...');
+        const roamjetUrl = new URL('https://smtp.roamjet.net/api/email/send');
+        roamjetUrl.searchParams.set('email', roamjetEmail);
+        roamjetUrl.searchParams.set('project_id', roamjetProjectId);
+        roamjetUrl.searchParams.set('template_id', roamjetTemplateId);
+        roamjetUrl.searchParams.set('title', title);
+        roamjetUrl.searchParams.set('text', messageBody);
+
+        const roamjetRes = await fetch(roamjetUrl.toString(), {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        emailResponse = await roamjetRes.json();
+        
+        if (roamjetRes.ok) {
+          console.log('✅ Email sent via Roamjet API:', emailResponse);
+        } else {
+          console.error('❌ Roamjet email send failed:', emailResponse);
+        }
+      } catch (emailError) {
+        console.error('❌ Roamjet email API error:', emailError);
+        // Don't fail the entire request if email fails
+      }
+    } else {
+      console.log('⚠️ Roamjet email not sent: missing email, projectId, or templateId');
+    }
+
     res.status(200).json({
       success: response.success !== false,
       messageId: response.messageId || 'unknown',
       successCount,
       failureCount,
       totalCount,
-      results: response.results || []
+      results: response.results || [],
+      email: emailResponse ? {
+        success: emailResponse.success || false,
+        messageId: emailResponse.messageId,
+        message: emailResponse.message
+      } : null
     });
 
   } catch (error) {
