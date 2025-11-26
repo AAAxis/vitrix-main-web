@@ -43,27 +43,74 @@ export default function ManualWorkoutBuilder({ user }) {
 
   useEffect(() => {
     const loadData = async () => {
-      if (!user) return;
+      if (!user) {
+        console.log('⚠️ No user, skipping data load');
+        setIsLoading(false);
+        return;
+      }
       setIsLoading(true);
+      
+      // Add timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        console.warn('⚠️ Data loading timeout - forcing stop');
+        setIsLoading(false);
+      }, 30000); // 30 second timeout
+      
       try {
+        console.log('🔄 Starting to load exercises and templates...', { userEmail: user.email });
+        
+        // Load exercises with timeout
+        const exercisesPromise = ExerciseDefinition.list().catch(err => {
+          console.error('❌ Error loading exercises:', err);
+          return [];
+        });
+        
+        // Load templates with timeout
+        const templatesPromise = WorkoutTemplate.filter({ created_by: user.email }).catch(err => {
+          console.error('❌ Error loading templates:', err);
+          return [];
+        });
+        
+        // Load defaults with timeout
+        const defaultsPromise = ExerciseDefault.filter({ user_email: user.email }).catch(err => {
+          console.error('❌ Error loading defaults:', err);
+          return [];
+        });
+        
         const [defs, tpls, defaults] = await Promise.all([
-          ExerciseDefinition.list(),
-          WorkoutTemplate.filter({ created_by: user.email }),
-          ExerciseDefault.filter({ user_email: user.email }) 
+          exercisesPromise,
+          templatesPromise,
+          defaultsPromise
         ]);
         
-        setExerciseDefinitions(defs.sort((a, b) => a.name_he.localeCompare(b.name_he)));
-        setTemplates(tpls);
+        clearTimeout(timeoutId);
+        
+        console.log('📋 Loaded exercises:', defs?.length || 0);
+        console.log('📋 Loaded templates:', tpls?.length || 0);
+        console.log('📋 Loaded defaults:', defaults?.length || 0);
+        
+        if (defs && defs.length > 0) {
+          setExerciseDefinitions(defs.sort((a, b) => (a.name_he || '').localeCompare(b.name_he || '')));
+        } else {
+          console.warn('⚠️ No exercises found in database');
+          setExerciseDefinitions([]);
+        }
+        setTemplates(tpls || []);
 
-        const defaultsMap = defaults.reduce((acc, def) => {
+        const defaultsMap = (defaults || []).reduce((acc, def) => {
           acc[def.exercise_id] = def;
           return acc;
         }, {});
         setExerciseDefaults(defaultsMap);
 
       } catch (error) {
-        console.error("Error loading data for manual builder:", error);
+        clearTimeout(timeoutId);
+        console.error("❌ Error loading data for manual builder:", error);
+        setExerciseDefinitions([]);
+        setTemplates([]);
+        setExerciseDefaults({});
       } finally {
+        console.log('✅ Finished loading data');
         setIsLoading(false);
       }
     };
@@ -77,12 +124,6 @@ export default function ManualWorkoutBuilder({ user }) {
   };
 
   const addExercise = (exerciseDef) => {
-    const userDefaults = exerciseDefaults[exerciseDef.id] || {
-      default_weight: 0,
-      default_reps: 0,
-      default_duration: 0
-    };
-
     const newExercise = {
       key: `${exerciseDef.id}-${Date.now()}`, 
       definitionId: exerciseDef.id,
@@ -90,10 +131,10 @@ export default function ManualWorkoutBuilder({ user }) {
       category: exerciseDef.category,
       video_url: exerciseDef.video_url,
       part: 'part_1_exercises', 
-      suggested_sets: 3,
-      suggested_reps: userDefaults.default_reps || 0,
-      suggested_weight: userDefaults.default_weight || 0,
-      suggested_duration: userDefaults.default_duration || 0,
+      suggested_sets: 1,
+      suggested_reps: 1,
+      suggested_weight: 1,
+      suggested_duration: 1,
       notes: ''
     };
     setWorkoutExercises(prev => [...prev, newExercise]);
@@ -110,7 +151,7 @@ export default function ManualWorkoutBuilder({ user }) {
                 return { ...ex, [field]: value };
             }
             const numValue = Number(value);
-            return { ...ex, [field]: isNaN(numValue) ? 0 : numValue };
+            return { ...ex, [field]: isNaN(numValue) ? 1 : numValue };
         }
         return ex;
     }));
@@ -161,6 +202,24 @@ export default function ManualWorkoutBuilder({ user }) {
     }
   };
 
+  // Helper function to remove undefined values from objects
+  const removeUndefined = (obj) => {
+    if (obj === null || obj === undefined) return null;
+    if (Array.isArray(obj)) {
+      return obj.map(item => removeUndefined(item)).filter(item => item !== undefined);
+    }
+    if (typeof obj === 'object') {
+      const cleaned = {};
+      for (const [key, value] of Object.entries(obj)) {
+        if (value !== undefined) {
+          cleaned[key] = removeUndefined(value);
+        }
+      }
+      return cleaned;
+    }
+    return obj;
+  };
+
   const handleSaveOrUpdateTemplate = async () => {
     if (!templateName) {
       alert("יש לתת שם לתבנית.");
@@ -172,14 +231,50 @@ export default function ManualWorkoutBuilder({ user }) {
     }
     setIsSaving(true);
     try {
-      const templateData = {
+      const templateData = removeUndefined({
         template_name: templateName,
-        workout_title: workoutTitle,
-        workout_description: workoutDescription,
-        part_1_exercises: workoutExercises.filter(e => e.part === 'part_1_exercises').map(ex => ({...ex})),
-        part_2_exercises: workoutExercises.filter(e => e.part === 'part_2_exercises').map(ex => ({...ex})),
-        part_3_exercises: workoutExercises.filter(e => e.part === 'part_3_exercises').map(ex => ({...ex})),
-      };
+        workout_title: workoutTitle || '',
+        workout_description: workoutDescription || '',
+        part_1_exercises: workoutExercises.filter(e => e.part === 'part_1_exercises').map(ex => ({
+          key: ex.key,
+          definitionId: ex.definitionId,
+          name: ex.name || '',
+          category: ex.category || '',
+          video_url: ex.video_url || '',
+          part: ex.part || 'part_1_exercises',
+          suggested_sets: ex.suggested_sets ?? 1,
+          suggested_reps: ex.suggested_reps ?? 1,
+          suggested_weight: ex.suggested_weight ?? 1,
+          suggested_duration: ex.suggested_duration ?? 1,
+          notes: ex.notes || ''
+        })),
+        part_2_exercises: workoutExercises.filter(e => e.part === 'part_2_exercises').map(ex => ({
+          key: ex.key,
+          definitionId: ex.definitionId,
+          name: ex.name || '',
+          category: ex.category || '',
+          video_url: ex.video_url || '',
+          part: ex.part || 'part_2_exercises',
+          suggested_sets: ex.suggested_sets ?? 1,
+          suggested_reps: ex.suggested_reps ?? 1,
+          suggested_weight: ex.suggested_weight ?? 1,
+          suggested_duration: ex.suggested_duration ?? 1,
+          notes: ex.notes || ''
+        })),
+        part_3_exercises: workoutExercises.filter(e => e.part === 'part_3_exercises').map(ex => ({
+          key: ex.key,
+          definitionId: ex.definitionId,
+          name: ex.name || '',
+          category: ex.category || '',
+          video_url: ex.video_url || '',
+          part: ex.part || 'part_3_exercises',
+          suggested_sets: ex.suggested_sets ?? 1,
+          suggested_reps: ex.suggested_reps ?? 1,
+          suggested_weight: ex.suggested_weight ?? 1,
+          suggested_duration: ex.suggested_duration ?? 1,
+          notes: ex.notes || ''
+        })),
+      });
 
       if (editingTemplate) {
         await WorkoutTemplate.update(editingTemplate.id, templateData);
@@ -296,8 +391,18 @@ export default function ManualWorkoutBuilder({ user }) {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-64">
+      <div className="flex flex-col justify-center items-center h-64 space-y-4">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        <p className="text-slate-600">טוען תרגילים...</p>
+        {!user && <p className="text-xs text-red-500">ממתין לטעינת משתמש...</p>}
+      </div>
+    );
+  }
+  
+  if (!user) {
+    return (
+      <div className="flex flex-col justify-center items-center h-64 space-y-4">
+        <p className="text-slate-600">ממתין לטעינת משתמש...</p>
       </div>
     );
   }
@@ -350,54 +455,58 @@ export default function ManualWorkoutBuilder({ user }) {
                 />
               </div>
               
-              {searchTerm && (
-                <ScrollArea className="h-48 border rounded-lg bg-white">
-                  <div className="p-2 space-y-1">
-                    {filteredExercises.length > 0 ? filteredExercises.map(exercise => (
-                      <div
-                        key={exercise.id}
-                        className="flex items-center justify-between p-2 hover:bg-slate-100 rounded cursor-pointer"
-                        onClick={() => addExercise(exercise)}
-                      >
-                        <div className="flex-1">
-                          <p className="font-medium text-sm">{exercise.name_he}</p>
-                          <p className="text-xs text-slate-500">{exercise.name_en}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {exercise.video_url && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handlePlayVideo(exercise.video_url, exercise.name_he);
-                              }}
-                              title="צפה בהדגמת וידאו"
-                            >
-                              <Video className="w-4 h-4 text-blue-600" />
-                            </Button>
-                          )}
+              <div className="text-xs text-slate-500 mb-2">
+                {exerciseDefinitions.length} תרגילים זמינים
+                {searchTerm && ` (${filteredExercises.length} תואמים לחיפוש)`}
+              </div>
+              <ScrollArea className="h-[400px] border rounded-lg bg-white">
+                <div className="p-2 space-y-1">
+                  {filteredExercises.length > 0 ? filteredExercises.map(exercise => (
+                    <div
+                      key={exercise.id}
+                      className="flex items-center justify-between p-2 hover:bg-slate-100 rounded cursor-pointer"
+                      onClick={() => addExercise(exercise)}
+                    >
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{exercise.name_he}</p>
+                        <p className="text-xs text-slate-500">{exercise.name_en}</p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {exercise.video_url && (
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedExerciseInfo(exercise);
+                              handlePlayVideo(exercise.video_url, exercise.name_he);
                             }}
+                            title="צפה בהדגמת וידאו"
                           >
-                            <Info className="w-3 h-3" />
+                            <Video className="w-4 h-4 text-blue-600" />
                           </Button>
-                          <Plus className="w-4 h-4 text-green-600" />
-                        </div>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedExerciseInfo(exercise);
+                          }}
+                        >
+                          <Info className="w-3 h-3" />
+                        </Button>
+                        <Plus className="w-4 h-4 text-green-600" />
                       </div>
-                    )) : (
-                      <p className="text-center text-slate-500 py-8">לא נמצאו תרגילים</p>
-                    )}
-                  </div>
-                </ScrollArea>
-              )}
+                    </div>
+                  )) : (
+                    <p className="text-center text-slate-500 py-8">
+                      {searchTerm ? 'לא נמצאו תרגילים תואמים' : 'טוען תרגילים...'}
+                    </p>
+                  )}
+                </div>
+              </ScrollArea>
             </div>
           </CardContent>
         </Card>
@@ -475,12 +584,7 @@ export default function ManualWorkoutBuilder({ user }) {
         </Card>
         
         {workoutExercises.length > 0 && (
-          <Card>
-              <CardHeader>
-                  <CardTitle>האימון שלך</CardTitle>
-                  <CardDescription>כאן תוכל לשנות את פרטי התרגילים ולשייך אותם לחלקים השונים באימון.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
+          <div className="space-y-6">
                   {Object.keys(exercisesByPart).map(partKey => (
                       exercisesByPart[partKey].length > 0 && (
                           <div key={partKey}>
@@ -523,19 +627,19 @@ export default function ManualWorkoutBuilder({ user }) {
                                               </div>
                                               <div className="sm:col-span-1">
                                                   <Label className="text-xs">סטים</Label>
-                                                  <Input type="number" value={ex.suggested_sets} onChange={(e) => handleSetChange(ex.key, 'suggested_sets', e.target.value)} />
+                                                  <Input type="number" value={ex.suggested_sets ?? 1} onChange={(e) => handleSetChange(ex.key, 'suggested_sets', e.target.value)} />
                                               </div>
                                               <div className="sm:col-span-1">
                                                   <Label className="text-xs">חזרות</Label>
-                                                  <Input type="number" value={ex.suggested_reps} onChange={(e) => handleSetChange(ex.key, 'suggested_reps', e.target.value)} />
+                                                  <Input type="number" value={ex.suggested_reps ?? 1} onChange={(e) => handleSetChange(ex.key, 'suggested_reps', e.target.value)} />
                                               </div>
                                               <div className="sm:col-span-1">
                                                   <Label className="text-xs">משקל (ק"ג)</Label>
-                                                  <Input type="number" value={ex.suggested_weight} onChange={(e) => handleSetChange(ex.key, 'suggested_weight', e.target.value)} />
+                                                  <Input type="number" value={ex.suggested_weight ?? 1} onChange={(e) => handleSetChange(ex.key, 'suggested_weight', e.target.value)} />
                                               </div>
                                               <div className="sm:col-span-1">
                                                   <Label className="text-xs">משך (שניות)</Label>
-                                                  <Input type="number" value={ex.suggested_duration} onChange={(e) => handleSetChange(ex.key, 'suggested_duration', e.target.value)} />
+                                                  <Input type="number" value={ex.suggested_duration ?? 1} onChange={(e) => handleSetChange(ex.key, 'suggested_duration', e.target.value)} />
                                               </div>
                                           </div>
                                       </div>
@@ -544,8 +648,7 @@ export default function ManualWorkoutBuilder({ user }) {
                           </div>
                       )
                   ))}
-              </CardContent>
-          </Card>
+          </div>
         )}
 
         <Card>

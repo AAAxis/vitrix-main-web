@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { PreMadeWorkout, WorkoutTemplate, User, UserGroup, ExerciseDefinition, CoachNotification } from '@/api/entities';
 import { InvokeLLM } from '@/api/integrations'; // Added InvokeLLM
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -33,81 +33,6 @@ const partLabels = {
   part_3_exercises: 'חלק 3 - סיום/עצימות'
 };
 
-const ExerciseBuilderCard = ({ exercise, part, index, updateExercise, removeExercise }) => {
-  const handleNumericChange = (field, value) => {
-    updateExercise(part, index, field, Math.max(0, parseInt(value) || 0));
-  };
-
-  const handleStepper = (field, amount) => {
-    const currentValue = exercise[field] || 0;
-    handleNumericChange(field, currentValue + amount);
-  };
-
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      className="border rounded-lg p-4 mb-4 bg-white shadow-sm"
-    >
-      <div className="flex justify-between items-start">
-        <div>
-          <p className="font-semibold text-slate-800">{exercise.name}</p>
-          <p className="text-xs text-slate-500">{exercise.category}</p>
-        </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeExercise(part, index)}>
-          <Trash2 className="w-4 h-4 text-red-500" />
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-4">
-        {/* Sets */}
-        <div className="space-y-1">
-          <Label className="text-xs flex items-center gap-1"><Repeat className="w-3 h-3" /> סטים</Label>
-          <div className="flex items-center">
-            <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => handleStepper('suggested_sets', -1)}>-</Button>
-            <Input type="text" className="w-12 text-center h-8" value={exercise.suggested_sets} onChange={e => handleNumericChange('suggested_sets', e.target.value)} />
-            <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => handleStepper('suggested_sets', 1)}>+</Button>
-          </div>
-        </div>
-
-        {/* Reps */}
-        <div className="space-y-1">
-          <Label className="text-xs flex items-center gap-1"><Dumbbell className="w-3 h-3" /> חזרות</Label>
-          <div className="flex items-center">
-            <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => handleStepper('suggested_reps', -1)}>-</Button>
-            <Input type="text" className="w-12 text-center h-8" value={exercise.suggested_reps} onChange={e => handleNumericChange('suggested_reps', e.target.value)} />
-            <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => handleStepper('suggested_reps', 1)}>+</Button>
-          </div>
-        </div>
-
-        {/* Weight */}
-        <div className="space-y-1">
-          <Label className="text-xs flex items-center gap-1"><Weight className="w-3 h-3" /> משקל (ק"ג)</Label>
-          <Input
-            type="number"
-            className="h-8"
-            value={exercise.suggested_weight}
-            onChange={e => updateExercise(part, index, 'suggested_weight', parseFloat(e.target.value) || 0)}
-            step="0.5"
-          />
-        </div>
-      </div>
-
-      <div className="mt-3">
-        <Label className="text-xs">הערות לתרגיל</Label>
-        <Textarea
-          placeholder="..."
-          rows={2}
-          className="text-sm"
-          value={exercise.notes}
-          onChange={e => updateExercise(part, index, 'notes', e.target.value)}
-        />
-      </div>
-    </motion.div>
-  );
-};
 
 
 // ManualWorkoutBuilder component encapsulating the original WorkoutCreator's functionality
@@ -183,21 +108,26 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
 
   const addExercise = (part, exercise) => {
     const newExercise = {
-      id: exercise.id,
-      name: exercise.name_he,
-      category: exercise.category,
-      suggested_sets: 3,
-      suggested_reps: 12,
-      suggested_weight: exercise.default_weight || 0,
-      suggested_duration: 0,
-      notes: '',
-      video_url: exercise.video_url
+      id: exercise.id || `exercise-${Date.now()}-${Math.random()}`,
+      name: exercise.name_he || exercise.name || '',
+      category: exercise.category || '',
+      suggested_sets: 1,
+      suggested_reps: 1,
+      suggested_weight: 1,
+      suggested_duration: 1,
+      notes: exercise.notes || '',
+      video_url: exercise.video_url || ''
     };
 
-    setWorkoutData(prev => ({
-      ...prev,
-      [part]: [...prev[part], newExercise]
-    }));
+    setWorkoutData(prev => {
+      const newData = {
+        ...prev,
+        [part]: [...(prev[part] || []), newExercise]
+      };
+      console.log('Adding exercise:', newExercise);
+      console.log('Updated part data:', newData[part]);
+      return newData;
+    });
   };
 
   const updateExercise = (part, index, field, value) => {
@@ -499,19 +429,75 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
     });
 
   const renderWorkoutPart = (partKey) => (
-    <Card>
-      <CardHeader><CardTitle className="text-base">{partLabels[partKey]}</CardTitle></CardHeader>
-      <CardContent>
+    <div>
+      <h3 className="text-base font-semibold mb-3">{partLabels[partKey]}</h3>
+      <div>
         <AnimatePresence>
           {workoutData[partKey].map((exercise, index) => (
-            <ExerciseBuilderCard
-              key={`${partKey}-${index}`}
-              exercise={exercise}
-              part={partKey}
-              index={index}
-              updateExercise={updateExercise}
-              removeExercise={removeExercise}
-            />
+            <div key={`${partKey}-${exercise.id || exercise.name}-${index}`} className="border rounded-lg p-4 mb-4 bg-white shadow-sm">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <p className="font-semibold text-slate-800">{exercise.name}</p>
+                  <p className="text-xs text-slate-500">{exercise.category}</p>
+                </div>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => removeExercise(partKey, index)}>
+                  <Trash2 className="w-4 h-4 text-red-500" />
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <Label className="text-xs">סטים</Label>
+                  <Input 
+                    type="number" 
+                    className="h-8 mt-1" 
+                    value={exercise.suggested_sets ?? 1} 
+                    onChange={e => updateExercise(partKey, index, 'suggested_sets', parseInt(e.target.value) || 1)} 
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs">חזרות</Label>
+                  <Input 
+                    type="number" 
+                    className="h-8 mt-1" 
+                    value={exercise.suggested_reps ?? 1} 
+                    onChange={e => updateExercise(partKey, index, 'suggested_reps', parseInt(e.target.value) || 1)} 
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs">משקל (ק"ג)</Label>
+                  <Input
+                    type="number"
+                    className="h-8 mt-1"
+                    value={exercise.suggested_weight ?? 1}
+                    onChange={e => updateExercise(partKey, index, 'suggested_weight', parseFloat(e.target.value) || 1)}
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-xs">משך (שניות)</Label>
+                  <Input
+                    type="number"
+                    className="h-8 mt-1"
+                    value={exercise.suggested_duration ?? 1}
+                    onChange={e => updateExercise(partKey, index, 'suggested_duration', parseInt(e.target.value) || 1)}
+                  />
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <Label className="text-xs">הערות לתרגיל</Label>
+                <Textarea
+                  placeholder="..."
+                  rows={2}
+                  className="text-sm mt-1"
+                  value={exercise.notes ?? ''}
+                  onChange={e => updateExercise(partKey, index, 'notes', e.target.value)}
+                />
+              </div>
+            </div>
           ))}
         </AnimatePresence>
         {workoutData[partKey].length === 0 && (
@@ -521,8 +507,8 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
             <p className="text-sm">הוסף תרגילים מספריית התרגילים בצד ימין</p>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 
   return (
@@ -583,6 +569,78 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6 mt-4">
             {/* Left Pane: Library - Mobile Optimized */}
             <div className="xl:col-span-4 space-y-4 order-2 xl:order-1">
+              <Card>
+                <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-lg sm:text-xl">התבניות שלי</CardTitle>
+                    <CardDescription className="text-xs sm:text-sm">טען תבנית קיימת</CardDescription>
+                </CardHeader>
+                <CardContent className="p-4 sm:p-6 pt-0">
+                  {isLoadingData ? (
+                    <div className="text-center py-4 text-slate-500">
+                      <Loader2 className="w-4 h-4 animate-spin mx-auto mb-2" />
+                      <p className="text-xs">טוען תבניות...</p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="mb-2 text-xs text-slate-500">
+                        {templates?.length || 0} תבניות זמינות
+                      </div>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" role="combobox" className="w-full justify-between text-sm">
+                            <span className="truncate">
+                              {templates && templates.length > 0 ? 'בחר תבנית לטעינה...' : 'אין תבניות זמינות'}
+                            </span>
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] max-w-[400px] p-0">
+                          <Command>
+                            <CommandInput placeholder="חפש תבנית..." className="text-sm" />
+                            <CommandEmpty>לא נמצאו תבניות.</CommandEmpty>
+                            <CommandList className="max-h-[400px] overflow-y-auto">
+                              <CommandGroup>
+                                {templates && templates.length > 0 ? (
+                                  templates.map((template) => (
+                                    <CommandItem
+                                      key={template.id}
+                                      value={`${template.template_name || template.workout_title || 'תבנית ללא שם'} ${template.workout_description || ''}`}
+                                      onSelect={() => {
+                                        loadTemplate(template);
+                                      }}
+                                      className="text-sm cursor-pointer"
+                                    >
+                                      <Check className={cn("mr-2 h-4 w-4 opacity-0")} />
+                                      <div className="flex-1">
+                                        <div className="font-medium">{template.template_name || template.workout_title || 'תבנית ללא שם'}</div>
+                                        {template.workout_description && (
+                                          <div className="text-xs text-slate-500 truncate">{template.workout_description}</div>
+                                        )}
+                                        <div className="flex gap-2 mt-1">
+                                          {template.workout_equipment && (
+                                            <Badge variant="outline" className="text-xs">{template.workout_equipment}</Badge>
+                                          )}
+                                          {template.estimated_duration && (
+                                            <Badge variant="outline" className="text-xs">{template.estimated_duration} דק'</Badge>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </CommandItem>
+                                  ))
+                                ) : (
+                                  <CommandItem disabled>
+                                    אין תבניות זמינות
+                                  </CommandItem>
+                                )}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
               <Card>
                 <CardHeader className="p-4 sm:p-6">
                     <CardTitle className="text-lg sm:text-xl">ספריית תרגילים</CardTitle>
@@ -1091,7 +1149,7 @@ export default function WorkoutCreator({ templateToLoad, onTemplateLoaded, user 
         loadWithRetry(() => User.filter({ role: 'user' }), 'Users'),
         loadWithRetry(() => UserGroup.list(), 'UserGroups'),
         loadWithRetry(() => ExerciseDefinition.list(), 'ExerciseDefinitions'),
-        loadWithRetry(() => WorkoutTemplate.list(), 'WorkoutTemplates'),
+        loadWithRetry(() => WorkoutTemplate.list('-created_date'), 'WorkoutTemplates'),
         loadWithRetry(() => PreMadeWorkout.list(), 'PreMadeWorkouts')
       ]);
 
@@ -1101,6 +1159,13 @@ export default function WorkoutCreator({ templateToLoad, onTemplateLoaded, user 
       setTemplates(templatesData || []);
       setExistingWorkouts(workoutsData || []);
       setRetryCount(0);
+      
+      // Debug: Log templates count
+      console.log('📋 Loaded templates:', templatesData?.length || 0);
+      console.log('📋 Templates data:', templatesData);
+      if (templatesData && templatesData.length > 0) {
+        console.log('📋 First template:', templatesData[0]);
+      }
 
     } catch (error) {
       console.error('Error loading data:', error);
