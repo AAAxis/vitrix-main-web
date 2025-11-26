@@ -7,8 +7,20 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Search, Plus, Edit, Trash2, X, FileUp, Download, ChevronsRight, FileCheck2 } from 'lucide-react';
+import { Loader2, Search, Plus, Edit, Trash2, X, FileUp, Download, ChevronsRight, FileCheck2, Database, CheckSquare, Square } from 'lucide-react';
 import { UploadFile, ExtractDataFromUploadedFile } from '@/api/integrations';
+import { 
+    searchExercises, 
+    getExercisesByBodyPart, 
+    getExercisesByEquipment,
+    getBodyParts,
+    getBodyPartsEnglish,
+    getEquipmentList,
+    getEquipmentListEnglish,
+    reverseTranslateBodyPart,
+    reverseTranslateEquipment,
+    mapExerciseDBArrayToExerciseDefinitions
+} from '@/api/exercisedbClient';
 
 export default function ExerciseLibraryManager() {
     const [exercises, setExercises] = useState([]);
@@ -28,6 +40,21 @@ export default function ExerciseLibraryManager() {
     const [isImporting, setIsImporting] = useState(false);
     const [importError, setImportError] = useState('');
     const [importSuccess, setImportSuccess] = useState('');
+
+    // State for ExerciseDB import
+    const [isExerciseDBModalOpen, setIsExerciseDBModalOpen] = useState(false);
+    const [exerciseDBSearchTerm, setExerciseDBSearchTerm] = useState('');
+    const [exerciseDBResults, setExerciseDBResults] = useState([]);
+    const [selectedExerciseDBExercises, setSelectedExerciseDBExercises] = useState(new Set());
+    const [isSearchingExerciseDB, setIsSearchingExerciseDB] = useState(false);
+    const [exerciseDBError, setExerciseDBError] = useState('');
+    const [exerciseDBImporting, setExerciseDBImporting] = useState(false);
+    const [exerciseDBImportSuccess, setExerciseDBImportSuccess] = useState('');
+    const [exerciseDBSearchType, setExerciseDBSearchType] = useState('name'); // 'name', 'bodyPart', 'equipment'
+    const [bodyPartsList, setBodyPartsList] = useState([]);
+    const [equipmentListDB, setEquipmentListDB] = useState([]);
+    const [selectedBodyPart, setSelectedBodyPart] = useState('');
+    const [selectedEquipment, setSelectedEquipment] = useState('');
 
     const muscleGroups = ["Chest", "Back", "Legs", "Shoulders", "Biceps", "Triceps", "Core", "Full Body", "Cardio"];
     const categories = ["Strength", "Hypertrophy", "Cardio", "Mobility", "Functional", "Olympic Weightlifting"];
@@ -49,6 +76,25 @@ export default function ExerciseLibraryManager() {
     useEffect(() => {
         loadExercises();
     }, [loadExercises]);
+
+    // Load body parts and equipment lists when ExerciseDB modal opens
+    useEffect(() => {
+        if (isExerciseDBModalOpen) {
+            const loadLists = async () => {
+                try {
+                    const [bodyParts, equipment] = await Promise.all([
+                        getBodyParts(),
+                        getEquipmentList()
+                    ]);
+                    setBodyPartsList(bodyParts);
+                    setEquipmentListDB(equipment);
+                } catch (err) {
+                    console.error('Error loading ExerciseDB lists:', err);
+                }
+            };
+            loadLists();
+        }
+    }, [isExerciseDBModalOpen]);
 
     const filteredExercises = useMemo(() => {
         if (!searchTerm) return exercises;
@@ -241,6 +287,102 @@ export default function ExerciseLibraryManager() {
         }
     };
 
+    // ExerciseDB search handlers
+    const handleExerciseDBSearch = async () => {
+        if (!exerciseDBSearchTerm.trim() && exerciseDBSearchType === 'name') {
+            setExerciseDBError('נא להזין מונח חיפוש');
+            return;
+        }
+        if (exerciseDBSearchType === 'bodyPart' && !selectedBodyPart) {
+            setExerciseDBError('נא לבחור קבוצת שריר');
+            return;
+        }
+        if (exerciseDBSearchType === 'equipment' && !selectedEquipment) {
+            setExerciseDBError('נא לבחור ציוד');
+            return;
+        }
+
+        setIsSearchingExerciseDB(true);
+        setExerciseDBError('');
+        setExerciseDBResults([]);
+        setSelectedExerciseDBExercises(new Set());
+
+        try {
+            let results = [];
+            if (exerciseDBSearchType === 'name') {
+                results = await searchExercises(exerciseDBSearchTerm, 50);
+            } else if (exerciseDBSearchType === 'bodyPart') {
+                // Convert Hebrew body part back to English for API call
+                const englishBodyPart = reverseTranslateBodyPart(selectedBodyPart);
+                results = await getExercisesByBodyPart(englishBodyPart, 50);
+            } else if (exerciseDBSearchType === 'equipment') {
+                // Convert Hebrew equipment back to English for API call
+                const englishEquipment = reverseTranslateEquipment(selectedEquipment);
+                results = await getExercisesByEquipment(englishEquipment, 50);
+            }
+
+            const mappedResults = mapExerciseDBArrayToExerciseDefinitions(results);
+            setExerciseDBResults(mappedResults);
+        } catch (err) {
+            setExerciseDBError('שגיאה בחיפוש תרגילים מ-ExerciseDB. נסה שוב מאוחר יותר.');
+            console.error('ExerciseDB search error:', err);
+        } finally {
+            setIsSearchingExerciseDB(false);
+        }
+    };
+
+    const handleToggleExerciseDBSelection = (exerciseId) => {
+        setSelectedExerciseDBExercises(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(exerciseId)) {
+                newSet.delete(exerciseId);
+            } else {
+                newSet.add(exerciseId);
+            }
+            return newSet;
+        });
+    };
+
+    const handleSelectAllExerciseDB = () => {
+        if (selectedExerciseDBExercises.size === exerciseDBResults.length) {
+            setSelectedExerciseDBExercises(new Set());
+        } else {
+            setSelectedExerciseDBExercises(new Set(exerciseDBResults.map(ex => ex.exercisedb_id)));
+        }
+    };
+
+    const handleImportFromExerciseDB = async () => {
+        if (selectedExerciseDBExercises.size === 0) {
+            setExerciseDBError('נא לבחור לפחות תרגיל אחד לייבוא');
+            return;
+        }
+
+        setExerciseDBImporting(true);
+        setExerciseDBError('');
+        setExerciseDBImportSuccess('');
+
+        try {
+            const exercisesToImport = exerciseDBResults.filter(ex => 
+                selectedExerciseDBExercises.has(ex.exercisedb_id)
+            );
+            
+            await ExerciseDefinition.bulkCreate(exercisesToImport);
+            setExerciseDBImportSuccess(`${exercisesToImport.length} תרגילים יובאו בהצלחה מ-ExerciseDB!`);
+            setSelectedExerciseDBExercises(new Set());
+            setExerciseDBResults([]);
+            
+            setTimeout(() => {
+                setIsExerciseDBModalOpen(false);
+                loadExercises();
+            }, 2000);
+        } catch (err) {
+            setExerciseDBError('שגיאה בייבוא התרגילים למאגר.');
+            console.error('ExerciseDB import error:', err);
+        } finally {
+            setExerciseDBImporting(false);
+        }
+    };
+
     return (
         <div dir="rtl">
             <div className="flex justify-between items-center mb-4">
@@ -248,6 +390,7 @@ export default function ExerciseLibraryManager() {
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={handleExport}><Download className="w-4 h-4 ml-2"/>ייצוא מאגר</Button>
                     <Button variant="outline" onClick={() => setIsImportModalOpen(true)}><FileUp className="w-4 h-4 ml-2"/>ייבוא מקובץ</Button>
+                    <Button variant="outline" onClick={() => setIsExerciseDBModalOpen(true)}><Database className="w-4 h-4 ml-2"/>ייבוא מ-ExerciseDB</Button>
                     <Button onClick={() => handleOpenForm()}><Plus className="w-4 h-4 ml-2" />הוסף תרגיל</Button>
                 </div>
             </div>
@@ -397,6 +540,216 @@ export default function ExerciseLibraryManager() {
                         <Button onClick={handleConfirmImport} disabled={isImporting || importedExercises.length === 0}>
                             {isImporting ? <Loader2 className="w-4 h-4 animate-spin ml-2"/> : <FileCheck2 className="w-4 h-4 ml-2"/>}
                             אישור וייבוא נתונים
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* ExerciseDB Import Dialog */}
+            <Dialog open={isExerciseDBModalOpen} onOpenChange={(isOpen) => {
+                if (!isOpen) {
+                    setExerciseDBResults([]);
+                    setSelectedExerciseDBExercises(new Set());
+                    setExerciseDBSearchTerm('');
+                    setExerciseDBError('');
+                    setExerciseDBImportSuccess('');
+                    setSelectedBodyPart('');
+                    setSelectedEquipment('');
+                    setExerciseDBSearchType('name');
+                }
+                setIsExerciseDBModalOpen(isOpen);
+            }}>
+                <DialogContent className="max-w-4xl max-h-[90vh]" dir="rtl">
+                    <DialogHeader>
+                        <DialogTitle>ייבוא תרגילים מ-ExerciseDB</DialogTitle>
+                        <DialogDescription>
+                            חפש ותייבא תרגילים ממאגר ExerciseDB המכיל מעל 11,000 תרגילים מקצועיים עם תמונות, סרטונים והוראות מפורטות.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4 space-y-4">
+                        {/* Search Type Selection */}
+                        <div className="flex gap-2">
+                            <Button
+                                variant={exerciseDBSearchType === 'name' ? 'default' : 'outline'}
+                                onClick={() => setExerciseDBSearchType('name')}
+                                size="sm"
+                            >
+                                חיפוש לפי שם
+                            </Button>
+                            <Button
+                                variant={exerciseDBSearchType === 'bodyPart' ? 'default' : 'outline'}
+                                onClick={() => setExerciseDBSearchType('bodyPart')}
+                                size="sm"
+                            >
+                                חיפוש לפי קבוצת שריר
+                            </Button>
+                            <Button
+                                variant={exerciseDBSearchType === 'equipment' ? 'default' : 'outline'}
+                                onClick={() => setExerciseDBSearchType('equipment')}
+                                size="sm"
+                            >
+                                חיפוש לפי ציוד
+                            </Button>
+                        </div>
+
+                        {/* Search Input */}
+                        <div className="flex gap-2">
+                            {exerciseDBSearchType === 'name' && (
+                                <div className="flex-1 relative">
+                                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <Input
+                                        placeholder="חיפוש תרגיל (לדוגמה: bench press, squat, deadlift)..."
+                                        value={exerciseDBSearchTerm}
+                                        onChange={(e) => setExerciseDBSearchTerm(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleExerciseDBSearch()}
+                                        className="pr-10"
+                                    />
+                                </div>
+                            )}
+                            {exerciseDBSearchType === 'bodyPart' && (
+                                <Select value={selectedBodyPart} onValueChange={setSelectedBodyPart}>
+                                    <SelectTrigger className="flex-1">
+                                        <SelectValue placeholder="בחר קבוצת שריר" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Array.isArray(bodyPartsList) && bodyPartsList.length > 0 ? (
+                                            bodyPartsList
+                                                .filter(bp => bp && typeof bp === 'string' && bp.trim() !== '')
+                                                .map(bp => (
+                                                    <SelectItem key={bp} value={bp}>{bp}</SelectItem>
+                                                ))
+                                        ) : (
+                                            <SelectItem value="loading" disabled>טוען...</SelectItem>
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                            {exerciseDBSearchType === 'equipment' && (
+                                <Select value={selectedEquipment} onValueChange={setSelectedEquipment}>
+                                    <SelectTrigger className="flex-1">
+                                        <SelectValue placeholder="בחר ציוד" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Array.isArray(equipmentListDB) && equipmentListDB.length > 0 ? (
+                                            equipmentListDB
+                                                .filter(eq => eq && typeof eq === 'string' && eq.trim() !== '')
+                                                .map(eq => (
+                                                    <SelectItem key={eq} value={eq}>{eq}</SelectItem>
+                                                ))
+                                        ) : (
+                                            <SelectItem value="loading" disabled>טוען...</SelectItem>
+                                        )}
+                                    </SelectContent>
+                                </Select>
+                            )}
+                            <Button 
+                                onClick={handleExerciseDBSearch} 
+                                disabled={isSearchingExerciseDB}
+                            >
+                                {isSearchingExerciseDB ? (
+                                    <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                                ) : (
+                                    <Search className="w-4 h-4 ml-2" />
+                                )}
+                                חפש
+                            </Button>
+                        </div>
+
+                        {exerciseDBError && (
+                            <div className="text-sm text-red-600 bg-red-50 p-3 rounded-md">
+                                {exerciseDBError}
+                            </div>
+                        )}
+
+                        {exerciseDBImportSuccess && (
+                            <div className="text-sm text-green-600 bg-green-50 p-3 rounded-md">
+                                {exerciseDBImportSuccess}
+                            </div>
+                        )}
+
+                        {/* Results */}
+                        {exerciseDBResults.length > 0 && (
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <h4 className="font-bold">
+                                        נמצאו {exerciseDBResults.length} תרגילים
+                                    </h4>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleSelectAllExerciseDB}
+                                    >
+                                        {selectedExerciseDBExercises.size === exerciseDBResults.length ? (
+                                            <>
+                                                <CheckSquare className="w-4 h-4 ml-2" />
+                                                בטל בחירה
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Square className="w-4 h-4 ml-2" />
+                                                בחר הכל
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                                <ScrollArea className="h-[400px] border rounded-md p-2">
+                                    <div className="space-y-2">
+                                        {exerciseDBResults.map((exercise) => {
+                                            const isSelected = selectedExerciseDBExercises.has(exercise.exercisedb_id);
+                                            return (
+                                                <div
+                                                    key={exercise.exercisedb_id}
+                                                    className={`p-3 rounded-md border cursor-pointer transition-colors ${
+                                                        isSelected
+                                                            ? 'bg-blue-50 border-blue-300'
+                                                            : 'bg-white hover:bg-slate-50'
+                                                    }`}
+                                                    onClick={() => handleToggleExerciseDBSelection(exercise.exercisedb_id)}
+                                                >
+                                                    <div className="flex items-start gap-3">
+                                                        <div className="mt-1">
+                                                            {isSelected ? (
+                                                                <CheckSquare className="w-5 h-5 text-blue-600" />
+                                                            ) : (
+                                                                <Square className="w-5 h-5 text-slate-400" />
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <p className="font-bold text-slate-800">
+                                                                {exercise.name_en}
+                                                            </p>
+                                                            <p className="text-sm text-slate-600 mt-1">
+                                                                {exercise.muscle_group} | {exercise.equipment} | {exercise.category}
+                                                            </p>
+                                                            {exercise.description && (
+                                                                <p className="text-xs text-slate-500 mt-2 line-clamp-2">
+                                                                    {exercise.description.substring(0, 150)}...
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </ScrollArea>
+                            </div>
+                        )}
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setIsExerciseDBModalOpen(false)}>
+                            סגור
+                        </Button>
+                        <Button
+                            onClick={handleImportFromExerciseDB}
+                            disabled={exerciseDBImporting || selectedExerciseDBExercises.size === 0}
+                        >
+                            {exerciseDBImporting ? (
+                                <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                            ) : (
+                                <FileCheck2 className="w-4 h-4 ml-2" />
+                            )}
+                            ייבא {selectedExerciseDBExercises.size > 0 && `(${selectedExerciseDBExercises.size})`}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

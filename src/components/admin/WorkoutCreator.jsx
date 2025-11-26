@@ -774,14 +774,14 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                       <div>
                         <Label className="text-sm">ציוד נדרש</Label>
                         <Select 
-                          value={workoutData.workout_equipment || ''} 
-                          onValueChange={(value) => setWorkoutData({...workoutData, workout_equipment: value})}
+                          value={workoutData.workout_equipment || 'none'} 
+                          onValueChange={(value) => setWorkoutData({...workoutData, workout_equipment: value === 'none' ? '' : value})}
                         >
                           <SelectTrigger className="text-sm">
                             <SelectValue placeholder="בחר ציוד" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">ללא ציוד</SelectItem>
+                            <SelectItem value="none">ללא ציוד</SelectItem>
                             <SelectItem value="Bodyweight">משקל גוף</SelectItem>
                             <SelectItem value="Barbell">מוט</SelectItem>
                             <SelectItem value="Dumbbell">משקולות יד</SelectItem>
