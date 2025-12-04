@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getAuth, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
@@ -54,6 +54,59 @@ export const auth = getAuth(app);
 
 // Configure auth settings to handle token refresh better
 auth.settings.appVerificationDisabledForTesting = false;
+
+// Add global error handler for Firebase token refresh failures
+if (typeof window !== 'undefined') {
+  // Listen for unhandled promise rejections (like Firebase token refresh failures)
+  const errorHandler = (event) => {
+    const error = event.reason;
+    const errorMessage = error?.message || String(error) || '';
+    const errorCode = error?.code || '';
+    const errorUrl = error?.url || '';
+    
+    // Check if it's a Firebase token refresh error (400 Bad Request)
+    const isTokenError = errorMessage.includes('securetoken.googleapis.com') || 
+        errorMessage.includes('400') ||
+        errorMessage.includes('Bad Request') ||
+        errorUrl.includes('securetoken.googleapis.com') ||
+        errorCode === 'auth/invalid-user-token' ||
+        errorCode === 'auth/user-token-expired';
+    
+    if (isTokenError) {
+      console.warn('⚠️ Firebase token refresh failed - clearing invalid session');
+      // Clear the invalid session
+      signOut(auth).catch(console.error);
+      // Clear all Firebase auth state from localStorage
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('firebase:authUser:') || key.includes('firebase')) {
+          localStorage.removeItem(key);
+        }
+      });
+      // Clear sessionStorage as well
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('firebase:') || key.includes('firebase')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+      // Prevent the error from being logged to console
+      event.preventDefault();
+    }
+  };
+  
+  window.addEventListener('unhandledrejection', errorHandler);
+  
+  // Also listen for console errors that might indicate token issues
+  const originalError = console.error;
+  console.error = function(...args) {
+    const errorString = args.join(' ');
+    if (errorString.includes('securetoken.googleapis.com') && 
+        (errorString.includes('400') || errorString.includes('Bad Request'))) {
+      // Trigger the error handler
+      errorHandler({ reason: { message: errorString, url: 'securetoken.googleapis.com' }, preventDefault: () => {} });
+    }
+    originalError.apply(console, args);
+  };
+}
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 // Initialize Functions with region (us-central1 is default, but specify explicitly)

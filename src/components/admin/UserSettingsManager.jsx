@@ -985,14 +985,22 @@ export default function UserSettingsManager({
                               <p><strong>שם מלא:</strong> {viewingContract.contract_full_name}</p>
                               <p><strong>תאריך חתימה:</strong> {viewingContract.contract_signed_date ? format(new Date(viewingContract.contract_signed_date), 'dd/MM/yyyy HH:mm', { locale: he }) : 'לא זמין'}</p>
                             </div>
-                            {viewingContract.contract_signature && (
+                            {(viewingContract.contract_signature || viewingContract.contract_signature_url) && (
                               <div className="mt-4">
                                 <p className="text-sm font-semibold text-green-800 mb-2">חתימה דיגיטלית:</p>
                                 <div className="bg-white p-4 border border-green-300 rounded inline-block">
                                   <img
-                                    src={viewingContract.contract_signature}
+                                    src={viewingContract.contract_signature_url || viewingContract.contract_signature}
                                     alt="חתימה דיגיטלית"
-                                    className="max-h-16 border border-slate-200 rounded"
+                                    className="max-h-32 border border-slate-200 rounded object-contain"
+                                    onError={(e) => {
+                                      console.error('Error loading signature image:', e);
+                                      e.target.style.display = 'none';
+                                      const errorDiv = document.createElement('div');
+                                      errorDiv.className = 'text-red-500 text-sm p-2';
+                                      errorDiv.textContent = 'שגיאה בטעינת החתימה';
+                                      e.target.parentElement?.appendChild(errorDiv);
+                                    }}
                                   />
                                 </div>
                               </div>

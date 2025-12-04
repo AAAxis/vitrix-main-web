@@ -173,6 +173,8 @@ export default function UserReset() {
                 contract_signed: false,
                 contract_signed_date: null,
                 contract_signature: null,
+                contract_signature_url: null,
+                contract_signature_base64: null,
                 contract_full_name: null,
                 tags: [],
                 last_seen_date: null

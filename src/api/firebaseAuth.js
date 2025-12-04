@@ -76,6 +76,25 @@ class FirebaseUser {
         throw new Error('No user logged in');
       }
       
+      // Try to get a fresh token - this will trigger token refresh if needed
+      // If token refresh fails, it will throw an error
+      try {
+        await currentUser.getIdToken(true); // Force refresh
+      } catch (tokenError) {
+        console.error('Token refresh failed:', tokenError);
+        
+        // If token refresh fails with 400 or invalid token, sign out
+        if (tokenError.code === 'auth/invalid-user-token' || 
+            tokenError.code === 'auth/user-token-expired' ||
+            tokenError.message?.includes('400') ||
+            tokenError.message?.includes('Bad Request')) {
+          console.warn('Invalid token detected, signing out...');
+          await this.logout();
+          throw new Error('Session expired. Please log in again.');
+        }
+        throw tokenError;
+      }
+      
       const userDocRef = doc(db, 'users', currentUser.uid);
       const userDoc = await getDoc(userDocRef);
       
@@ -118,6 +137,15 @@ class FirebaseUser {
       };
     } catch (error) {
       console.error('Error getting current user:', error);
+      
+      // If it's a token error, re-throw as a more user-friendly error
+      if (error.message?.includes('Session expired') || 
+          error.message?.includes('400') ||
+          error.code === 'auth/invalid-user-token' ||
+          error.code === 'auth/user-token-expired') {
+        throw error;
+      }
+      
       throw error;
     }
   }

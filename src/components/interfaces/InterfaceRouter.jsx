@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useLayoutEffect } from 'react';
 import { User } from '@/api/entities';
+import { auth } from '@/api/firebaseConfig';
 import TrainerInterface from './TrainerInterface';
 import TraineeInterface from './TraineeInterface';
 import NetworkErrorDisplay from '../errors/NetworkErrorDisplay';
@@ -54,6 +55,30 @@ export default function InterfaceRouter({ children, currentPageName }) {
         return;
       }
       
+      // Check if it's a session expired error (token refresh failed)
+      if (error.message?.includes("Session expired") || 
+          error.message?.includes("400") ||
+          error.code === 'auth/invalid-user-token' ||
+          error.code === 'auth/user-token-expired' ||
+          error.message?.includes('Bad Request')) {
+        // Session is invalid, clear it and show login
+        console.warn("Session expired, clearing auth state...");
+        // Try to logout to clear Firebase state
+        User.logout().catch(console.error);
+        // Clear all local state
+        setUser(null);
+        setFirebaseUser(null);
+        setIsLoading(false);
+        setNetworkError(false);
+        // Clear Firebase auth state from localStorage
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('firebase:authUser:')) {
+            localStorage.removeItem(key);
+          }
+        });
+        return;
+      }
+      
       // Check for actual network errors
       const isNetworkError = 
         error.message?.includes("Network Error") ||
@@ -78,22 +103,143 @@ export default function InterfaceRouter({ children, currentPageName }) {
       return;
     }
 
-    // Set up Firebase auth state observer
-    const unsubscribe = User.onAuthStateChanged(async (firebaseAuthUser) => {
-      setFirebaseUser(firebaseAuthUser);
-      
-      if (firebaseAuthUser) {
-        // User is signed in, load user data from Firestore
-        await loadUser();
+    // Immediately check if there's a current user and validate their token
+    const validateCurrentSession = async () => {
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        try {
+          // Try to get a fresh token - this will fail if token is invalid
+          await currentUser.getIdToken(true);
+        } catch (tokenError) {
+          console.error("Token validation failed on mount:", tokenError);
+          // If token is invalid, clear the session immediately
+          if (tokenError.code === 'auth/invalid-user-token' || 
+              tokenError.code === 'auth/user-token-expired' ||
+              tokenError.message?.includes('400') ||
+              tokenError.message?.includes('Bad Request') ||
+              tokenError.code?.includes('400')) {
+            console.warn("Invalid token detected on mount, clearing session...");
+            try {
+              await User.logout();
+            } catch (logoutError) {
+              console.error("Error during logout:", logoutError);
+              // Even if logout fails, clear local state
+            }
+            // Force clear all state
+            setUser(null);
+            setFirebaseUser(null);
+            setIsLoading(false);
+            setNetworkError(false);
+            // Clear Firebase auth state from localStorage
+            Object.keys(localStorage).forEach(key => {
+              if (key.startsWith('firebase:authUser:')) {
+                localStorage.removeItem(key);
+              }
+            });
+            return;
+          }
+        }
       } else {
-        // User is signed out - show login screen
+        // No current user, ensure we're not in loading state
         setUser(null);
+        setFirebaseUser(null);
         setIsLoading(false);
-        setNetworkError(false);
+      }
+    };
+
+    // Run validation immediately
+    validateCurrentSession();
+
+    let timeoutHandled = false;
+
+    // Add a timeout to prevent infinite loading if auth state doesn't resolve
+    const loadingTimeout = setTimeout(() => {
+      if (timeoutHandled) return;
+      timeoutHandled = true;
+      
+      console.warn("Auth state loading timeout - checking current auth state...");
+      // Check if there's a current user but auth state hasn't fired
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        // User exists but auth state observer hasn't fired - try to load user
+        loadUser().catch((error) => {
+          console.error("Error loading user after timeout:", error);
+          // If it fails, clear the session
+          if (error.message?.includes("Session expired") || 
+              error.message?.includes("400") ||
+              error.code === 'auth/invalid-user-token') {
+            User.logout().catch(console.error);
+          }
+          setUser(null);
+          setFirebaseUser(null);
+          setIsLoading(false);
+        });
+      } else {
+        // No user, show login
+        setUser(null);
+        setFirebaseUser(null);
+        setIsLoading(false);
+      }
+    }, 3000); // Reduced to 3 second timeout
+
+    // Set up Firebase auth state observer with error handling
+    const unsubscribe = User.onAuthStateChanged(async (firebaseAuthUser) => {
+      if (timeoutHandled) return; // Don't process if timeout already handled
+      clearTimeout(loadingTimeout); // Clear timeout if auth state resolves
+      
+      try {
+        setFirebaseUser(firebaseAuthUser);
+        
+        if (firebaseAuthUser) {
+          // User is signed in, load user data from Firestore
+          await loadUser();
+        } else {
+          // User is signed out - show login screen
+          setUser(null);
+          setIsLoading(false);
+          setNetworkError(false);
+        }
+      } catch (error) {
+        console.error("Error in auth state observer:", error);
+        
+        // If token refresh failed (400 error), clear the invalid session
+        if (error.code === 'auth/invalid-user-token' || 
+            error.code === 'auth/user-token-expired' ||
+            error.message?.includes('400') ||
+            error.message?.includes('Bad Request') ||
+            error.message?.includes('Session expired')) {
+          console.warn("Invalid token detected, signing out...");
+          try {
+            await User.logout();
+          } catch (logoutError) {
+            console.error("Error during logout:", logoutError);
+          }
+          setUser(null);
+          setFirebaseUser(null);
+          setIsLoading(false);
+          setNetworkError(false);
+        } else {
+          // For other errors, show network error or set user to null
+          const isNetworkError = 
+            error.message?.includes("Network Error") ||
+            error.message?.includes("Failed to fetch") ||
+            error.code === 'unavailable' ||
+            (!navigator.onLine);
+          
+          if (isNetworkError && navigator.onLine) {
+            setNetworkError(true);
+          } else {
+            setUser(null);
+            setIsLoading(false);
+          }
+        }
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(loadingTimeout);
+      unsubscribe();
+    };
   }, [isPublicPage]);
 
   const memoizedUserChecks = useMemo(() => {
@@ -154,7 +300,8 @@ export default function InterfaceRouter({ children, currentPageName }) {
   }
 
   // Show login screen if user is not authenticated (only for non-public pages)
-  if (!firebaseUser && !isLoading) {
+  // Also show login if we've been loading for too long without a valid user
+  if ((!firebaseUser && !isLoading) || (!user && !firebaseUser && !isLoading)) {
     return <LoginScreen />;
   }
 

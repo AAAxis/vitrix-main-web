@@ -10,7 +10,7 @@ import TerminationFeedbackViewer from '../admin/TerminationFeedbackViewer'; // A
 
 export default function TrainerInterface({ user }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [activeAdminTab, setActiveAdminTab] = useState('control-center');
+  const [activeAdminTab, setActiveAdminTab] = useState('user-management');
   const [navigateToTab, setNavigateToTab] = useState(null);
 
   const adminMenuItems = [

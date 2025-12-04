@@ -40,11 +40,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 
-export default function AdminDashboard({ activeTab = 'control-center', setActiveTab: externalSetActiveTab, hideNavigation = false, onNavigateToTab: externalNavigateToTab }) {
+export default function AdminDashboard({ activeTab = 'user-management', setActiveTab: externalSetActiveTab, hideNavigation = false, onNavigateToTab: externalNavigateToTab }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Internal state for active tab, initialized from external prop or default. Changed default to 'control-center'.
+  // Internal state for active tab, initialized from external prop or default. Changed default to 'user-management'.
   const [internalActiveTab, setInternalActiveTab] = useState(activeTab); // Renamed to avoid conflict with prop
 
   // States for sub-tabs
@@ -140,9 +140,16 @@ export default function AdminDashboard({ activeTab = 'control-center', setActive
     const loadUser = async () => {
       try {
         const currentUser = await User.me();
+        console.log('AdminDashboard: User loaded:', currentUser);
         setUser(currentUser);
       } catch (error) {
-        console.error('Error loading user:', error);
+        console.error('AdminDashboard: Error loading user:', error);
+        // If it's a session error, don't set user to null - let InterfaceRouter handle it
+        if (error.message?.includes("Session expired") || 
+            error.message?.includes("400") ||
+            error.code === 'auth/invalid-user-token') {
+          console.warn('AdminDashboard: Session expired, will be handled by InterfaceRouter');
+        }
         setUser(null);
       } finally {
         setIsLoading(false);
@@ -188,7 +195,7 @@ export default function AdminDashboard({ activeTab = 'control-center', setActive
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center min-h96">
+      <div className="flex items-center justify-center min-h-[400px]">
         <div className="relative">
           <img
             src="/logo.jpeg"
@@ -203,7 +210,18 @@ export default function AdminDashboard({ activeTab = 'control-center', setActive
 
   // Treat 'coach' and 'admin' as admin roles
   const isAdmin = user?.role === 'admin' || user?.role === 'coach';
-  if (!user || !isAdmin) {
+  if (!user) {
+    console.warn('AdminDashboard: No user found');
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <p className="text-slate-600">טוען משתמש...</p>
+        </div>
+      </div>
+    );
+  }
+  if (!isAdmin) {
+    console.warn('AdminDashboard: User is not admin/coach. Role:', user?.role);
     return <LockedScreen message="גישה מוגבלת - נדרשות הרשאות מנהל" />;
   }
 

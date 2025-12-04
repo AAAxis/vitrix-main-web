@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Search, Plus, Edit, Trash2, X, FileUp, Download, ChevronsRight, FileCheck2, Database, CheckSquare, Square } from 'lucide-react';
+import { Loader2, Search, Plus, Edit, Trash2, X, FileUp, Download, ChevronsRight, FileCheck2, Database, CheckSquare, Square, Image as ImageIcon, Video, Play } from 'lucide-react';
 import { UploadFile, ExtractDataFromUploadedFile } from '@/api/integrations';
 import { 
     searchExercises, 
@@ -412,18 +412,87 @@ export default function ExerciseLibraryManager() {
             ) : (
                 <ScrollArea className="h-[60vh] border rounded-lg p-2">
                     <div className="space-y-2">
-                        {filteredExercises.map(ex => (
-                            <div key={ex.id} className="flex items-center justify-between p-3 bg-white rounded-md shadow-sm">
-                                <div>
-                                    <p className="font-bold">{ex.name_he} <span className="text-slate-500 text-sm">({ex.name_en})</span></p>
-                                    <p className="text-sm text-slate-600">{ex.muscle_group} | {ex.equipment}</p>
+                        {filteredExercises.map(ex => {
+                            // Helper functions to get image/video URLs
+                            const getImageUrl = (exercise) => {
+                                if (exercise?.exercisedb_image_url) {
+                                    if (exercise.exercisedb_image_url.startsWith('http')) {
+                                        return exercise.exercisedb_image_url;
+                                    }
+                                    return `https://v2.exercisedb.dev/images/${exercise.exercisedb_image_url}`;
+                                }
+                                return null;
+                            };
+
+                            const getVideoUrl = (exercise) => {
+                                if (exercise?.video_url) {
+                                    if (exercise.video_url.startsWith('http')) {
+                                        return exercise.video_url;
+                                    }
+                                    // Check if it's a relative path from ExerciseDB
+                                    if (exercise.video_url && !exercise.video_url.includes('youtube') && !exercise.video_url.includes('youtu.be')) {
+                                        return `https://v2.exercisedb.dev/videos/${exercise.video_url}`;
+                                    }
+                                    return exercise.video_url;
+                                }
+                                return null;
+                            };
+
+                            const imageUrl = getImageUrl(ex);
+                            const videoUrl = getVideoUrl(ex);
+
+                            return (
+                                <div key={ex.id} className="flex items-center justify-between p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow">
+                                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                                        {/* Thumbnail */}
+                                        {(imageUrl || videoUrl) && (
+                                            <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
+                                                {imageUrl ? (
+                                                    <img
+                                                        src={imageUrl}
+                                                        alt={ex.name_he}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                        }}
+                                                    />
+                                                ) : videoUrl ? (
+                                                    <div className="w-full h-full flex items-center justify-center bg-slate-200 relative">
+                                                        <video
+                                                            src={videoUrl}
+                                                            className="w-full h-full object-cover"
+                                                            muted
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                            }}
+                                                        />
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                                            <Play className="w-6 h-6 text-white" />
+                                                        </div>
+                                                    </div>
+                                                ) : null}
+                                            </div>
+                                        )}
+                                        
+                                        {/* Exercise Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-bold truncate">{ex.name_he} <span className="text-slate-500 text-sm">({ex.name_en})</span></p>
+                                                {imageUrl && <ImageIcon className="w-3 h-3 text-blue-500 flex-shrink-0" />}
+                                                {videoUrl && <Video className="w-3 h-3 text-red-500 flex-shrink-0" />}
+                                            </div>
+                                            <p className="text-sm text-slate-600">{ex.muscle_group} | {ex.equipment}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Action Buttons */}
+                                    <div className="flex gap-2 flex-shrink-0">
+                                        <Button variant="ghost" size="icon" onClick={() => handleOpenForm(ex)}><Edit className="w-4 h-4" /></Button>
+                                        <Button variant="ghost" size="icon" onClick={() => handleDelete(ex.id)} className="text-red-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></Button>
+                                    </div>
                                 </div>
-                                <div className="flex gap-2">
-                                    <Button variant="ghost" size="icon" onClick={() => handleOpenForm(ex)}><Edit className="w-4 h-4" /></Button>
-                                    <Button variant="ghost" size="icon" onClick={() => handleDelete(ex.id)} className="text-red-500 hover:text-red-600"><Trash2 className="w-4 h-4" /></Button>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </ScrollArea>
             )}
@@ -436,6 +505,110 @@ export default function ExerciseLibraryManager() {
                     </DialogHeader>
                     {currentExercise && (
                         <div className="space-y-4 py-4">
+                            {/* Image/Video Display */}
+                            {(() => {
+                                const getImageUrl = (ex) => {
+                                    if (ex?.exercisedb_image_url) {
+                                        if (ex.exercisedb_image_url.startsWith('http')) {
+                                            return ex.exercisedb_image_url;
+                                        }
+                                        return `https://v2.exercisedb.dev/images/${ex.exercisedb_image_url}`;
+                                    }
+                                    return null;
+                                };
+
+                                const getVideoUrl = (ex) => {
+                                    if (ex?.video_url) {
+                                        if (ex.video_url.startsWith('http')) {
+                                            return ex.video_url;
+                                        }
+                                        // Check if it's a relative path from ExerciseDB
+                                        if (ex.video_url && !ex.video_url.includes('youtube') && !ex.video_url.includes('youtu.be')) {
+                                            return `https://v2.exercisedb.dev/videos/${ex.video_url}`;
+                                        }
+                                        return ex.video_url;
+                                    }
+                                    return null;
+                                };
+
+                                const imageUrl = getImageUrl(currentExercise);
+                                const videoUrl = getVideoUrl(currentExercise);
+
+                                if (imageUrl || videoUrl) {
+                                    return (
+                                        <div className="space-y-3 pb-4 border-b">
+                                            {imageUrl && (
+                                                <div>
+                                                    <h4 className="font-semibold mb-2 text-slate-800 flex items-center gap-2 text-sm">
+                                                        <ImageIcon className="w-4 h-4" />
+                                                        <span>תמונת דוגמה</span>
+                                                    </h4>
+                                                    <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                                                        <img
+                                                            src={imageUrl}
+                                                            alt={currentExercise?.name_he}
+                                                            className="w-full h-auto max-h-64 object-contain"
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                                const errorDiv = e.target.nextElementSibling;
+                                                                if (errorDiv) {
+                                                                    errorDiv.classList.remove('hidden');
+                                                                }
+                                                            }}
+                                                        />
+                                                        <div className="hidden text-center p-4 text-slate-400 text-sm">
+                                                            לא ניתן לטעון את התמונה
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {videoUrl && (
+                                                <div>
+                                                    <h4 className="font-semibold mb-2 text-slate-800 flex items-center gap-2 text-sm">
+                                                        <Video className="w-4 h-4" />
+                                                        <span>סרטון הדגמה</span>
+                                                    </h4>
+                                                    <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                                                        {videoUrl.includes('youtube') || videoUrl.includes('youtu.be') ? (
+                                                            <div className="aspect-video bg-slate-200 flex items-center justify-center">
+                                                                <a 
+                                                                    href={videoUrl} 
+                                                                    target="_blank" 
+                                                                    rel="noopener noreferrer"
+                                                                    className="flex items-center gap-2 text-blue-600 hover:text-blue-800"
+                                                                >
+                                                                    <Play className="w-6 h-6" />
+                                                                    <span>פתח סרטון YouTube</span>
+                                                                </a>
+                                                            </div>
+                                                        ) : (
+                                                            <video
+                                                                src={videoUrl}
+                                                                controls
+                                                                className="w-full h-auto max-h-64"
+                                                                onError={(e) => {
+                                                                    e.target.style.display = 'none';
+                                                                    const errorDiv = e.target.nextElementSibling;
+                                                                    if (errorDiv) {
+                                                                        errorDiv.classList.remove('hidden');
+                                                                    }
+                                                                }}
+                                                            >
+                                                                הדפדפן שלך לא תומך בתג וידאו.
+                                                            </video>
+                                                        )}
+                                                        <div className="hidden text-center p-4 text-slate-400 text-sm">
+                                                            לא ניתן לטעון את הסרטון
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            })()}
+
                             <div className="grid grid-cols-2 gap-4">
                                 <Input name="name_he" placeholder="שם בעברית" value={currentExercise.name_he} onChange={handleFormChange} />
                                 <Input name="name_en" placeholder="שם באנגלית" value={currentExercise.name_en} onChange={handleFormChange} />
@@ -455,7 +628,7 @@ export default function ExerciseLibraryManager() {
                                 </Select>
                             </div>
                             <Textarea name="description" placeholder="תיאור התרגיל" value={currentExercise.description} onChange={handleFormChange} />
-                            <Input name="video_url" placeholder="קישור לסרטון (YouTube)" value={currentExercise.video_url} onChange={handleFormChange} />
+                            <Input name="video_url" placeholder="קישור לסרטון (YouTube או ExerciseDB)" value={currentExercise.video_url} onChange={handleFormChange} />
                             <div>
                                 <label className="text-sm font-medium">משקל ברירת מחדל (ק"ג)</label>
                                 <Input type="number" name="default_weight" value={currentExercise.default_weight} onChange={handleFormChange} />
@@ -696,6 +869,34 @@ export default function ExerciseLibraryManager() {
                                     <div className="space-y-2">
                                         {exerciseDBResults.map((exercise) => {
                                             const isSelected = selectedExerciseDBExercises.has(exercise.exercisedb_id);
+                                            
+                                            // Helper functions to get image/video URLs
+                                            const getImageUrl = (ex) => {
+                                                if (ex?.exercisedb_image_url) {
+                                                    if (ex.exercisedb_image_url.startsWith('http')) {
+                                                        return ex.exercisedb_image_url;
+                                                    }
+                                                    return `https://v2.exercisedb.dev/images/${ex.exercisedb_image_url}`;
+                                                }
+                                                return null;
+                                            };
+
+                                            const getVideoUrl = (ex) => {
+                                                if (ex?.video_url) {
+                                                    if (ex.video_url.startsWith('http')) {
+                                                        return ex.video_url;
+                                                    }
+                                                    if (ex.video_url && !ex.video_url.includes('youtube') && !ex.video_url.includes('youtu.be')) {
+                                                        return `https://v2.exercisedb.dev/videos/${ex.video_url}`;
+                                                    }
+                                                    return ex.video_url;
+                                                }
+                                                return null;
+                                            };
+
+                                            const imageUrl = getImageUrl(exercise);
+                                            const videoUrl = getVideoUrl(exercise);
+
                                             return (
                                                 <div
                                                     key={exercise.exercisedb_id}
@@ -714,10 +915,45 @@ export default function ExerciseLibraryManager() {
                                                                 <Square className="w-5 h-5 text-slate-400" />
                                                             )}
                                                         </div>
+                                                        
+                                                        {/* Thumbnail */}
+                                                        {(imageUrl || videoUrl) && (
+                                                            <div className="flex-shrink-0 w-16 h-16 rounded overflow-hidden bg-slate-100 border border-slate-200">
+                                                                {imageUrl ? (
+                                                                    <img
+                                                                        src={imageUrl}
+                                                                        alt={exercise.name_en}
+                                                                        className="w-full h-full object-cover"
+                                                                        onError={(e) => {
+                                                                            e.target.style.display = 'none';
+                                                                        }}
+                                                                    />
+                                                                ) : videoUrl ? (
+                                                                    <div className="w-full h-full flex items-center justify-center bg-slate-200 relative">
+                                                                        <video
+                                                                            src={videoUrl}
+                                                                            className="w-full h-full object-cover"
+                                                                            muted
+                                                                            onError={(e) => {
+                                                                                e.target.style.display = 'none';
+                                                                            }}
+                                                                        />
+                                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                                                            <Play className="w-4 h-4 text-white" />
+                                                                        </div>
+                                                                    </div>
+                                                                ) : null}
+                                                            </div>
+                                                        )}
+                                                        
                                                         <div className="flex-1">
-                                                            <p className="font-bold text-slate-800">
-                                                                {exercise.name_en}
-                                                            </p>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="font-bold text-slate-800">
+                                                                    {exercise.name_en}
+                                                                </p>
+                                                                {imageUrl && <ImageIcon className="w-3 h-3 text-blue-500 flex-shrink-0" />}
+                                                                {videoUrl && <Video className="w-3 h-3 text-red-500 flex-shrink-0" />}
+                                                            </div>
                                                             <p className="text-sm text-slate-600 mt-1">
                                                                 {exercise.muscle_group} | {exercise.equipment} | {exercise.category}
                                                             </p>

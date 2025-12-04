@@ -344,8 +344,12 @@ export default function ExerciseLibrary() {
             <Dialog open={!!selectedExercise} onOpenChange={() => setSelectedExercise(null)}>
                 <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
                     <DialogHeader>
-                        <DialogTitle className="text-lg">{selectedExercise?.name_he}</DialogTitle>
-                        <DialogDescription className="text-sm text-slate-500">{selectedExercise?.name_en}</DialogDescription>
+                        <DialogTitle className="text-lg">
+                            {selectedExercise?.name_he || selectedExercise?.name_en || 'פרטי תרגיל'}
+                        </DialogTitle>
+                        {selectedExercise?.name_en && (
+                            <DialogDescription className="text-sm text-slate-500">{selectedExercise.name_en}</DialogDescription>
+                        )}
                     </DialogHeader>
                     <div className="py-4 space-y-4">
                         {/* Image/Video Display */}

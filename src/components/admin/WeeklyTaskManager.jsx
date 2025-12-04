@@ -61,6 +61,8 @@ import {
     BarChart,
     Check,
     ChevronsUpDown,
+    CheckSquare,
+    Square,
 } from 'lucide-react';
 import { format, addDays, parseISO, addWeeks, startOfWeek, endOfWeek } from 'date-fns';
 import { he } from 'date-fns/locale';
@@ -1079,18 +1081,92 @@ export default function WeeklyTaskManager() {
                             </div>
                             <div>
                                 <Label>שבועות להקצאה</Label>
-                                <Select onValueChange={(value) => setWeeksToAssign(value.map(Number))} value={weeksToAssign.map(String)}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="בחר שבועות" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {weekOptions.map(option => (
-                                            <SelectItem key={option.value} value={String(option.value)}>
-                                                {option.label}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                <div className="border rounded-lg p-4 bg-white max-h-64 overflow-y-auto">
+                                    <div className="flex items-center gap-2 mb-3 pb-2 border-b">
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                if (weeksToAssign.length === weekOptions.length) {
+                                                    setWeeksToAssign([]);
+                                                } else {
+                                                    setWeeksToAssign(weekOptions.map(opt => opt.value));
+                                                }
+                                            }}
+                                            className="h-8 text-xs"
+                                        >
+                                            {weeksToAssign.length === weekOptions.length ? (
+                                                <>
+                                                    <Square className="w-4 h-4 ml-1" />
+                                                    בטל בחירת הכל
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <CheckSquare className="w-4 h-4 ml-1" />
+                                                    בחר הכל
+                                                </>
+                                            )}
+                                        </Button>
+                                        <span className="text-sm text-slate-600">
+                                            נבחרו {weeksToAssign.length} מתוך {weekOptions.length}
+                                        </span>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                                        {weekOptions.map(option => {
+                                            const isChecked = weeksToAssign.includes(option.value);
+                                            return (
+                                                <label
+                                                    key={option.value}
+                                                    htmlFor={`week-${option.value}`}
+                                                    className={`flex items-start gap-2 p-3 border-2 cursor-pointer transition-all`}
+                                                    style={{
+                                                        borderRadius: '8px',
+                                                        ...(isChecked 
+                                                            ? { backgroundColor: '#eff6ff', borderColor: '#3b82f6', color: '#1e40af' }
+                                                            : { backgroundColor: '#ffffff', borderColor: '#e2e8f0' }
+                                                        )
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        if (!isChecked) {
+                                                            e.currentTarget.style.borderColor = '#cbd5e1';
+                                                            e.currentTarget.style.backgroundColor = '#f8fafc';
+                                                        }
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        if (!isChecked) {
+                                                            e.currentTarget.style.borderColor = '#e2e8f0';
+                                                            e.currentTarget.style.backgroundColor = '#ffffff';
+                                                        }
+                                                    }}
+                                                >
+                                                    <Checkbox
+                                                        id={`week-${option.value}`}
+                                                        checked={isChecked}
+                                                        onCheckedChange={(checked) => {
+                                                            if (checked === true) {
+                                                                setWeeksToAssign(prev => {
+                                                                    if (!prev.includes(option.value)) {
+                                                                        return [...prev, option.value].sort((a, b) => a - b);
+                                                                    }
+                                                                    return prev;
+                                                                });
+                                                            } else {
+                                                                setWeeksToAssign(prev => prev.filter(w => w !== option.value));
+                                                            }
+                                                        }}
+                                                        className="cursor-pointer mt-0.5 flex-shrink-0"
+                                                    />
+                                                    <span className="text-sm font-medium select-none leading-tight">
+                                                        {option.label}
+                                                    </span>
+                                                </label>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                             </div>
                             <div>
                                 <Label>היסט (שבועות)</Label>

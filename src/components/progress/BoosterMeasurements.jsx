@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { WeightEntry, User } from '@/api/entities';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, VisuallyHidden } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Activity, Heart, Ruler, Scale, Zap, Dna, Droplets, ShieldAlert, Target, Recycle, Dumbbell, Info, AlertTriangle, CheckCircle, TrendingUp } from 'lucide-react';
 import { formatDate } from "@/components/utils/timeUtils";
@@ -632,14 +632,20 @@ export default function BoosterMeasurements({ user }) {
             {/* Explanation Dialog */}
             <Dialog open={isExplanationDialogOpen} onOpenChange={setIsExplanationDialogOpen}>
                 <DialogContent className="max-w-2xl" dir="rtl">
-                    {selectedMeasurement && (
-                        <>
-                            <DialogHeader>
-                                <DialogTitle className="flex items-center gap-2 text-xl">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-xl">
+                            {selectedMeasurement ? (
+                                <>
                                     <Info className="w-6 h-6 text-blue-600" />
                                     {selectedMeasurement.title}
-                                </DialogTitle>
-                            </DialogHeader>
+                                </>
+                            ) : (
+                                <VisuallyHidden>פרטי מדידה</VisuallyHidden>
+                            )}
+                        </DialogTitle>
+                    </DialogHeader>
+                    {selectedMeasurement && (
+                        <>
                             <div className="space-y-6 py-4">
                                 {/* Current Status */}
                                 <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
@@ -677,6 +683,11 @@ export default function BoosterMeasurements({ user }) {
                                 )}
                             </div>
                         </>
+                    )}
+                    {!selectedMeasurement && (
+                        <div className="py-8 text-center text-slate-500">
+                            אין מדידה נבחרת להצגה
+                        </div>
                     )}
                 </DialogContent>
             </Dialog>
