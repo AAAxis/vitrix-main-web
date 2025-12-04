@@ -1096,10 +1096,10 @@ export default function UnifiedNotificationsViewer() {
       {/* User Detail Dialog (remains unchanged from original code, but `filteredUsers` affects which users are clickable) */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden" dir="rtl">
-          {selectedUser && (
-            <>
-              <DialogHeader className="pb-4">
-                <DialogTitle className="flex items-center gap-3 text-xl">
+          <DialogHeader className="pb-4">
+            <DialogTitle className="flex items-center gap-3 text-xl">
+              {selectedUser ? (
+                <>
                   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-lg">
                     {(selectedUser.name || selectedUser.email || 'U')[0].toUpperCase()}
                   </div>
@@ -1107,8 +1107,14 @@ export default function UnifiedNotificationsViewer() {
                     <div>{selectedUser.name || 'חסר שם'}</div>
                     <div className="text-sm text-slate-600 font-normal">{selectedUser.email}</div>
                   </div>
-                </DialogTitle>
-              </DialogHeader>
+                </>
+              ) : (
+                'פרטי משתמש'
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedUser && (
+            <>
               
               <ScrollArea className="max-h-[70vh] px-1">
                 <Tabs defaultValue="checkins" className="w-full">

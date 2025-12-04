@@ -40,7 +40,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 
-export default function AdminDashboard({ activeTab = 'control-center', setActiveTab: externalSetActiveTab, hideNavigation = false }) {
+export default function AdminDashboard({ activeTab = 'control-center', setActiveTab: externalSetActiveTab, hideNavigation = false, onNavigateToTab: externalNavigateToTab }) {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -129,6 +129,13 @@ export default function AdminDashboard({ activeTab = 'control-center', setActive
     }
   };
 
+  // Expose handleTabChange to parent component
+  useEffect(() => {
+    if (externalNavigateToTab) {
+      externalNavigateToTab(handleTabChange);
+    }
+  }, [externalNavigateToTab]);
+
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -184,7 +191,7 @@ export default function AdminDashboard({ activeTab = 'control-center', setActive
       <div className="flex items-center justify-center min-h96">
         <div className="relative">
           <img
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png"
+            src="/logo.jpeg"
             alt="טוען..."
             className="w-12 h-12 rounded-2xl object-contain animate-pulse"
           />

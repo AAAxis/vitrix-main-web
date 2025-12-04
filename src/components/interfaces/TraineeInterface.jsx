@@ -49,8 +49,8 @@ export default function TraineeInterface({ children, currentPageName }) {
                         <SheetContent side="right" className="flex flex-col bg-gradient-to-b from-emerald-50 to-teal-50" dir="rtl">
                             <nav className="grid gap-4 text-lg font-medium mt-4">
                                 <Link to={createPageUrl('Home')} className="flex items-center gap-4 px-2.5 text-emerald-800 mb-4 font-bold" onClick={() => setIsSheetOpen(false)}>
-                                    <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png" alt="Logo" className="h-8 w-8" />
-                                    <span>Muscle Up Yavne</span>
+                                    <img src="/logo.jpeg" alt="Logo" className="h-8 w-8" />
+                                    <span>Vitrix</span>
                                 </Link>
                                 {navItems.map(item => (
                                      <NavLink key={item.href} {...item} pathname={location.pathname} onNavigate={() => setIsSheetOpen(false)} />
@@ -71,8 +71,8 @@ export default function TraineeInterface({ children, currentPageName }) {
                 <div className="flex h-full max-h-screen flex-col gap-2 sticky top-0">
                     <div className="flex h-16 items-center border-b border-emerald-200 px-6 bg-white/50 backdrop-blur-sm">
                         <Link to={createPageUrl('Home')} className="flex items-center gap-2 font-semibold">
-                            <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png" alt="Logo" className="h-8 w-8" />
-                            <span className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Muscle Up Yavne</span>
+                            <img src="/logo.jpeg" alt="Logo" className="h-8 w-8" />
+                            <span className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">Vitrix</span>
                         </Link>
                     </div>
                     <nav className="flex-1 overflow-auto py-4 px-4 text-sm font-medium">

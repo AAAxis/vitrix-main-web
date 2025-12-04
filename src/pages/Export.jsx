@@ -459,7 +459,7 @@ export default function Export() {
             ${coachMenuSection}
 
             <div class="footer">
-                 <p>דוח זה הופק באמצעות מערכת MUSCLE UP YAVNE.</p>
+                 <p>דוח זה הופק באמצעות מערכת Vitrix.</p>
             </div>
         </div>
         

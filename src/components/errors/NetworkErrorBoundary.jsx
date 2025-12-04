@@ -65,7 +65,7 @@ class NetworkErrorBoundary extends Component {
                 
                 <div className="mt-6 text-center">
                   <p className="text-xs text-slate-400">
-                    MUSCLE UP YAVNE • Better Than Yesterday
+                    Vitrix • Better Than Yesterday
                   </p>
                 </div>
               </div>

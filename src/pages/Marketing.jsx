@@ -43,13 +43,13 @@ export default function Marketing() {
         >
           <div className="inline-block mb-6">
             <img
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png"
-              alt="Muscle Up Logo"
+              src="/logo.jpeg"
+              alt="Vitrix Logo"
               className="w-24 h-24 rounded-2xl object-contain mx-auto shadow-lg"
             />
           </div>
           <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600 bg-clip-text text-transparent mb-4">
-            Muscle Up
+            Vitrix
           </h1>
           <p className="text-xl md:text-2xl text-slate-700 mb-2">
             ניהול חדר הכושר שלך - פשוט, מהיר ומעורר מוטיבציה
@@ -223,7 +223,7 @@ export default function Marketing() {
             </a>
           </div>
           <p className="text-xs text-slate-500 mt-4">
-            © {new Date().getFullYear()} Muscle Up. כל הזכויות שמורות.
+            © {new Date().getFullYear()} Vitrix. כל הזכויות שמורות.
           </p>
         </motion.div>
       </div>

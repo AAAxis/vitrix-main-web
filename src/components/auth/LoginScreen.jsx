@@ -20,7 +20,11 @@ export default function LoginScreen() {
             // by the platform or by a router guard.
         } catch (error) {
             console.error('Login error:', error);
-            setLoginError('שגיאה בהתחברות. אנא נסה שוב.');
+            // Use the error message if it's a user-friendly Hebrew message, otherwise use default
+            const errorMessage = error.message && error.message.includes('אנא') 
+                ? error.message 
+                : 'שגיאה בהתחברות. אנא נסה שוב.';
+            setLoginError(errorMessage);
             setIsLoading(false);
         }
     };
@@ -30,17 +34,17 @@ export default function LoginScreen() {
             <div className="max-w-md w-full space-y-8">
                 {/* Logo and Header */}
                 <div className="text-center">
-                    <div className="mx-auto w-20 h-20 bg-gradient-to-br from-green-500 to-blue-500 rounded-3xl flex items-center justify-center mb-6 shadow-2xl">
+                    <div className="mx-auto mb-6 flex items-center justify-center">
                         <img 
-                            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png"
-                            alt="Muscle Up Yavne"
-                            className="w-12 h-12 rounded-2xl object-contain"
+                            src="/logo.jpeg"
+                            alt="Vitrix"
+                            className="w-20 h-20 object-contain rounded-2xl"
                         />
                     </div>
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 via-yellow-500 to-blue-500 bg-clip-text text-transparent">
-                        MUSCLE UP YAVNE
+                        Vitrix
                     </h1>
-                    <p className="text-slate-600 mt-2 text-lg">Better Than Yesterday</p>
+                    <p className="text-slate-600 mt-2 text-lg">טוב יותר מאתמול</p>
                 </div>
 
                 {/* Login Card */}

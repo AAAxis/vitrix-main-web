@@ -95,7 +95,7 @@ exports.sendFCMNotification = functions.region('us-central1').https.onCall(async
       android: {
         priority: 'high',
         notification: {
-          channelId: 'muscleup_notifications',
+          channelId: 'vitrix_notifications',
           sound: 'default',
           priority: 'high',
           ...(imageUrl && { imageUrl: imageUrl }),

@@ -526,7 +526,7 @@ export default function UserManagement({ initialUserEmail, startInEditMode, admi
 • מותן: ${displayValue(selectedUserDetails.waist_circumference, 'ס"מ')}
 • ישבן: ${displayValue(glutesCircumference, 'ס"מ')}
 
-#MuscleUpYavne #Progress #FitnessJourney #HealthyLifestyle
+#Vitrix #Progress #FitnessJourney #HealthyLifestyle
     `;
 
     navigator.clipboard.writeText(overviewText.trim());
@@ -1364,11 +1364,11 @@ export default function UserManagement({ initialUserEmail, startInEditMode, admi
 
       <Dialog open={isModalOpen} onOpenChange={(isOpen) => { setIsModalOpen(isOpen); if (!isOpen) { setIsCopied(false); setSelectedUserDetails(null); setSelectedUser(null); setError(null); } }}>
         <DialogContent className="max-w-3xl" dir="rtl">
-          {selectedUser && (
-            <DialogHeader className="pb-3">
-              <DialogTitle className="text-xl text-slate-800">פרטי מתאמן: {selectedUser.name}</DialogTitle>
-            </DialogHeader>
-          )}
+          <DialogHeader className="pb-3">
+            <DialogTitle className="text-xl text-slate-800">
+              {selectedUser ? `פרטי מתאמן: ${selectedUser.name}` : 'פרטי מתאמן'}
+            </DialogTitle>
+          </DialogHeader>
           <ScrollArea className="max-h-[calc(90vh-100px)] pr-4">
             <div className="py-2">
               {isLoadingDetails ? (

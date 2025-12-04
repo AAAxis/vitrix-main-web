@@ -165,7 +165,7 @@ export default function NetworkErrorDisplay({ onRetry }) {
             
             <div className="mt-6 text-center">
               <p className="text-xs text-slate-400">
-                MUSCLE UP YAVNE • Better Than Yesterday
+                Vitrix • Better Than Yesterday
               </p>
               <p className="text-xs text-slate-500 mt-1">
                 אם הבעיה נמשכת, אנא צור קשר עם התמיכה

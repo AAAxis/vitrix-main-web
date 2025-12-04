@@ -163,7 +163,7 @@ export default function InterfaceRouter({ children, currentPageName }) {
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-lime-50" dir="rtl">
         <div className="relative">
           <img 
-            src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png"
+            src="/logo.jpeg"
             alt="טוען..."
             className="w-20 h-20 rounded-2xl object-contain animate-pulse"
           />

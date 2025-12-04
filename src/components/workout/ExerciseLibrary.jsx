@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Info, Search, Save, Loader2, CheckCircle } from "lucide-react";
+import { Info, Search, Save, Loader2, CheckCircle, Image as ImageIcon, Play, Video } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function ExerciseLibrary() {
@@ -151,27 +151,105 @@ export default function ExerciseLibrary() {
                     
                     <ScrollArea className="h-[500px]">
                         <div className="space-y-4">
-                            {filteredExercises.map((exercise) => (
-                                <motion.div
-                                    key={exercise.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="bg-slate-50 p-4 rounded-lg border"
-                                >
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div>
-                                            <p className="font-semibold text-slate-800">{exercise.name_he}</p>
-                                            <p className="text-sm text-slate-500">{exercise.name_en}</p>
+                            {filteredExercises.map((exercise) => {
+                                // Helper to get image/video URLs
+                                const getImageUrl = (ex) => {
+                                    if (ex.exercisedb_image_url) {
+                                        if (ex.exercisedb_image_url.startsWith('http')) {
+                                            return ex.exercisedb_image_url;
+                                        }
+                                        return `https://v2.exercisedb.dev/images/${ex.exercisedb_image_url}`;
+                                    }
+                                    if (ex.video_url) {
+                                        // If video_url exists but no image, we might have a gif
+                                        return null;
+                                    }
+                                    return null;
+                                };
+
+                                const getVideoUrl = (ex) => {
+                                    if (ex.video_url) {
+                                        if (ex.video_url.startsWith('http')) {
+                                            return ex.video_url;
+                                        }
+                                        return `https://v2.exercisedb.dev/videos/${ex.video_url}`;
+                                    }
+                                    return null;
+                                };
+
+                                const imageUrl = getImageUrl(exercise);
+                                const videoUrl = getVideoUrl(exercise);
+
+                                return (
+                                    <motion.div
+                                        key={exercise.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="bg-slate-50 p-4 rounded-lg border"
+                                    >
+                                        <div className="flex items-start gap-4 mb-3">
+                                            {/* Thumbnail Image/Video */}
+                                            {(imageUrl || videoUrl) && (
+                                                <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
+                                                    {imageUrl ? (
+                                                        <img
+                                                            src={imageUrl}
+                                                            alt={exercise.name_he}
+                                                            className="w-full h-full object-cover"
+                                                            onError={(e) => {
+                                                                e.target.style.display = 'none';
+                                                            }}
+                                                        />
+                                                    ) : videoUrl ? (
+                                                        <div className="w-full h-full flex items-center justify-center bg-slate-200 relative">
+                                                            <video
+                                                                src={videoUrl}
+                                                                className="w-full h-full object-cover"
+                                                                muted
+                                                                onError={(e) => {
+                                                                    e.target.style.display = 'none';
+                                                                }}
+                                                            />
+                                                            <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                                                <Play className="w-6 h-6 text-white" />
+                                                            </div>
+                                                        </div>
+                                                    ) : null}
+                                                </div>
+                                            )}
+                                            
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-semibold text-slate-800 truncate">{exercise.name_he}</p>
+                                                        <p className="text-sm text-slate-500 truncate">{exercise.name_en}</p>
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => setSelectedExercise(exercise)}
+                                                        className="text-blue-600 hover:bg-blue-100 flex-shrink-0"
+                                                    >
+                                                        <Info className="w-4 h-4" />
+                                                    </Button>
+                                                </div>
+                                                {/* Media indicators */}
+                                                <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
+                                                    {imageUrl && (
+                                                        <span className="flex items-center gap-1">
+                                                            <ImageIcon className="w-3 h-3" />
+                                                            תמונה
+                                                        </span>
+                                                    )}
+                                                    {videoUrl && (
+                                                        <span className="flex items-center gap-1">
+                                                            <Video className="w-3 h-3" />
+                                                            וידאו
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => setSelectedExercise(exercise)}
-                                            className="text-blue-600 hover:bg-blue-100"
-                                        >
-                                            <Info className="w-4 h-4" />
-                                        </Button>
-                                    </div>
 
                                     <div className="grid grid-cols-4 gap-3">
                                         <div>
@@ -255,7 +333,8 @@ export default function ExerciseLibrary() {
                                         </div>
                                     </div>
                                 </motion.div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </ScrollArea>
                 </CardContent>
@@ -263,12 +342,98 @@ export default function ExerciseLibrary() {
 
             {/* Exercise Info Modal */}
             <Dialog open={!!selectedExercise} onOpenChange={() => setSelectedExercise(null)}>
-                <DialogContent className="max-w-md" dir="rtl">
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" dir="rtl">
                     <DialogHeader>
                         <DialogTitle className="text-lg">{selectedExercise?.name_he}</DialogTitle>
                         <DialogDescription className="text-sm text-slate-500">{selectedExercise?.name_en}</DialogDescription>
                     </DialogHeader>
                     <div className="py-4 space-y-4">
+                        {/* Image/Video Display */}
+                        {(() => {
+                            const getImageUrl = (ex) => {
+                                if (ex?.exercisedb_image_url) {
+                                    if (ex.exercisedb_image_url.startsWith('http')) {
+                                        return ex.exercisedb_image_url;
+                                    }
+                                    return `https://v2.exercisedb.dev/images/${ex.exercisedb_image_url}`;
+                                }
+                                return null;
+                            };
+
+                            const getVideoUrl = (ex) => {
+                                if (ex?.video_url) {
+                                    if (ex.video_url.startsWith('http')) {
+                                        return ex.video_url;
+                                    }
+                                    return `https://v2.exercisedb.dev/videos/${ex.video_url}`;
+                                }
+                                return null;
+                            };
+
+                            const imageUrl = getImageUrl(selectedExercise);
+                            const videoUrl = getVideoUrl(selectedExercise);
+
+                            if (imageUrl || videoUrl) {
+                                return (
+                                    <div className="space-y-3">
+                                        {imageUrl && (
+                                            <div>
+                                                <h4 className="font-semibold mb-2 text-slate-800 flex items-center gap-2">
+                                                    <ImageIcon className="w-4 h-4" />
+                                                    <span>תמונת דוגמה</span>
+                                                </h4>
+                                                <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                                                    <img
+                                                        src={imageUrl}
+                                                        alt={selectedExercise?.name_he}
+                                                        className="w-full h-auto max-h-96 object-contain"
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            const errorDiv = e.target.nextElementSibling;
+                                                            if (errorDiv) {
+                                                                errorDiv.classList.remove('hidden');
+                                                            }
+                                                        }}
+                                                    />
+                                                    <div className="hidden text-center p-4 text-slate-400 text-sm">
+                                                        לא ניתן לטעון את התמונה
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {videoUrl && (
+                                            <div>
+                                                <h4 className="font-semibold mb-2 text-slate-800 flex items-center gap-2">
+                                                    <Video className="w-4 h-4" />
+                                                    <span>סרטון הדגמה</span>
+                                                </h4>
+                                                <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
+                                                    <video
+                                                        src={videoUrl}
+                                                        controls
+                                                        className="w-full h-auto max-h-96"
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            const errorDiv = e.target.nextElementSibling;
+                                                            if (errorDiv) {
+                                                                errorDiv.classList.remove('hidden');
+                                                            }
+                                                        }}
+                                                    >
+                                                        הדפדפן שלך לא תומך בתג וידאו.
+                                                    </video>
+                                                    <div className="hidden text-center p-4 text-slate-400 text-sm">
+                                                        לא ניתן לטעון את הסרטון
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })()}
+
                         <div>
                             <h4 className="font-semibold mb-2 text-slate-800 flex items-center gap-2">
                                 💪 <span>שרירים עובדים</span>

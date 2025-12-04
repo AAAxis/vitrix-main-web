@@ -37,7 +37,7 @@ export default function TermsOfService() {
           <Card className="bg-white/80 backdrop-blur-sm border border-slate-200">
             <CardContent className="p-6">
               <p className="text-slate-700 leading-relaxed">
-                ברוכים הבאים ל-Muscle Up. על ידי שימוש באפליקציה שלנו, אתה מסכים לתנאי השימוש המפורטים להלן. אנא קרא אותם בעיון לפני השימוש בשירותים שלנו.
+                ברוכים הבאים ל-Vitrix. על ידי שימוש באפליקציה שלנו, אתה מסכים לתנאי השימוש המפורטים להלן. אנא קרא אותם בעיון לפני השימוש בשירותים שלנו.
               </p>
             </CardContent>
           </Card>
@@ -52,7 +52,7 @@ export default function TermsOfService() {
             </CardHeader>
             <CardContent>
               <p className="text-slate-700 leading-relaxed">
-                על ידי גישה לשימוש באפליקציה Muscle Up, אתה מאשר שקראת, הבנת והסכמת להיות כפוף לתנאי השימוש הללו ולכל החוקים והתקנות החלים. אם אינך מסכים עם כל אחד מהתנאים, אנא אל תשתמש באפליקציה.
+                על ידי גישה לשימוש באפליקציה Vitrix, אתה מאשר שקראת, הבנת והסכמת להיות כפוף לתנאי השימוש הללו ולכל החוקים והתקנות החלים. אם אינך מסכים עם כל אחד מהתנאים, אנא אל תשתמש באפליקציה.
               </p>
             </CardContent>
           </Card>
@@ -67,7 +67,7 @@ export default function TermsOfService() {
             </CardHeader>
             <CardContent>
               <p className="text-slate-700 leading-relaxed mb-4">
-                Muscle Up היא אפליקציה לניהול חדר כושר המספקת:
+                Vitrix היא אפליקציה לניהול חדר כושר המספקת:
               </p>
               <ul className="list-disc list-inside space-y-2 text-slate-700 mr-4">
                 <li>ניהול מנוי לחדר כושר</li>

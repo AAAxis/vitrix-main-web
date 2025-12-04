@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, VisuallyHidden } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 
@@ -11,9 +11,11 @@ export default function WelcomeModal({ isOpen, onClose, user }) {
         dir="rtl"
         hideCloseButton={true}
       >
-        <DialogHeader className="sr-only">
-          <DialogTitle>ברוך הבא ל-MUSCLE UP YAVNE</DialogTitle>
-        </DialogHeader>
+        <VisuallyHidden>
+          <DialogHeader>
+            <DialogTitle>ברוך הבא ל-Vitrix</DialogTitle>
+          </DialogHeader>
+        </VisuallyHidden>
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -23,7 +25,7 @@ export default function WelcomeModal({ isOpen, onClose, user }) {
           {/* Background Logo */}
           <div className="absolute inset-0 flex items-center justify-center z-0 opacity-10">
             <img 
-              src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png"
+              src="/logo.jpeg"
               alt="Background Logo"
               className="w-full h-full object-contain"
             />
@@ -34,7 +36,7 @@ export default function WelcomeModal({ isOpen, onClose, user }) {
               <div className="space-y-3">
                 <h1 className="text-2xl font-bold">
                   <span className="bg-gradient-to-r from-green-600 via-yellow-500 to-blue-500 bg-clip-text text-transparent">
-                    MUSCLE UP YAVNE
+                    Vitrix
                   </span>
                 </h1>
                 
@@ -52,7 +54,7 @@ export default function WelcomeModal({ isOpen, onClose, user }) {
               <div className="bg-gradient-to-r from-green-50/20 to-blue-50/20 backdrop-blur-sm rounded-2xl p-4 border border-slate-200/30">
                 <p className="text-slate-700 leading-relaxed">
                   {user?.name ? `שלום ${user.name}, ` : ''}
-                  ברוך הבא למשפחת MUSCLE UP YAVNE! 
+                  ברוך הבא למשפחת Vitrix! 
                   <br />
                   בואו נתחיל להכיר אותך טוב יותר.
                 </p>

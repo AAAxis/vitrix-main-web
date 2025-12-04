@@ -82,6 +82,15 @@ const DialogDescription = React.forwardRef(({ className, ...props }, ref) => (
 ))
 DialogDescription.displayName = DialogPrimitive.Description.displayName
 
+// VisuallyHidden component for accessibility
+const VisuallyHidden = React.forwardRef(({ className, ...props }, ref) => (
+  <span
+    ref={ref}
+    className={cn("sr-only", className)}
+    {...props} />
+))
+VisuallyHidden.displayName = "VisuallyHidden"
+
 export {
   Dialog,
   DialogPortal,
@@ -93,4 +102,5 @@ export {
   DialogFooter,
   DialogTitle,
   DialogDescription,
+  VisuallyHidden,
 }

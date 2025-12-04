@@ -228,7 +228,7 @@ export default function UserRegistration() {
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-lime-50 flex items-center justify-center p-4" dir="rtl">
                 <Card className="max-w-md w-full text-center shadow-2xl muscle-glass">
                     <CardHeader>
-                        <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png" alt="Logo" className="w-16 h-16 mx-auto mb-4 rounded-2xl" />
+                        <img src="/logo.jpeg" alt="Logo" className="w-16 h-16 mx-auto mb-4 rounded-2xl" />
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <NetworkErrorDisplay retryAction={retryLoad} />
@@ -243,7 +243,7 @@ export default function UserRegistration() {
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-lime-50 flex items-center justify-center p-4" dir="rtl">
                 <Card className="max-w-md w-full text-center shadow-2xl muscle-glass">
                     <CardHeader>
-                        <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png" alt="Logo" className="w-16 h-16 mx-auto mb-4 rounded-2xl" />
+                        <img src="/logo.jpeg" alt="Logo" className="w-16 h-16 mx-auto mb-4 rounded-2xl" />
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="flex flex-col items-center gap-4">
@@ -261,7 +261,7 @@ export default function UserRegistration() {
             <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-lime-50 flex items-center justify-center p-4" dir="rtl">
                 <Card className="max-w-md w-full text-center shadow-2xl muscle-glass">
                     <CardHeader>
-                        <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png" alt="Logo" className="w-16 h-16 mx-auto mb-4 rounded-2xl" />
+                        <img src="/logo.jpeg" alt="Logo" className="w-16 h-16 mx-auto mb-4 rounded-2xl" />
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="mx-auto w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
@@ -283,7 +283,7 @@ export default function UserRegistration() {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-lime-50 flex items-center justify-center p-4" dir="rtl">
             <Card className="max-w-md w-full text-center shadow-2xl muscle-glass">
                 <CardHeader>
-                    <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png" alt="Logo" className="w-16 h-16 mx-auto mb-4 rounded-2xl" />
+                    <img src="/logo.jpeg" alt="Logo" className="w-16 h-16 mx-auto mb-4 rounded-2xl" />
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {isRegistering ? (

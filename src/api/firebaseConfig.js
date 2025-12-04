@@ -51,6 +51,9 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase services
 export const auth = getAuth(app);
+
+// Configure auth settings to handle token refresh better
+auth.settings.appVerificationDisabledForTesting = false;
 export const db = getFirestore(app);
 export const storage = getStorage(app);
 // Initialize Functions with region (us-central1 is default, but specify explicitly)

@@ -13,6 +13,11 @@ class FirebaseUser {
   // Login with Google
   async login() {
     try {
+      // Add custom parameters to Google provider
+      googleProvider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       const additionalInfo = getAdditionalUserInfo(result);
@@ -43,6 +48,22 @@ class FirebaseUser {
       return user;
     } catch (error) {
       console.error('Error during login:', error);
+      
+      // Handle specific error cases
+      if (error.code === 'auth/popup-blocked') {
+        throw new Error('החלון נחסם על ידי הדפדפן. אנא אפשר חלונות קופצים ונסה שוב.');
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        throw new Error('התהליך בוטל. אנא נסה שוב.');
+      } else if (error.code === 'auth/cancelled-popup-request') {
+        throw new Error('בקשה קודמת עדיין מתבצעת. אנא המתן ונסה שוב.');
+      } else if (error.code === 'auth/network-request-failed') {
+        throw new Error('שגיאת רשת. אנא בדוק את החיבור לאינטרנט ונסה שוב.');
+      } else if (error.code === 'auth/invalid-api-key') {
+        throw new Error('שגיאת הגדרות מערכת. אנא פנה למנהל המערכת.');
+      } else if (error.message?.includes('400')) {
+        throw new Error('שגיאת אימות. אנא נסה להתחבר מחדש.');
+      }
+      
       throw error;
     }
   }

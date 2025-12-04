@@ -34,6 +34,8 @@ import PrivacyPolicy from "./PrivacyPolicy";
 
 import TermsOfService from "./TermsOfService";
 
+import ExerciseDBTester from "./ExerciseDBTester";
+
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
 
 const PAGES = {
@@ -71,6 +73,8 @@ const PAGES = {
     PrivacyPolicy: PrivacyPolicy,
     
     TermsOfService: TermsOfService,
+    
+    ExerciseDBTester: ExerciseDBTester,
     
 }
 
@@ -155,6 +159,9 @@ function PagesContent() {
                 <Route path="/termsofservice" element={<TermsOfService />} />
                 <Route path="/terms-of-service" element={<TermsOfService />} />
                 <Route path="/terms" element={<TermsOfService />} />
+                
+                <Route path="/ExerciseDBTester" element={<ExerciseDBTester />} />
+                <Route path="/exercisedbtester" element={<ExerciseDBTester />} />
                 
             </Routes>
         </Layout>

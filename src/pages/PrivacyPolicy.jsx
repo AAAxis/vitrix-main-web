@@ -37,7 +37,7 @@ export default function PrivacyPolicy() {
           <Card className="bg-white/80 backdrop-blur-sm border border-slate-200">
             <CardContent className="p-6">
               <p className="text-slate-700 leading-relaxed">
-                ב-Muscle Up, אנו מחויבים להגנה על הפרטיות שלך. מדיניות פרטיות זו מסבירה כיצד אנו אוספים, משתמשים, מגנים ומחשיפים את המידע שלך בעת השימוש באפליקציה שלנו.
+                ב-Vitrix, אנו מחויבים להגנה על הפרטיות שלך. מדיניות פרטיות זו מסבירה כיצד אנו אוספים, משתמשים, מגנים ומחשיפים את המידע שלך בעת השימוש באפליקציה שלנו.
               </p>
             </CardContent>
           </Card>

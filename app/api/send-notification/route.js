@@ -126,7 +126,7 @@ export async function POST(request) {
       android: {
         priority: 'high',
         notification: {
-          channelId: 'muscleup_notifications',
+          channelId: 'vitrix_notifications',
           sound: 'default',
           clickAction: 'FLUTTER_NOTIFICATION_CLICK'
         }

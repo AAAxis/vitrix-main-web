@@ -660,7 +660,7 @@ export default function SharedMealsViewer() {
               </div>
               <p>ניתן להיכנס לאפליקציה כדי לראות את המשוב המלא ולהמשיך לעקוב אחר ההתקדמות שלך.</p>
               <p>בברכה,</p>
-              <p>צוות MUSCLE UP YAVNE</p>
+              <p>צוות Vitrix</p>
             </div>
           `;
           // Create notification instead of sending email

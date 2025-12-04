@@ -476,7 +476,7 @@ export default function JournalPage() {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="relative">
-          <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png" alt="טוען..." className="w-12 h-12 rounded-2xl object-contain animate-pulse" />
+          <img src="/logo.jpeg" alt="טוען..." className="w-12 h-12 rounded-2xl object-contain animate-pulse" />
           <div className="absolute -inset-1 w-14 h-14 rounded-full border-4 border-blue-300 border-t-transparent animate-spin"></div>
         </div>
       </div>

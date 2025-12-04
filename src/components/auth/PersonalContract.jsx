@@ -61,7 +61,7 @@ export default function PersonalContract({ user, onContractSigned }) {
                 console.warn("No default contract found, creating default contract...");
                 const defaultContract = {
                     key: 'default',
-                    title: 'חוזה אישי - MUSCLE UP YAVNE',
+                    title: 'חוזה אישי - Vitrix',
                     instructions: 'אנא קרא/י בעיון את החוזה הבא וחתום/י עליו',
                     intro_paragraph: '[MALE]אני מתחייב[FEMALE]אני מתחייבת[/MALE] למלא את כל הסעיפים הבאים:',
                     commitment_header: 'התחייבויות:',

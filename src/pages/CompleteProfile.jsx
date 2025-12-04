@@ -215,7 +215,7 @@ export default function CompleteProfile() {
             <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-lime-50" dir="rtl">
                 <div className="relative">
                     <img 
-                        src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png"
+                        src="/logo.jpeg"
                         alt="טוען..."
                         className="w-20 h-20 rounded-2xl object-contain animate-pulse"
                     />
@@ -237,8 +237,8 @@ export default function CompleteProfile() {
             <div className="max-w-2xl mx-auto">
                 <div className="text-center mb-8">
                     <img 
-                        src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png"
-                        alt="MUSCLE UP YAVNE"
+                        src="/logo.jpeg"
+                        alt="Vitrix"
                         className="w-16 h-16 rounded-2xl object-contain mx-auto mb-4"
                     />
                     <h1 className="text-3xl font-bold bg-gradient-to-r from-green-600 via-yellow-500 to-blue-500 bg-clip-text text-transparent">

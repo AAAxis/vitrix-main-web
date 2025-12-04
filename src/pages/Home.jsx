@@ -353,7 +353,7 @@ export default function HomePage() {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-emerald-25 to-teal-25">
                 <div className="relative">
-                    <img src="https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/d04615afd_.png" alt="טוען..." className="w-20 h-20 rounded-2xl object-contain animate-pulse" />
+                    <img src="/logo.jpeg" alt="טוען..." className="w-20 h-20 rounded-2xl object-contain animate-pulse" />
                     <div className="absolute -inset-1 w-22 h-22 rounded-full border-4 border-emerald-300 border-t-transparent animate-spin"></div>
                 </div>
             </div>

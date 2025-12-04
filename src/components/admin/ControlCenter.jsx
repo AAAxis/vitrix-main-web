@@ -111,7 +111,7 @@ export default function ControlCenter({ onNavigateToTab }) {
     const [selectedStatusTitle, setSelectedStatusTitle] = useState('');
 
     const messageTemplates = [
-        { id: 'welcome', title: 'ברוך הבא', content: 'שלום {userName}, ברוך הבא למשפחת Muscle Up! אנחנו שמחים שהצטרפת אלינו.' },
+        { id: 'welcome', title: 'ברוך הבא', content: 'שלום {userName}, ברוך הבא למשפחת Vitrix! אנחנו שמחים שהצטרפת אלינו.' },
         { id: 'reminder', title: 'תזכורת ידידותית', content: 'היי {userName}, רק רציתי להזכיר לך לעדכן את המשקל שלך השבוע. בהצלחה!' },
         { id: 'birthday', title: 'יום הולדת שמח', content: 'מזל טוב ליום הולדתך, {userName}! מאחלים לך שנה של בריאות, כושר והגשמת מטרות!' }
     ];
@@ -211,7 +211,7 @@ export default function ControlCenter({ onNavigateToTab }) {
                 message_title: selectedTemplate ? messageTemplates.find(t => t.id === selectedTemplate)?.title || 'הודעה מהמנהל' : 'הודעה מהמנהל',
                 message_content: messageContent,
                 target_type: messageTarget === 'all' ? 'all_users' : messageTarget === 'group' ? 'specific_group' : 'specific_user',
-                sent_by: 'admin@muscleup.com',
+                sent_by: 'admin@vitrix.com',
                 sent_date: new Date().toISOString(),
                 template_used: selectedTemplate || null
             };
