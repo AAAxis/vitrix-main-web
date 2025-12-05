@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import {
   Loader2, User as UserIcon, Scale, Activity, ClipboardList, MessageSquare, Calendar, ChevronLeft, ChevronRight, Share2, Cake, Percent, HeartPulse, Weight, Recycle, Ruler, Droplets, Zap, Target, PieChart, AlertTriangle,
   TrendingUp, TrendingDown, Minus, Dumbbell, Clock, WifiOff, RefreshCw, Copy, X, Bell, CheckCircle, AlertCircle, ChevronsUpDown, Check
@@ -97,8 +98,6 @@ const getVisceralFatColor = (visceralFat) => {
   return 'bg-red-100 text-red-800'; // High
 };
 
-const PAGE_SIZE = 10; // This is now the batch size for infinite scroll
-
 export default function UserManagement({ initialUserEmail, startInEditMode, adminUser }) {
   const [users, setUsers] = useState([]); // This will hold all processed users (including admins, before filtering for display)
   const [groups, setGroups] = useState([]);
@@ -124,12 +123,13 @@ export default function UserManagement({ initialUserEmail, startInEditMode, admi
 
   const [expandedUsers, setExpandedUsers] = useState(new Set());
 
-  // Infinite scroll states
-  const [visibleUsersCount, setVisibleUsersCount] = useState(PAGE_SIZE); // How many filtered users are currently rendered
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  // Reset visibleUsersCount when filters or search term changes
+  // Reset to page 1 when filters or search term changes
   useEffect(() => {
-    setVisibleUsersCount(PAGE_SIZE);
+    setCurrentPage(1);
   }, [searchTerm, selectedGroup, statusFilter, boosterFilter, weightChangeFilter]);
 
 
@@ -1187,26 +1187,13 @@ export default function UserManagement({ initialUserEmail, startInEditMode, admi
     });
   }, [validUsers, searchTerm, selectedGroup, statusFilter, boosterFilter, weightChangeFilter, getWeightChangeStatus, adminUser]);
 
-  // Infinite scroll: display only a portion of filtered users
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
   const displayedUsers = useMemo(() => {
-    return filteredUsers.slice(0, visibleUsersCount);
-  }, [filteredUsers, visibleUsersCount]);
-
-  // Intersection Observer for infinite scroll
-  const observer = useRef();
-  const lastUserElementRef = useCallback(node => {
-    if (isLoading) return; 
-    if (observer.current) observer.current.disconnect();
-
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && displayedUsers.length < filteredUsers.length) {
-        // Load more users
-        setVisibleUsersCount(prevCount => prevCount + PAGE_SIZE);
-      }
-    });
-
-    if (node) observer.current.observe(node);
-  }, [isLoading, displayedUsers.length, filteredUsers.length]);
+    return filteredUsers.slice(startIndex, endIndex);
+  }, [filteredUsers, startIndex, endIndex]);
 
 
   if (networkError) {
@@ -1320,23 +1307,96 @@ export default function UserManagement({ initialUserEmail, startInEditMode, admi
                   <p>לא נמצאו מתאמנים התואמים את המסננים.</p>
                 </div>
               ) : (
-                displayedUsers.map((user, index) => {
-                  const isLastElement = displayedUsers.length === index + 1;
-                  return (
-                    <div ref={isLastElement ? lastUserElementRef : null} key={user.id}>
-                      {generateUserReport(user)}
-                    </div>
-                  );
-                })
-              )}
-              {displayedUsers.length < filteredUsers.length && (
-                <div className="flex justify-center items-center py-4">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
-                  <span className="mr-2 text-slate-600">טוען עוד...</span>
-                </div>
+                displayedUsers.map((user) => (
+                  <div key={user.id}>
+                    {generateUserReport(user)}
+                  </div>
+                ))
               )}
             </div>
           </ScrollArea>
+
+          {/* Pagination Controls */}
+          {filteredUsers.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 px-4 pb-4 border-t border-slate-200 bg-white">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="itemsPerPage" className="text-sm text-slate-600">מתאמנים לעמוד:</Label>
+                <Select 
+                  value={itemsPerPage.toString()} 
+                  onValueChange={(value) => {
+                    setItemsPerPage(Number(value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-slate-600">
+                  עמוד {currentPage} מתוך {totalPages} ({filteredUsers.length} מתאמנים)
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                  קודם
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-10"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  הבא
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

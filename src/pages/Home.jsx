@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger, DrawerClose } from '@/components/ui/drawer';
 import { User, WeightEntry, Workout, PreMadeWorkout, CoachMessage, WeightReminder } from '@/api/entities';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -136,6 +137,7 @@ const EditableProfileForm = React.memo(({ editForm, onInputChange, onGenderChang
 
 export default function HomePage() {
     const [user, setUser] = useState(null);
+    const [coach, setCoach] = useState(null); // Coach/trainer data
     const [isLoading, setIsLoading] = useState(true);
     const [networkError, setNetworkError] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -198,6 +200,19 @@ export default function HomePage() {
         try {
             const currentUser = await User.me();
             setUser(currentUser);
+            
+            // Load coach data if coach_email exists
+            if (currentUser?.coach_email) {
+                try {
+                    const coachUsers = await User.filter({ email: currentUser.coach_email });
+                    if (coachUsers && coachUsers.length > 0) {
+                        setCoach(coachUsers[0]);
+                    }
+                } catch (coachError) {
+                    console.warn('Could not load coach data:', coachError);
+                    // Don't fail the whole load if coach data fails
+                }
+            }
             if (currentUser) {
                 initializeEditForm(currentUser);
                 const [weightEntries, messages, reminders] = await Promise.all([
@@ -467,19 +482,19 @@ export default function HomePage() {
             </div>
 
             {/* Profile Modal */}
-            <Dialog open={isProfileModalOpen} onOpenChange={handleModalClose}>
-                <DialogContent className="max-w-md max-h-[90vh] overflow-hidden" dir="rtl">
-                    <DialogHeader>
-                        <DialogTitle className="flex items-center justify-between">
-                            <div className="flex items-center gap-2"><UserIcon className="w-5 h-5" />פרופיל אישי</div>
+            <Drawer open={isProfileModalOpen} onOpenChange={handleModalClose}>
+                <DrawerContent className="max-h-[90vh]" dir="rtl">
+                    <DrawerHeader className="text-right">
+                        <div className="flex items-center justify-between">
+                            <DrawerTitle className="flex items-center gap-2"><UserIcon className="w-5 h-5" />פרופיל אישי</DrawerTitle>
                             {!isEditingProfile ? (
                                 <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)} disabled={isSavingProfile || isUploadingImage}><Edit className="w-4 h-4 ml-2" />ערוך</Button>
                             ) : (
                                 <Button variant="ghost" size="sm" onClick={() => { setIsEditingProfile(false); initializeEditForm(user); setProfileError(''); setProfileSuccess(''); setProfileImageFile(null); }} disabled={isSavingProfile || isUploadingImage}><X className="w-4 h-4 ml-2" />בטל</Button>
                             )}
-                        </DialogTitle>
-                    </DialogHeader>
-                    <div className="overflow-y-auto max-h-[calc(90vh-100px)] px-1 space-y-6 pt-4">
+                        </div>
+                    </DrawerHeader>
+                    <div className="overflow-y-auto max-h-[calc(90vh-120px)] px-6 pb-6 space-y-6 pt-4">
                         {user && (
                             <div className="flex flex-col items-center gap-4">
                                 <div className="relative w-32 h-32">
@@ -521,8 +536,26 @@ export default function HomePage() {
                         <div>
                             <h3 className="text-lg font-semibold text-slate-800 mb-3 flex items-center gap-2"><Dumbbell className="w-5 h-5" />פרטי המאמן</h3>
                             <div className="space-y-3 text-sm bg-emerald-50 rounded-lg p-4">
-                                <DetailItem icon={UserIcon} label="שם המאמן" value={user?.coach_name} />
-                                <DetailItem icon={Mail} label="אימייל מאמן" value={user?.coach_email} />
+                                {/* Coach Logo/Image */}
+                                {coach && (
+                                    <div className="flex items-center justify-center mb-3">
+                                        <div className="relative w-20 h-20">
+                                            {coach.profile_image_url ? (
+                                                <img
+                                                    src={coach.profile_image_url}
+                                                    alt={coach.name || 'מאמן'}
+                                                    className="w-full h-full rounded-full object-cover border-2 border-emerald-300 shadow-md"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full rounded-full bg-emerald-200 flex items-center justify-center border-2 border-emerald-300">
+                                                    <UserIcon className="w-8 h-8 text-emerald-600" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                <DetailItem icon={UserIcon} label="שם המאמן" value={user?.coach_name || coach?.name} />
+                                <DetailItem icon={Mail} label="אימייל מאמן" value={user?.coach_email || coach?.email} />
                                 {user?.coach_phone && <DetailItem icon={Phone} label="טלפון מאמן" value={user.coach_phone} />}
                             </div>
                         </div>
@@ -544,8 +577,8 @@ export default function HomePage() {
                         
                         <Button onClick={() => handleModalClose(false)} className="w-full muscle-primary-gradient text-white" disabled={isSavingProfile || isUploadingImage}>סגור</Button>
                     </div>
-                </DialogContent>
-            </Dialog>
+                </DrawerContent>
+            </Drawer>
         </div>
     );
 }

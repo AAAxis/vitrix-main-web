@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,36 +41,145 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 
-export default function AdminDashboard({ activeTab = 'user-management', setActiveTab: externalSetActiveTab, hideNavigation = false, onNavigateToTab: externalNavigateToTab }) {
+export default function AdminDashboard({ activeTab: externalActiveTab, setActiveTab: externalSetActiveTab, hideNavigation = false, onNavigateToTab: externalNavigateToTab }) {
+  const navigate = useNavigate();
+  const params = useParams();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Internal state for active tab, initialized from external prop or default. Changed default to 'user-management'.
-  const [internalActiveTab, setInternalActiveTab] = useState(activeTab); // Renamed to avoid conflict with prop
+  // Get tab from URL params, fallback to external prop, then default to 'control-center'
+  const urlTab = params.tab;
+  const urlSubTab = params.subTab;
+  const initialTab = urlTab || externalActiveTab || 'control-center';
 
-  // States for sub-tabs
-  const [userManagementTab, setUserManagementTab] = useState('user-list');
-  const [progressMediaTab, setProgressMediaTab] = useState('notification-status');
-  const [workoutCreatorTab, setWorkoutCreatorTab] = useState('send-workout');
+  // Internal state for active tab, initialized from URL or external prop or default
+  const [internalActiveTab, setInternalActiveTab] = useState(initialTab);
+
+  // States for sub-tabs - initialize from URL if available
+  const getInitialSubTab = (mainTab, subTabValue, defaultValue) => {
+    if (urlTab === mainTab && urlSubTab) {
+      return urlSubTab;
+    }
+    return defaultValue;
+  };
+
+  const [userManagementTab, setUserManagementTab] = useState(getInitialSubTab('user-management', urlSubTab, 'user-list'));
+  const [progressMediaTab, setProgressMediaTab] = useState(getInitialSubTab('progress-media', urlSubTab, 'notification-status'));
+  const [workoutCreatorTab, setWorkoutCreatorTab] = useState(getInitialSubTab('workout-creator', urlSubTab, 'send-workout'));
   // Changed initial state to null to start collapsed
-  const [programsTab, setProgramsTab] = useState(null);
+  const [programsTab, setProgramsTab] = useState(getInitialSubTab('programs', urlSubTab, null));
   const [templateToLoad, setTemplateToLoad] = useState(null);
 
   // New state for direct user navigation, as per outline
   const [userManagementProps, setUserManagementProps] = useState({});
   const [userSettingsProps, setUserSettingsProps] = useState({}); // New state for UserSettingsManager props
 
-  // Update internal state when external activeTab changes
+  // Redirect to control-center if no tab in URL (initial load) or if URL contains null
   useEffect(() => {
-    if (activeTab && activeTab !== internalActiveTab) {
-      setInternalActiveTab(activeTab);
+    if (location.pathname.includes('/null')) {
+      // If URL contains /null, redirect to control-center
+      navigate('/admindashboard/control-center', { replace: true });
+      return;
     }
-  }, [activeTab, internalActiveTab]);
+    if (!urlTab && (location.pathname === '/admindashboard' || location.pathname === '/AdminDashboard')) {
+      navigate('/admindashboard/control-center', { replace: true });
+    }
+  }, [urlTab, location.pathname, navigate]);
+
+  // Initialize tab from URL on mount or when URL changes
+  useEffect(() => {
+    if (urlTab) {
+      // Guard against null/undefined tab values from URL
+      if (urlTab === 'null' || urlTab === 'undefined') {
+        console.warn('AdminDashboard: Invalid tab in URL, redirecting to control-center');
+        navigate('/admindashboard/control-center', { replace: true });
+        return;
+      }
+      
+      if (urlTab !== internalActiveTab) {
+        setInternalActiveTab(urlTab);
+      }
+      
+      // Update sub-tabs based on URL - ignore null/undefined subTab values
+      if (urlSubTab && urlSubTab !== 'null' && urlSubTab !== 'undefined') {
+        switch (urlTab) {
+          case 'user-management':
+            if (userManagementTab !== urlSubTab) {
+              setUserManagementTab(urlSubTab);
+            }
+            break;
+          case 'progress-media':
+            if (progressMediaTab !== urlSubTab) {
+              setProgressMediaTab(urlSubTab);
+            }
+            break;
+          case 'workout-creator':
+            if (workoutCreatorTab !== urlSubTab) {
+              setWorkoutCreatorTab(urlSubTab);
+            }
+            break;
+          case 'programs':
+            if (programsTab !== urlSubTab) {
+              setProgramsTab(urlSubTab);
+            }
+            break;
+        }
+      } else if (urlSubTab === 'null' || urlSubTab === 'undefined') {
+        // If subTab is explicitly "null" or "undefined" in URL, redirect to tab without subTab
+        navigate(`/admindashboard/${urlTab}`, { replace: true });
+        return;
+      } else {
+        // If no sub-tab in URL, set defaults and update URL
+        switch (urlTab) {
+          case 'user-management':
+            if (userManagementTab !== 'user-list') {
+              setUserManagementTab('user-list');
+              navigate(`/admindashboard/user-management/user-list`, { replace: true });
+            }
+            break;
+          case 'progress-media':
+            if (progressMediaTab !== 'notification-status') {
+              setProgressMediaTab('notification-status');
+              navigate(`/admindashboard/progress-media/notification-status`, { replace: true });
+            }
+            break;
+          case 'workout-creator':
+            if (workoutCreatorTab !== 'send-workout') {
+              setWorkoutCreatorTab('send-workout');
+              navigate(`/admindashboard/workout-creator/send-workout`, { replace: true });
+            }
+            break;
+        }
+      }
+    }
+  }, [urlTab, urlSubTab, internalActiveTab, navigate, userManagementTab, progressMediaTab, workoutCreatorTab, programsTab]);
+
+  // Update internal state when external activeTab changes (for backward compatibility)
+  useEffect(() => {
+    if (externalActiveTab && externalActiveTab !== internalActiveTab && !urlTab) {
+      setInternalActiveTab(externalActiveTab);
+    }
+  }, [externalActiveTab, internalActiveTab, urlTab]);
 
   // Update external state when internal activeTab changes - Enhanced to handle sub-tabs and props
   // Renamed from handleNavigation in outline to handleTabChange to match existing structure
   const handleTabChange = (newTab, subTab = null, props = {}) => {
+    // Guard against null/undefined tab values
+    if (!newTab || newTab === 'null' || newTab === 'undefined') {
+      console.warn('AdminDashboard: Invalid tab value:', newTab);
+      return;
+    }
+    
     setInternalActiveTab(newTab);
+    
+    // Update URL when tab changes - ensure subTab is valid and not null/undefined
+    if (subTab && subTab !== 'null' && subTab !== 'undefined') {
+      navigate(`/admindashboard/${newTab}/${subTab}`, { replace: true });
+    } else {
+      navigate(`/admindashboard/${newTab}`, { replace: true });
+    }
+    
     if (externalSetActiveTab) {
       externalSetActiveTab(newTab);
     }
@@ -115,16 +225,25 @@ export default function AdminDashboard({ activeTab = 'user-management', setActiv
       // If no specific sub-tab is passed, set default sub-tabs or collapse 'programs'
       if (newTab === 'programs' && !props.userEmail) { // Only collapse if not navigating to a specific user's settings
         setProgramsTab(null);
-      }
-      // Default to primary sub-tabs for others if no subTab is specified
-      if (newTab === 'user-management') {
+        // Don't add sub-tab to URL for programs when collapsed
+      } else {
+        // Default to primary sub-tabs for others if no subTab is specified
+        let defaultSubTab = null;
+        if (newTab === 'user-management') {
           setUserManagementTab('user-list');
-      }
-      if (newTab === 'progress-media') {
+          defaultSubTab = 'user-list';
+        } else if (newTab === 'progress-media') {
           setProgressMediaTab('notification-status');
-      }
-      if (newTab === 'workout-creator') {
+          defaultSubTab = 'notification-status';
+        } else if (newTab === 'workout-creator') {
           setWorkoutCreatorTab('send-workout');
+          defaultSubTab = 'send-workout';
+        }
+        
+        // Update URL with default sub-tab if applicable
+        if (defaultSubTab) {
+          navigate(`/admindashboard/${newTab}/${defaultSubTab}`, { replace: true });
+        }
       }
     }
   };
@@ -161,8 +280,7 @@ export default function AdminDashboard({ activeTab = 'user-management', setActiv
   // Function to handle loading a template into the WorkoutCreator
   const handleLoadTemplate = (template) => {
     setTemplateToLoad(template);
-    setWorkoutCreatorTab('send-workout');
-    handleTabChange('workout-creator'); // Use handleTabChange to ensure main tab switches
+    handleTabChange('workout-creator', 'send-workout'); // Use handleTabChange to ensure main tab switches with sub-tab
   };
 
   // Memoized UserManagement component to re-render when initialUserEmail changes (from outline)
@@ -272,9 +390,37 @@ export default function AdminDashboard({ activeTab = 'user-management', setActiv
     }
   ];
 
+  // Helper function to handle sub-tab changes with URL update
+  const handleSubTabChange = (mainTab, subTab) => {
+    // Guard against null/undefined values
+    if (!subTab || subTab === 'null' || subTab === 'undefined') {
+      console.warn('AdminDashboard: Invalid subTab value:', subTab);
+      return;
+    }
+    
+    switch (mainTab) {
+      case 'user-management':
+        setUserManagementTab(subTab);
+        navigate(`/admindashboard/user-management/${subTab}`, { replace: true });
+        break;
+      case 'progress-media':
+        setProgressMediaTab(subTab);
+        navigate(`/admindashboard/progress-media/${subTab}`, { replace: true });
+        break;
+      case 'workout-creator':
+        setWorkoutCreatorTab(subTab);
+        navigate(`/admindashboard/workout-creator/${subTab}`, { replace: true });
+        break;
+      case 'programs':
+        setProgramsTab(subTab);
+        navigate(`/admindashboard/programs/${subTab}`, { replace: true });
+        break;
+    }
+  };
+
   // Components for each main tab's content, defined inside AdminDashboard to access its state and functions
   const UserManagementTab = () => (
-    <Tabs value={userManagementTab} onValueChange={setUserManagementTab} className="w-full">
+    <Tabs value={userManagementTab} onValueChange={(value) => handleSubTabChange('user-management', value)} className="w-full">
       {/* Updated grid-cols to lg:grid-cols-4 since we now have 4 sub-tabs */}
       <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 h-auto">
         {userManagementSubTabs.map(cat => (
@@ -301,7 +447,7 @@ export default function AdminDashboard({ activeTab = 'user-management', setActiv
   );
 
   const ProgressMediaTab = () => (
-    <Tabs value={progressMediaTab} onValueChange={setProgressMediaTab} className="w-full">
+    <Tabs value={progressMediaTab} onValueChange={(value) => handleSubTabChange('progress-media', value)} className="w-full">
       {/* Adjusted grid-cols to 7 after removing 'Shared Images' */}
       <TabsList className="grid w-full grid-cols-2 sm:grid-cols-7 h-auto">
         <TabsTrigger value="notification-status" className="text-xs sm:text-sm py-2 flex items-center justify-center gap-1">
@@ -345,7 +491,7 @@ export default function AdminDashboard({ activeTab = 'user-management', setActiv
 
   const WorkoutCreatorMainTab = () => { // Renamed to avoid direct name conflict with WorkoutCreator component
     return (
-      <Tabs value={workoutCreatorTab} onValueChange={setWorkoutCreatorTab} className="w-full">
+      <Tabs value={workoutCreatorTab} onValueChange={(value) => handleSubTabChange('workout-creator', value)} className="w-full">
         <TabsList className="grid w-full grid-cols-3 h-auto">
           <TabsTrigger value="send-workout" className="text-xs sm:text-sm py-2">שלח אימון</TabsTrigger>
           <TabsTrigger value="templates" className="text-xs sm:text-sm py-2">תבניות אימון</TabsTrigger>
@@ -405,7 +551,15 @@ export default function AdminDashboard({ activeTab = 'user-management', setActiv
                   <motion.div
                     layout="position"
                     className="flex items-center p-4 cursor-pointer"
-                    onClick={() => setProgramsTab(prev => prev === category.value ? null : category.value)}
+                    onClick={() => {
+                      const newTab = programsTab === category.value ? null : category.value;
+                      setProgramsTab(newTab);
+                      if (newTab) {
+                        navigate(`/admindashboard/programs/${newTab}`, { replace: true });
+                      } else {
+                        navigate(`/admindashboard/programs`, { replace: true });
+                      }
+                    }}
                   >
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl mr-4 bg-gradient-to-br ${category.color}`}>
                       {category.icon}

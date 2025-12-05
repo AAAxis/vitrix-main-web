@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -531,6 +532,12 @@ export default function GroupManagement() {
 const GroupSettings = ({ group, onUpdate }) => {
     const [workoutPlans, setWorkoutPlans] = useState([]);
     const [reminders, setReminders] = useState([]);
+    const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
+    const [editingPlan, setEditingPlan] = useState(null);
+    const [planFormData, setPlanFormData] = useState({
+        plan_name: '',
+        is_active: true
+    });
 
     const loadGroupSettings = useCallback(async () => {
         try {
@@ -548,6 +555,46 @@ const GroupSettings = ({ group, onUpdate }) => {
     useEffect(() => {
         loadGroupSettings();
     }, [loadGroupSettings]); // Dependency on the memoized function
+
+    const handleOpenPlanDialog = (plan = null) => {
+        if (plan) {
+            setEditingPlan(plan);
+            setPlanFormData({
+                plan_name: plan.plan_name || '',
+                is_active: plan.is_active !== undefined ? plan.is_active : true
+            });
+        } else {
+            setEditingPlan(null);
+            setPlanFormData({
+                plan_name: '',
+                is_active: true
+            });
+        }
+        setIsPlanDialogOpen(true);
+    };
+
+    const handleSavePlan = async (e) => {
+        e.preventDefault();
+        if (!planFormData.plan_name) return;
+
+        try {
+            const planData = {
+                ...planFormData,
+                group_name: group.name
+            };
+
+            if (editingPlan) {
+                await GroupWorkoutPlan.update(editingPlan.id, planData);
+            } else {
+                await GroupWorkoutPlan.create(planData);
+            }
+            setIsPlanDialogOpen(false);
+            loadGroupSettings();
+            if (onUpdate) onUpdate();
+        } catch (error) {
+            console.error("Error saving workout plan:", error);
+        }
+    };
 
     return (
         <div className="space-y-6" dir="rtl">
@@ -577,7 +624,7 @@ const GroupSettings = ({ group, onUpdate }) => {
                 <TabsContent value="workout-plans" className="space-y-4">
                     <div className="flex justify-between items-center">
                         <h4 className="font-medium">תוכניות אימון קבוצתיות</h4>
-                        <Button size="sm">
+                        <Button size="sm" onClick={() => handleOpenPlanDialog()}>
                             <Plus className="w-4 h-4 mr-2" />
                             הוסף תוכנית
                         </Button>
@@ -592,7 +639,7 @@ const GroupSettings = ({ group, onUpdate }) => {
                                             {plan.is_active ? 'פעיל' : 'לא פעיל'}
                                         </Badge>
                                     </div>
-                                    <Button variant="outline" size="sm">ערוך</Button>
+                                    <Button variant="outline" size="sm" onClick={() => handleOpenPlanDialog(plan)}>ערוך</Button>
                                 </div>
                             ))}
                         </div>
@@ -635,6 +682,49 @@ const GroupSettings = ({ group, onUpdate }) => {
                     )}
                 </TabsContent>
             </Tabs>
+
+            {/* Add/Edit Workout Plan Dialog */}
+            <Dialog open={isPlanDialogOpen} onOpenChange={setIsPlanDialogOpen}>
+                <DialogContent className="sm:max-w-md" dir="rtl">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {editingPlan ? 'עריכת תוכנית אימון' : 'הוספת תוכנית אימון חדשה'}
+                        </DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={handleSavePlan} className="space-y-4">
+                        <div>
+                            <Label htmlFor="plan_name">שם התוכנית *</Label>
+                            <Input
+                                id="plan_name"
+                                value={planFormData.plan_name}
+                                onChange={(e) => setPlanFormData({...planFormData, plan_name: e.target.value})}
+                                required
+                                placeholder="הזן שם תוכנית אימון..."
+                            />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Checkbox
+                                id="is_active"
+                                checked={planFormData.is_active}
+                                onCheckedChange={(checked) => setPlanFormData({...planFormData, is_active: checked})}
+                            />
+                            <Label htmlFor="is_active">תוכנית פעילה</Label>
+                        </div>
+                        <DialogFooter>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => setIsPlanDialogOpen(false)}
+                            >
+                                ביטול
+                            </Button>
+                            <Button type="submit">
+                                {editingPlan ? 'עדכן תוכנית' : 'הוסף תוכנית'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 };

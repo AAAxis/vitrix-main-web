@@ -4,10 +4,11 @@ import { ExerciseDefinition } from '@/api/entities';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Search, Plus, Edit, Trash2, X, FileUp, Download, ChevronsRight, FileCheck2, Database, CheckSquare, Square, Image as ImageIcon, Video, Play } from 'lucide-react';
+import { Loader2, Search, Plus, Edit, Trash2, X, FileUp, Download, ChevronsRight, FileCheck2, Database, CheckSquare, Square, Image as ImageIcon, Video, Play, ChevronLeft, ChevronRight } from 'lucide-react';
 import { UploadFile, ExtractDataFromUploadedFile } from '@/api/integrations';
 import { 
     searchExercises, 
@@ -31,6 +32,9 @@ export default function ExerciseLibraryManager() {
     const [isEditing, setIsEditing] = useState(false);
     const [currentExercise, setCurrentExercise] = useState(null);
     const [isSaving, setIsSaving] = useState(false);
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(20);
     
     // State for import functionality
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -104,6 +108,17 @@ export default function ExerciseLibraryManager() {
             ex.muscle_group.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [exercises, searchTerm]);
+
+    // Pagination calculations
+    const totalPages = Math.ceil(filteredExercises.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedExercises = filteredExercises.slice(startIndex, endIndex);
+
+    // Reset to page 1 when search changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     const handleOpenForm = (exercise = null) => {
         if (exercise) {
@@ -199,7 +214,7 @@ export default function ExerciseLibraryManager() {
         const csvContent = "data:text/csv;charset=utf-8," + encodeURIComponent(csvRows.join('\n'));
         const link = document.createElement("a");
         link.setAttribute("href", csvContent);
-        link.setAttribute("download", `muscle_up_exercise_library_${new Date().toISOString().split('T')[0]}.csv`);
+        link.setAttribute("download", `vitrix_exercise_library_${new Date().toISOString().split('T')[0]}.csv`);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -412,7 +427,7 @@ export default function ExerciseLibraryManager() {
             ) : (
                 <ScrollArea className="h-[60vh] border rounded-lg p-2">
                     <div className="space-y-2">
-                        {filteredExercises.map(ex => {
+                        {paginatedExercises.map(ex => {
                             // Helper functions to get image/video URLs
                             const getImageUrl = (exercise) => {
                                 if (exercise?.exercisedb_image_url) {
@@ -495,6 +510,87 @@ export default function ExerciseLibraryManager() {
                         })}
                     </div>
                 </ScrollArea>
+            )}
+
+            {/* Pagination Controls */}
+            {filteredExercises.length > 0 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200">
+                    <div className="flex items-center gap-2">
+                        <Label htmlFor="itemsPerPage" className="text-sm text-slate-600">תרגילים לעמוד:</Label>
+                        <Select 
+                            value={itemsPerPage.toString()} 
+                            onValueChange={(value) => {
+                                setItemsPerPage(Number(value));
+                                setCurrentPage(1);
+                            }}
+                        >
+                            <SelectTrigger className="w-20">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="10">10</SelectItem>
+                                <SelectItem value="20">20</SelectItem>
+                                <SelectItem value="50">50</SelectItem>
+                                <SelectItem value="100">100</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                        <p className="text-sm text-slate-600">
+                            עמוד {currentPage} מתוך {totalPages} ({filteredExercises.length} תרגילים)
+                        </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                            disabled={currentPage === 1}
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                            קודם
+                        </Button>
+                        
+                        <div className="flex items-center gap-1">
+                            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                let pageNum;
+                                if (totalPages <= 5) {
+                                    pageNum = i + 1;
+                                } else if (currentPage <= 3) {
+                                    pageNum = i + 1;
+                                } else if (currentPage >= totalPages - 2) {
+                                    pageNum = totalPages - 4 + i;
+                                } else {
+                                    pageNum = currentPage - 2 + i;
+                                }
+                                
+                                return (
+                                    <Button
+                                        key={pageNum}
+                                        variant={currentPage === pageNum ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => setCurrentPage(pageNum)}
+                                        className="w-10"
+                                    >
+                                        {pageNum}
+                                    </Button>
+                                );
+                            })}
+                        </div>
+
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                            disabled={currentPage === totalPages}
+                        >
+                            הבא
+                            <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                    </div>
+                </div>
             )}
 
             {/* Form Dialog */}

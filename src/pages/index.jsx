@@ -124,6 +124,10 @@ function PagesContent() {
                 <Route path="/Tracking" element={<Tracking />} />
                 <Route path="/tracking" element={<Tracking />} />
                 
+                <Route path="/AdminDashboard/:tab/:subTab" element={<AdminDashboard />} />
+                <Route path="/admindashboard/:tab/:subTab" element={<AdminDashboard />} />
+                <Route path="/AdminDashboard/:tab" element={<AdminDashboard />} />
+                <Route path="/admindashboard/:tab" element={<AdminDashboard />} />
                 <Route path="/AdminDashboard" element={<AdminDashboard />} />
                 <Route path="/admindashboard" element={<AdminDashboard />} />
                 

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Search, Edit, Save, X, User as UserIcon, FileText, Calendar, Trash2, RefreshCw, AlertTriangle, Loader2, UserCog, Check, ChevronsUpDown, UserPlus, UserX } from 'lucide-react'; // Added UserX
+import { Search, Edit, Save, X, User as UserIcon, FileText, Calendar, Trash2, RefreshCw, AlertTriangle, Loader2, UserCog, Check, ChevronsUpDown, UserPlus, UserX, ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
@@ -82,6 +82,9 @@ export default function UserSettingsManager({
   const [groupFilter, setGroupFilter] = useState('all'); 
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
   const [editingUser, setEditingUser] = useState(null); // This state also controls the edit dialog's open/close
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -146,6 +149,17 @@ export default function UserSettingsManager({
       return searchMatch && groupMatch;
     });
   }, [users, searchTerm, groupFilter]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, groupFilter]);
 
   useEffect(() => {
     // Check if we have an instruction to start in edit mode,
@@ -522,7 +536,7 @@ export default function UserSettingsManager({
 
           <div className="grid gap-4">
             <AnimatePresence>
-              {filteredUsers.map((user) => (
+              {paginatedUsers.map((user) => (
                 <motion.div
                   key={user.id}
                   layout
@@ -620,6 +634,88 @@ export default function UserSettingsManager({
                 <UserIcon className="w-12 h-12 mx-auto mb-4 opacity-30"/>
                 <h3 className="text-lg font-semibold">לא נמצאו משתמשים</h3>
                 <p>נסה לשנות את החיפוש או הסינון או הוסף משתמשים חדשים.</p>
+            </div>
+          )}
+
+          {/* Pagination Controls */}
+          {filteredUsers.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200">
+              <div className="flex items-center gap-2">
+                <Label htmlFor="itemsPerPage" className="text-sm text-slate-600">משתמשים לעמוד:</Label>
+                <Select 
+                  value={itemsPerPage.toString()} 
+                  onValueChange={(value) => {
+                    setItemsPerPage(Number(value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5</SelectItem>
+                    <SelectItem value="10">10</SelectItem>
+                    <SelectItem value="20">20</SelectItem>
+                    <SelectItem value="50">50</SelectItem>
+                    <SelectItem value="100">100</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <p className="text-sm text-slate-600">
+                  עמוד {currentPage} מתוך {totalPages} ({filteredUsers.length} משתמשים)
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronRight className="w-4 h-4" />
+                  קודם
+                </Button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-10"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  הבא
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>
