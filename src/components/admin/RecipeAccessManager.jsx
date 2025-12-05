@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Recipe, User } from '@/api/entities';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from '@/components/ui/pagination';
 import { UploadFile } from '@/api/integrations';
 import { 
   Users, 
@@ -24,7 +25,9 @@ import {
   Save,
   X,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 export default function RecipeAccessManager() {
@@ -32,6 +35,8 @@ export default function RecipeAccessManager() {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   
   // Recipe Management States
   const [isRecipeDialogOpen, setIsRecipeDialogOpen] = useState(false);
@@ -259,10 +264,60 @@ export default function RecipeAccessManager() {
     }
   };
 
-  const filteredRecipes = recipes.filter(recipe =>
+  const filteredRecipes = useMemo(() => 
+    recipes.filter(recipe =>
     recipe.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     recipe.category?.toLowerCase().includes(searchTerm.toLowerCase())
+    ),
+    [recipes, searchTerm]
   );
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredRecipes.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedRecipes = filteredRecipes.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search term changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push('ellipsis');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        pages.push(1);
+        pages.push('ellipsis');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('ellipsis');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
 
   if (isLoading) {
     return (
@@ -320,7 +375,7 @@ export default function RecipeAccessManager() {
 
               <ScrollArea className="h-[500px]">
                 <div className="space-y-2">
-                  {filteredRecipes.map(recipe => (
+                  {paginatedRecipes.map(recipe => (
                     <div
                       key={recipe.id}
                       className="p-4 border rounded-lg bg-white hover:bg-slate-50 transition-colors"
@@ -364,7 +419,8 @@ export default function RecipeAccessManager() {
                 </div>
               </ScrollArea>
 
-              <div className="bg-slate-50 rounded-lg p-4">
+              <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+                <div>
                 <p className="text-sm text-slate-600">
                   <strong>סה"כ מתכונים:</strong> {recipes.length}
                 </p>
@@ -373,6 +429,65 @@ export default function RecipeAccessManager() {
                 </p>
                 <p className="text-sm text-slate-600">
                   <strong>פרטיים:</strong> {recipes.filter(r => !r.is_public).length}
+                  </p>
+                </div>
+                
+                {totalPages > 1 && (
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(prev => Math.max(1, prev - 1));
+                          }}
+                          href="#"
+                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                          <span>הקודם</span>
+                        </PaginationPrevious>
+                      </PaginationItem>
+                      
+                      {getPageNumbers().map((page, index) => (
+                        <PaginationItem key={index}>
+                          {page === 'ellipsis' ? (
+                            <PaginationEllipsis />
+                          ) : (
+                            <PaginationLink
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage(page);
+                              }}
+                              href="#"
+                              isActive={currentPage === page}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          )}
+                        </PaginationItem>
+                      ))}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(prev => Math.min(totalPages, prev + 1));
+                          }}
+                          href="#"
+                          className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        >
+                          <span>הבא</span>
+                          <ChevronLeft className="h-4 w-4" />
+                        </PaginationNext>
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                )}
+                
+                <p className="text-xs text-slate-500 text-center">
+                  מציג {startIndex + 1}-{Math.min(endIndex, filteredRecipes.length)} מתוך {filteredRecipes.length} מתכונים
                 </p>
               </div>
             </CardContent>
@@ -407,7 +522,7 @@ export default function RecipeAccessManager() {
 
               <ScrollArea className="h-[500px]">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {filteredRecipes.map(recipe => (
+                  {paginatedRecipes.map(recipe => (
                     <Card key={recipe.id} className="overflow-hidden">
                       {recipe.image_url && (
                         <div className="h-48 bg-slate-200 overflow-hidden">
@@ -455,6 +570,66 @@ export default function RecipeAccessManager() {
                   ))}
                 </div>
               </ScrollArea>
+              
+              {totalPages > 1 && (
+                <div className="mt-4 space-y-2">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(prev => Math.max(1, prev - 1));
+                          }}
+                          href="#"
+                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                          <span>הקודם</span>
+                        </PaginationPrevious>
+                      </PaginationItem>
+                      
+                      {getPageNumbers().map((page, index) => (
+                        <PaginationItem key={index}>
+                          {page === 'ellipsis' ? (
+                            <PaginationEllipsis />
+                          ) : (
+                            <PaginationLink
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setCurrentPage(page);
+                              }}
+                              href="#"
+                              isActive={currentPage === page}
+                              className="cursor-pointer"
+                            >
+                              {page}
+                            </PaginationLink>
+                          )}
+                        </PaginationItem>
+                      ))}
+                      
+                      <PaginationItem>
+                        <PaginationNext 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(prev => Math.min(totalPages, prev + 1));
+                          }}
+                          href="#"
+                          className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                        >
+                          <span>הבא</span>
+                          <ChevronLeft className="h-4 w-4" />
+                        </PaginationNext>
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                  
+                  <p className="text-xs text-slate-500 text-center">
+                    מציג {startIndex + 1}-{Math.min(endIndex, filteredRecipes.length)} מתוך {filteredRecipes.length} מתכונים
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

@@ -262,6 +262,8 @@ export async function POST(request) {
       successCount,
       failureCount
     });
+    
+    console.log(`✅ ✅ ✅ PUSH NOTIFICATIONS SENT: ${successCount} out of ${uniqueTokens.length} tokens (${usersSnapshot.size} users) in group "${groupName}"`);
 
     return NextResponse.json({
       success: true,

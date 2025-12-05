@@ -12,17 +12,18 @@ app.use(express.json());
 
 // Import API route handlers
 import { POST as sendNotificationPOST } from './app/api/send-notification/route.js';
+import { POST as sendGroupEmailPOST } from './app/api/send-group-email/route.js';
+import { POST as sendGroupNotificationPOST } from './app/api/send-group-notification/route.js';
 
-// API Routes (matching Next.js app/api structure)
-app.post('/api/send-notification', async (req, res) => {
-  // Convert Express req/res to Next.js-like format
+// Helper function to handle Next.js-style API routes
+const handleAPIRoute = async (handler, req, res) => {
   const request = {
     json: async () => req.body,
     body: req.body
   };
   
   try {
-    const nextResponse = await sendNotificationPOST(request);
+    const nextResponse = await handler(request);
     
     // Handle NextResponse
     if (nextResponse && nextResponse.body) {
@@ -46,10 +47,23 @@ app.post('/api/send-notification', async (req, res) => {
       res.status(500).json({ error: 'Invalid response format' });
     }
   } catch (error) {
-    console.error('❌ Error in send-notification handler:', error);
+    console.error('❌ Error in API handler:', error);
     console.error('❌ Error stack:', error.stack);
     res.status(500).json({ error: 'Internal server error', details: error.message });
   }
+};
+
+// API Routes (matching Next.js app/api structure)
+app.post('/api/send-notification', async (req, res) => {
+  await handleAPIRoute(sendNotificationPOST, req, res);
+});
+
+app.post('/api/send-group-email', async (req, res) => {
+  await handleAPIRoute(sendGroupEmailPOST, req, res);
+});
+
+app.post('/api/send-group-notification', async (req, res) => {
+  await handleAPIRoute(sendGroupNotificationPOST, req, res);
 });
 
 // Health check

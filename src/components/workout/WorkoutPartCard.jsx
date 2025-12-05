@@ -80,8 +80,8 @@ const ExerciseCard = ({ exercise, onUpdate, workout, partKey }) => {
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h4 className="font-semibold text-slate-800">{exercise.name}</h4>
-            {exercise.category && <p className="text-sm text-slate-500">{exercise.category}</p>}
+          <h4 className="font-semibold text-slate-800">{exercise.name}</h4>
+          {exercise.category && <p className="text-sm text-slate-500">{exercise.category}</p>}
           </div>
         </div>
         {exercise.completed && <Badge className="bg-green-600 text-white flex-shrink-0">בוצע</Badge>}

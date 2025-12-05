@@ -216,45 +216,257 @@ export default function GroupMessaging({ groups }) {
             return;
         }
 
-        setIsSending(true); // Using isSending for button state, consistent with existing usage
-        setFeedback({ type: '', message: '' }); // Clear previous feedback
+        setIsSending(true);
+        setFeedback({ type: '', message: '' });
 
         try {
             const currentUser = await User.me();
+            const groupUsers = getUsersInGroup(selectedGroup);
             
+            if (groupUsers.length === 0) {
+                setFeedback({ type: 'error', message: 'לא נמצאו משתמשים בקבוצה הנבחרת' });
+                setIsSending(false);
+                return;
+            }
+
+            // Initialize read receipts for all users in the group
+            const initialReadReceipts = groupUsers.map(user => ({
+                user_email: user.email,
+                user_name: user.name || user.email,
+                user_id: user.id,
+                is_read: false,
+                read_timestamp: null,
+                notification_opened: false,
+                notification_opened_timestamp: null,
+                email_opened: false,
+                email_opened_timestamp: null
+            }));
+
+            // Create message record first to get the ID for tracking
             const messageData = {
                 group_name: selectedGroup,
                 message_title: messageTitle,
                 message_content: messageContent,
                 message_type: messageType,
-                template_used: selectedTemplate || null, // Added as per outline
+                template_used: selectedTemplate || null,
                 send_immediately: sendImmediately,
-                scheduled_send_time: sendImmediately ? null : scheduledTime, // Added as per outline
-                delivery_status: { // Changed delivery_status init as per outline
-                    sent_count: 0,
+                scheduled_send_time: sendImmediately ? null : scheduledTime,
+                delivery_status: {
+                    sent_count: groupUsers.length,
                     delivered_count: 0,
-                    failed_count: 0
+                    failed_count: 0,
+                    notification_sent: 0,
+                    email_sent: 0
                 },
                 sent_by: currentUser.email,
                 sent_date: new Date().toISOString(),
-                read_receipts: [] // Changed read_receipts init as per outline
+                read_receipts: initialReadReceipts,
+                total_recipients: groupUsers.length
             };
 
-            // Create message record (actual sending logic is now assumed to be handled server-side or by GroupMessage.create)
-            await GroupMessage.create(messageData);
+            const createdMessage = await GroupMessage.create(messageData);
+            const messageId = createdMessage.id;
+
+            let notificationCount = 0;
+            let emailCount = 0;
+            let notificationError = null;
+            let emailError = null;
+            let notificationDetails = null;
+            let emailDetails = null;
+
+            // Send emails FIRST via Roamjet API to all users in the group
+            try {
+                console.log('📧 [FRONTEND] Starting to send emails to group:', selectedGroup);
+                const emailResponse = await fetch('/api/send-group-email', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        groupName: selectedGroup,
+                        title: messageTitle,
+                        message: messageContent
+                    }),
+                });
+
+                console.log('📧 [FRONTEND] Email API response status:', emailResponse.status);
+                
+                if (!emailResponse.ok) {
+                    let errorText;
+                    try {
+                        errorText = await emailResponse.text();
+                    } catch (e) {
+                        errorText = 'Could not read error response';
+                    }
+                    console.error('❌ [FRONTEND] Email API HTTP error:', emailResponse.status, errorText);
+                    throw new Error(`HTTP ${emailResponse.status}: ${errorText}`);
+                }
+
+                const emailResult = await emailResponse.json();
+                console.log('📧 [FRONTEND] Email API response data:', emailResult);
+
+                if (emailResult.success) {
+                    emailCount = emailResult.successCount || 0;
+                    emailDetails = emailResult;
+                    console.log(`✅ [FRONTEND] Successfully sent ${emailCount} emails to group ${selectedGroup}`);
+                    
+                    if (emailCount === 0 && emailResult.failureCount > 0) {
+                        emailError = `כל האימיילים נכשלו (${emailResult.failureCount} נכשלו)`;
+                    } else if (emailCount === 0 && emailResult.totalUsers > 0) {
+                        emailError = `לא נשלחו אימיילים (${emailResult.totalUsers} משתמשים בקבוצה)`;
+                    }
+                } else {
+                    emailError = emailResult.error || 'שגיאה בשליחת אימיילים';
+                    console.error('❌ [FRONTEND] Email API returned success=false:', emailResult);
+                }
+            } catch (error) {
+                console.error('❌ Error sending emails:', error);
+                emailError = `שגיאה בשליחת אימיילים: ${error.message}`;
+            }
+
+            // Then send push notifications to all FCM tokens in the group (with message ID for tracking)
+            try {
+                console.log('📱 [FRONTEND] Starting to send push notifications to group:', selectedGroup);
+                const notificationResponse = await fetch('/api/send-group-notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        groupName: selectedGroup,
+                        title: messageTitle,
+                        body: messageContent,
+                        data: {
+                            type: 'group_message',
+                            message_type: messageType,
+                            group_name: selectedGroup,
+                            message_id: messageId, // Include message ID for tracking opens
+                            track_open: true
+                        }
+                    }),
+                });
+
+                console.log('📱 [FRONTEND] Notification API response status:', notificationResponse.status);
+                
+                if (!notificationResponse.ok) {
+                    let errorText;
+                    try {
+                        errorText = await notificationResponse.text();
+                    } catch (e) {
+                        errorText = 'Could not read error response';
+                    }
+                    console.error('❌ [FRONTEND] Notification API HTTP error:', notificationResponse.status, errorText);
+                    throw new Error(`HTTP ${notificationResponse.status}: ${errorText}`);
+                }
+
+                const notificationResult = await notificationResponse.json();
+                console.log('📱 [FRONTEND] Notification API response data:', notificationResult);
+
+                if (notificationResult.success) {
+                    notificationCount = notificationResult.successCount || 0;
+                    notificationDetails = notificationResult;
+                    console.log(`✅ [FRONTEND] Successfully sent ${notificationCount} push notifications to group ${selectedGroup}`);
+                    
+                    if (notificationResult.totalTokens === 0) {
+                        notificationError = 'לא נמצאו אסימוני FCM למשתמשים בקבוצה';
+                    } else if (notificationCount === 0 && notificationResult.failureCount > 0) {
+                        notificationError = `כל ההתראות נכשלו (${notificationResult.failureCount} נכשלו)`;
+                    }
+                } else {
+                    notificationError = notificationResult.error || 'שגיאה בשליחת התראות push';
+                    console.error('❌ [FRONTEND] Notification API returned success=false:', notificationResult);
+                }
+            } catch (error) {
+                console.error('❌ Error sending push notifications:', error);
+                notificationError = `שגיאה בשליחת התראות push: ${error.message}`;
+            }
+
+            // Update message with delivery status
+            await GroupMessage.update(messageId, {
+                delivery_status: {
+                    sent_count: groupUsers.length,
+                    delivered_count: notificationCount + emailCount,
+                    failed_count: (groupUsers.length * 2) - (notificationCount + emailCount),
+                    notification_sent: notificationCount,
+                    email_sent: emailCount
+                }
+            });
             
-            setFeedback({ type: 'success', message: 'ההודעה נשלחה בהצלחה!' });
+            // Show success message with counts - prioritize email count
+            let successMessage = 'ההודעה נשלחה בהצלחה!';
+            const details = [];
+            const warnings = [];
             
-            // Reset form fields as per outline
+            // Show email count first (as requested)
+            if (emailCount > 0) {
+                details.push(`${emailCount} אימיילים נשלחו`);
+            } else {
+                if (emailDetails) {
+                    if (emailDetails.totalUsers > 0 && emailCount === 0) {
+                        warnings.push(`אימיילים: ${emailDetails.failureCount || 0} נכשלו מתוך ${emailDetails.totalUsers}`);
+                    } else {
+                        warnings.push('אימיילים לא נשלחו');
+                    }
+                } else if (emailError) {
+                    warnings.push(`אימיילים: ${emailError}`);
+                } else {
+                    warnings.push('אימיילים: לא נשלחו (לא התקבלה תשובה מהשרת)');
+                }
+            }
+            
+            // Then show notification count
+            if (notificationCount > 0) {
+                details.push(`${notificationCount} התראות push נשלחו`);
+            } else {
+                if (notificationDetails) {
+                    if (notificationDetails.totalTokens === 0) {
+                        warnings.push('לא נמצאו אסימוני FCM למשתמשים בקבוצה');
+                    } else if (notificationDetails.failureCount > 0) {
+                        warnings.push(`התראות push: ${notificationDetails.failureCount} נכשלו`);
+                    } else {
+                        warnings.push('התראות push לא נשלחו');
+                    }
+                } else if (notificationError) {
+                    warnings.push(`התראות push: ${notificationError}`);
+                } else {
+                    warnings.push('התראות push: לא נשלחו (לא התקבלה תשובה מהשרת)');
+                }
+            }
+            
+            if (details.length > 0) {
+                successMessage += ` (${details.join(' ו-')})`;
+            }
+            
+            if (warnings.length > 0) {
+                successMessage += `. אזהרות: ${warnings.join(', ')}`;
+            }
+            
+            // Show warning if nothing was sent
+            if (notificationCount === 0 && emailCount === 0) {
+                setFeedback({ 
+                    type: 'error', 
+                    message: `ההודעה נוצרה אך לא נשלחה. ${warnings.join('. ')}`
+                });
+            } else {
+                setFeedback({ type: 'success', message: successMessage });
+            }
+            
+            // Log final summary to console
+            console.log('📊 FINAL SUMMARY:', {
+                emailsSent: emailCount,
+                notificationsSent: notificationCount,
+                totalUsers: groupUsers.length,
+                emailError,
+                notificationError
+            });
+            
+            // Reset form fields
             setMessageTitle('');
             setMessageContent('');
-            setSelectedTemplate(''); // Clear selected template after sending
+            setSelectedTemplate('');
 
-            // Note: selectedGroup and messageType are not reset as per outline's implied changes.
-            // Original code reset them, but outline removes those lines.
-
-            // Load updated messages to reflect the new entry
-            await loadMessages(); // Changed from loadData() to loadMessages() for efficiency
+            // Load updated messages
+            await loadMessages();
             
         } catch (error) {
             console.error('שגיאה בשליחת ההודעה:', error);
@@ -280,11 +492,22 @@ export default function GroupMessaging({ groups }) {
     };
 
     const getReadStats = (message) => {
-        if (!message.read_receipts) return { read: 0, unread: 0 };
+        if (!message.read_receipts || message.read_receipts.length === 0) {
+            const totalRecipients = message.total_recipients || getUsersInGroup(message.group_name).length;
+            return { read: 0, unread: totalRecipients, notificationOpened: 0, emailOpened: 0 };
+        }
         const read = message.read_receipts.filter(r => r.is_read).length;
-        const totalRecipients = getUsersInGroup(message.group_name).length;
+        const notificationOpened = message.read_receipts.filter(r => r.notification_opened).length;
+        const emailOpened = message.read_receipts.filter(r => r.email_opened).length;
+        const totalRecipients = message.total_recipients || message.read_receipts.length || getUsersInGroup(message.group_name).length;
         const unread = totalRecipients - read;
-        return { read, unread: Math.max(0, unread) }; // Ensure unread isn't negative
+        return { 
+            read, 
+            unread: Math.max(0, unread),
+            notificationOpened,
+            emailOpened,
+            totalRecipients
+        };
     };
 
     if (isLoading) {
@@ -433,9 +656,12 @@ export default function GroupMessaging({ groups }) {
                                             <div className="space-y-4">
                                                 <AnimatePresence>
                                                     {messages.map((message, index) => { // Removed slice(0,10) to show all
-                                                        const readCount = message.read_receipts?.filter(r => r.is_read).length || 0;
-                                                        const totalRecipients = getUsersInGroup(message.group_name).length;
-                                                        const unreadCount = totalRecipients - readCount;
+                                                        const stats = getReadStats(message);
+                                                        const readCount = stats.read;
+                                                        const totalRecipients = stats.totalRecipients;
+                                                        const unreadCount = stats.unread;
+                                                        const notificationOpened = stats.notificationOpened;
+                                                        const emailOpened = stats.emailOpened;
 
                                                         return (
                                                             <motion.div
@@ -457,6 +683,7 @@ export default function GroupMessaging({ groups }) {
                                                                                 <Clock className="w-3 h-3" />
                                                                                 {format(new Date(message.sent_date), 'dd/MM/yy HH:mm', { locale: he })}
                                                                             </span>
+                                                                            <div className="flex items-center gap-2">
                                                                             <Badge className={`px-2 py-0.5 text-xs ${
                                                                                 readCount === totalRecipients && totalRecipients > 0
                                                                                     ? 'bg-green-100 text-green-800' 
@@ -466,6 +693,17 @@ export default function GroupMessaging({ groups }) {
                                                                             }`}>
                                                                                 {readCount}/{totalRecipients} קראו
                                                                             </Badge>
+                                                                                {notificationOpened > 0 && (
+                                                                                    <Badge className="px-2 py-0.5 text-xs bg-blue-100 text-blue-800" title="מספר אנשים שפתחו התראה">
+                                                                                        📱 {notificationOpened}
+                                                                                    </Badge>
+                                                                                )}
+                                                                                {emailOpened > 0 && (
+                                                                                    <Badge className="px-2 py-0.5 text-xs bg-purple-100 text-purple-800" title="מספר אנשים שפתחו אימייל">
+                                                                                        📧 {emailOpened}
+                                                                                    </Badge>
+                                                                                )}
+                                                                            </div>
                                                                         </div>
                                                                     </div>
                                                                     <Badge className="bg-purple-100 text-purple-800 text-xs px-2 py-0.5">
@@ -480,15 +718,35 @@ export default function GroupMessaging({ groups }) {
                                                                 {/* Read Receipts Details */}
                                                                 {message.read_receipts && message.read_receipts.length > 0 && (
                                                                     <div className="border-t pt-3">
-                                                                        <h4 className="text-sm font-semibold text-slate-700 mb-2">
+                                                                        <div className="flex items-center justify-between mb-2">
+                                                                            <h4 className="text-sm font-semibold text-slate-700">
                                                                             📋 סטטוס קריאה (פירוט):
                                                                         </h4>
+                                                                            <div className="flex gap-2 text-xs">
+                                                                                {notificationOpened > 0 && (
+                                                                                    <span className="text-blue-600">📱 {notificationOpened} פתחו התראה</span>
+                                                                                )}
+                                                                                {emailOpened > 0 && (
+                                                                                    <span className="text-purple-600">📧 {emailOpened} פתחו אימייל</span>
+                                                                                )}
+                                                                            </div>
+                                                                        </div>
                                                                         <div className="space-y-2 max-h-32 overflow-y-auto pr-2">
                                                                             {message.read_receipts
                                                                                 .sort((a, b) => new Date(b.read_timestamp || 0) - new Date(a.read_timestamp || 0))
                                                                                 .map((receipt, idx) => (
                                                                                 <div key={idx} className="flex items-center justify-between text-xs bg-gray-50 rounded p-2">
+                                                                                    <div className="flex-1">
                                                                                     <span className="font-medium">{receipt.user_name}</span>
+                                                                                        <div className="flex gap-2 mt-1">
+                                                                                            {receipt.notification_opened && (
+                                                                                                <span className="text-blue-600 text-xs">📱 פתח התראה</span>
+                                                                                            )}
+                                                                                            {receipt.email_opened && (
+                                                                                                <span className="text-purple-600 text-xs">📧 פתח אימייל</span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    </div>
                                                                                     <div className="flex items-center gap-2">
                                                                                         {receipt.is_read ? (
                                                                                             <>
@@ -557,6 +815,28 @@ export default function GroupMessaging({ groups }) {
                                     </div>
                                     <p className="text-2xl font-bold text-orange-800">
                                         {getReadStats(selectedMessage).unread}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 text-center">
+                                <div className="bg-blue-50 p-3 rounded-lg">
+                                    <div className="flex items-center justify-center gap-2 text-blue-600 mb-1">
+                                        <span className="text-xl">📱</span>
+                                        <span className="font-semibold">פתחו התראה</span>
+                                    </div>
+                                    <p className="text-2xl font-bold text-blue-800">
+                                        {getReadStats(selectedMessage).notificationOpened || 0}
+                                    </p>
+                                </div>
+
+                                <div className="bg-purple-50 p-3 rounded-lg">
+                                    <div className="flex items-center justify-center gap-2 text-purple-600 mb-1">
+                                        <span className="text-xl">📧</span>
+                                        <span className="font-semibold">פתחו אימייל</span>
+                                    </div>
+                                    <p className="text-2xl font-bold text-purple-800">
+                                        {getReadStats(selectedMessage).emailOpened || 0}
                                     </p>
                                 </div>
                             </div>

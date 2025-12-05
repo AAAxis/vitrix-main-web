@@ -136,7 +136,7 @@ const ExerciseCard = memo(({ exercise, partIndex, exerciseIndex, onSetChange, on
                             <CardTitle className="flex items-center gap-3 text-slate-800 flex-1 min-w-0">
                                 <Dumbbell className="w-6 h-6 text-blue-600 flex-shrink-0" />
                                 <span className="text-xl truncate">{exercise.name}</span>
-                            </CardTitle>
+                        </CardTitle>
                         </div>
                         {isExpanded ? <ChevronUp className="w-5 h-5 flex-shrink-0" /> : <ChevronDown className="w-5 h-5 flex-shrink-0" />}
                     </div>

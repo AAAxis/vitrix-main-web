@@ -241,6 +241,8 @@ export async function POST(request) {
       successCount,
       failureCount
     });
+    
+    console.log(`✅ ✅ ✅ EMAILS SENT: ${successCount} out of ${usersSnapshot.size} users in group "${groupName}"`);
 
     return NextResponse.json({
       success: true,

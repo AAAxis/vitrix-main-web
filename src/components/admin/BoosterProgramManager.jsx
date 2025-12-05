@@ -425,9 +425,9 @@ export default function BoosterProgramManager() {
                             {/* Booster Activation */}
                             <div className="space-y-4 p-4 border rounded-lg">
                                 <h4 className="font-semibold flex items-center gap-2"><ShieldCheck className="w-5 h-5 text-green-600"/>הפעלה / כיבוי תוכנית הבוסטר</h4>
-                                <div className="flex items-end gap-2">
-                                    <Button onClick={() => handleBoosterActivation(true)} className="bg-green-600 hover:bg-green-700">הפעל תוכנית</Button>
-                                    <Button variant="outline" onClick={() => handleBoosterActivation(false)} className="border-red-300 text-red-700 hover:bg-red-50">כבה תוכנית</Button>
+                                    <div className="flex items-end gap-2">
+                                        <Button onClick={() => handleBoosterActivation(true)} className="bg-green-600 hover:bg-green-700">הפעל תוכנית</Button>
+                                        <Button variant="outline" onClick={() => handleBoosterActivation(false)} className="border-red-300 text-red-700 hover:bg-red-50">כבה תוכנית</Button>
                                 </div>
                             </div>
 
