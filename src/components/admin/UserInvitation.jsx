@@ -291,11 +291,170 @@ export default function UserInvitation() {
         </CardContent>
       </Card>
 
+      {/* Mobile App Invite Link Generator */}
+      <Card className="muscle-glass border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            📱 קישור הזמנה לאפליקציה
+          </CardTitle>
+          <CardDescription>צור קישור הזמנה ישיר לאפליקציה הניידת שמדלג על בחירת מאמן</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <MobileInviteLinkGenerator coaches={coaches} isLoadingCoaches={isLoadingCoaches} />
+        </CardContent>
+      </Card>
+
       {/* The outline indicates to keep existing code for invitations list here,
           but the original file did not contain such a list.
           If a list of invitations is desired, it would be implemented here,
           using the 'invitations' state.
       */}
+    </div>
+  );
+}
+
+// Mobile Invite Link Generator Component
+function MobileInviteLinkGenerator({ coaches, isLoadingCoaches }) {
+  const [selectedCoach, setSelectedCoach] = useState(null);
+  const [isCoachPickerOpen, setIsCoachPickerOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+
+  const handleCoachSelect = (coach) => {
+    setSelectedCoach(coach);
+    setIsCoachPickerOpen(false);
+    setCopiedLink(false);
+  };
+
+  const generateMobileLink = () => {
+    if (!selectedCoach) return '';
+    
+    const params = new URLSearchParams({
+      coachEmail: selectedCoach.email,
+      coachName: selectedCoach.name,
+      ...(selectedCoach.phone && { coachPhone: selectedCoach.phone })
+    });
+    
+    return `muscleup://invite?${params.toString()}`;
+  };
+
+  const handleCopyLink = async () => {
+    const link = generateMobileLink();
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 3000);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
+    }
+  };
+
+  const mobileLink = generateMobileLink();
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <Label>בחר מאמן <span className="text-red-500">*</span></Label>
+        <Popover open={isCoachPickerOpen} onOpenChange={setIsCoachPickerOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              role="combobox"
+              aria-expanded={isCoachPickerOpen}
+              className="w-full justify-between"
+              disabled={isLoadingCoaches}
+            >
+              <span className="truncate">
+                {selectedCoach 
+                  ? `${selectedCoach.name} (${selectedCoach.email})`
+                  : isLoadingCoaches 
+                  ? "טוען מאמנים..." 
+                  : "בחר מאמן מהרשימה"}
+              </span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" dir="rtl">
+            <Command>
+              <CommandInput placeholder="חפש מאמן לפי שם או אימייל..." />
+              <CommandList>
+                <CommandEmpty>לא נמצא מאמן.</CommandEmpty>
+                <CommandGroup>
+                  {coaches.map((coach) => (
+                    <CommandItem
+                      key={coach.email}
+                      value={`${coach.name} ${coach.email}`}
+                      onSelect={() => handleCoachSelect(coach)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          selectedCoach?.email === coach.email ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      <div className="flex flex-col">
+                        <span className="font-medium">{coach.name}</span>
+                        <span className="text-xs text-slate-500">{coach.email}</span>
+                      </div>
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {selectedCoach && (
+        <>
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg space-y-3">
+            <div className="flex items-start gap-2">
+              <span className="text-2xl">📱</span>
+              <div className="flex-1">
+                <p className="font-semibold text-blue-900 mb-1">קישור לאפליקציה הניידת:</p>
+                <code className="block p-2 bg-white rounded text-xs break-all border border-blue-300 text-blue-800">
+                  {mobileLink}
+                </code>
+              </div>
+            </div>
+            
+            <Button 
+              onClick={handleCopyLink} 
+              className="w-full"
+              variant={copiedLink ? "outline" : "default"}
+            >
+              {copiedLink ? (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  הקישור הועתק!
+                </>
+              ) : (
+                <>
+                  📋 העתק קישור
+                </>
+              )}
+            </Button>
+          </div>
+
+          <div className="p-3 bg-slate-50 rounded-lg space-y-2 text-sm">
+            <p className="font-semibold text-slate-700">💡 איך זה עובד?</p>
+            <ul className="list-disc list-inside space-y-1 text-slate-600">
+              <li>שלח את הקישור למתאמן דרך WhatsApp, SMS או אימייל</li>
+              <li>כשהמתאמן לוחץ על הקישור, האפליקציה נפתחת</li>
+              <li>המאמן מוקצה אוטומטית - אין צורך לבחור מאמן!</li>
+              <li>המתאמן ממלא רק פרטים אישיים וחותם על חוזה</li>
+            </ul>
+          </div>
+
+          <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm">
+            <p className="font-semibold text-green-800 mb-1">✅ פרטי המאמן שיוקצו:</p>
+            <div className="space-y-1 text-green-700">
+              <p><strong>שם:</strong> {selectedCoach.name}</p>
+              <p><strong>אימייל:</strong> {selectedCoach.email}</p>
+              {selectedCoach.phone && <p><strong>טלפון:</strong> {selectedCoach.phone}</p>}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
