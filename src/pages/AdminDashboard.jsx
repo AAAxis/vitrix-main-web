@@ -35,6 +35,7 @@ import ControlCenter from '@/components/admin/ControlCenter';
 import ContractEditor from '@/components/admin/ContractEditor';
 import UserTracker from '@/components/admin/BoosterPlusManager'; // Changed BoosterPlusManager import to UserTracker
 import GroupNotifications from '@/components/admin/GroupNotifications';
+import FoodDatabase from '@/components/admin/FoodDatabase';
 
 // UI components for ContractEditor dialog (Dialog, DialogContent, etc. are no longer used for ContractEditor)
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -97,11 +98,11 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
         navigate('/admindashboard/control-center', { replace: true });
         return;
       }
-      
+
       if (urlTab !== internalActiveTab) {
         setInternalActiveTab(urlTab);
       }
-      
+
       // Update sub-tabs based on URL - ignore null/undefined subTab values
       if (urlSubTab && urlSubTab !== 'null' && urlSubTab !== 'undefined') {
         switch (urlTab) {
@@ -171,16 +172,16 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
       console.warn('AdminDashboard: Invalid tab value:', newTab);
       return;
     }
-    
+
     setInternalActiveTab(newTab);
-    
+
     // Update URL when tab changes - ensure subTab is valid and not null/undefined
     if (subTab && subTab !== 'null' && subTab !== 'undefined') {
       navigate(`/admindashboard/${newTab}/${subTab}`, { replace: true });
     } else {
       navigate(`/admindashboard/${newTab}`, { replace: true });
     }
-    
+
     if (externalSetActiveTab) {
       externalSetActiveTab(newTab);
     }
@@ -240,7 +241,7 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
           setWorkoutCreatorTab('send-workout');
           defaultSubTab = 'send-workout';
         }
-        
+
         // Update URL with default sub-tab if applicable
         if (defaultSubTab) {
           navigate(`/admindashboard/${newTab}/${defaultSubTab}`, { replace: true });
@@ -265,9 +266,9 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
       } catch (error) {
         console.error('AdminDashboard: Error loading user:', error);
         // If it's a session error, don't set user to null - let InterfaceRouter handle it
-        if (error.message?.includes("Session expired") || 
-            error.message?.includes("400") ||
-            error.code === 'auth/invalid-user-token') {
+        if (error.message?.includes("Session expired") ||
+          error.message?.includes("400") ||
+          error.code === 'auth/invalid-user-token') {
           console.warn('AdminDashboard: Session expired, will be handled by InterfaceRouter');
         }
         setUser(null);
@@ -296,9 +297,9 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
     // The logic is now entirely self-contained in UserSettingsManager.
     // We just pass the props.
     return <UserSettingsManager
-                   key={userSettingsProps.initialUserEmail || 'default-user-settings'}
-                   {...userSettingsProps}
-               />;
+      key={userSettingsProps.initialUserEmail || 'default-user-settings'}
+      {...userSettingsProps}
+    />;
   }, [userSettingsProps]);
 
   const memoizedGroupManagement = useMemo(() => <GroupManagement />, []);
@@ -388,6 +389,13 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
       icon: "✍️",
       description: "ניהול ועדכון חוזים אישיים",
       color: "from-purple-500 to-indigo-600"
+    },
+    {
+      value: "food-database",
+      title: "מאגר מזונות",
+      icon: "🍎",
+      description: "ניהול בסיס נתונים של מזונות וערכים תזונתיים",
+      color: "from-green-500 to-emerald-600"
     }
   ];
 
@@ -398,7 +406,7 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
       console.warn('AdminDashboard: Invalid subTab value:', subTab);
       return;
     }
-    
+
     switch (mainTab) {
       case 'user-management':
         setUserManagementTab(subTab);
@@ -520,15 +528,16 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
 
   const ProgramsSettingsTab = () => {
     const renderSubComponent = (tab) => {
-        switch (tab) {
-            case 'user-settings': return <UserSettingsManager {...userSettingsProps} />;
-            case 'booster': return <BoosterProgramManager />;
-            case 'weekly-tasks': return <WeeklyTaskManager />;
-            case 'menu-management': return <MenuManagement />;
-            case 'contract-editor': return <ContractEditor />;
-            case 'booster-plus': return <UserTracker />; // Now renders UserTracker (which is BoosterPlusManager)
-            default: return null;
-        }
+      switch (tab) {
+        case 'user-settings': return <UserSettingsManager {...userSettingsProps} />;
+        case 'booster': return <BoosterProgramManager />;
+        case 'weekly-tasks': return <WeeklyTaskManager />;
+        case 'menu-management': return <MenuManagement />;
+        case 'contract-editor': return <ContractEditor />;
+        case 'booster-plus': return <UserTracker />; // Now renders UserTracker (which is BoosterPlusManager)
+        case 'food-database': return <FoodDatabase />;
+        default: return null;
+      }
     };
 
     return (
@@ -550,11 +559,10 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
                 className="w-full"
               >
                 <Card
-                  className={`transition-all duration-300 w-full overflow-hidden ${
-                    isExpanded
+                  className={`transition-all duration-300 w-full overflow-hidden ${isExpanded
                       ? 'ring-2 ring-blue-500 shadow-xl'
                       : 'hover:shadow-md'
-                  }`}
+                    }`}
                 >
                   <motion.div
                     layout="position"

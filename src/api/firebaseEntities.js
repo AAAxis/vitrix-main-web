@@ -1,14 +1,14 @@
-import { 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
   limit,
   Timestamp,
   writeBatch
@@ -20,7 +20,7 @@ const convertFirestoreData = (doc) => {
   if (!doc.exists()) return null;
   const data = doc.data();
   const id = doc.id;
-  
+
   // Convert Firestore Timestamps to ISO strings recursively
   const convertValue = (value) => {
     if (value instanceof Timestamp) {
@@ -36,12 +36,12 @@ const convertFirestoreData = (doc) => {
     }
     return value;
   };
-  
+
   const converted = { id };
   Object.keys(data).forEach(key => {
     converted[key] = convertValue(data[key]);
   });
-  
+
   return converted;
 };
 
@@ -82,14 +82,14 @@ class FirebaseEntity {
     try {
       const batch = writeBatch(db);
       const results = [];
-      
+
       dataArray.forEach((data) => {
         const convertedData = this.convertToFirestore(data);
         const docRef = doc(this.collectionRef);
         batch.set(docRef, convertedData);
         results.push({ id: docRef.id, ...data });
       });
-      
+
       await batch.commit();
       return results;
     } catch (error) {
@@ -127,18 +127,18 @@ class FirebaseEntity {
   async list(orderByField = null, orderDirection = 'asc', limitCount = null) {
     try {
       let q = query(this.collectionRef);
-      
+
       if (orderByField) {
         // Handle descending order (prefix with -)
         const direction = orderByField.startsWith('-') ? 'desc' : 'asc';
         const field = orderByField.startsWith('-') ? orderByField.slice(1) : orderByField;
         q = query(q, orderBy(field, direction));
       }
-      
+
       if (limitCount) {
         q = query(q, limit(limitCount));
       }
-      
+
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => convertFirestoreData(doc));
     } catch (error) {
@@ -151,24 +151,24 @@ class FirebaseEntity {
   async filter(filters = {}, orderByField = null, limitCount = null) {
     try {
       let q = query(this.collectionRef);
-      
+
       // Apply filters
       Object.keys(filters).forEach(key => {
         q = query(q, where(key, '==', filters[key]));
       });
-      
+
       // Apply ordering
       if (orderByField) {
         const direction = orderByField.startsWith('-') ? 'desc' : 'asc';
         const field = orderByField.startsWith('-') ? orderByField.slice(1) : orderByField;
         q = query(q, orderBy(field, direction));
       }
-      
+
       // Apply limit
       if (limitCount) {
         q = query(q, limit(limitCount));
       }
-      
+
       const querySnapshot = await getDocs(q);
       return querySnapshot.docs.map(doc => convertFirestoreData(doc));
     } catch (error) {
@@ -182,15 +182,15 @@ class FirebaseEntity {
     if (!data || typeof data !== 'object') {
       return data;
     }
-    
+
     if (Array.isArray(data)) {
       return data.map(item => this.convertToFirestore(item));
     }
-    
+
     const converted = { ...data };
     Object.keys(converted).forEach(key => {
       const value = converted[key];
-      
+
       // Convert ISO date strings to Firestore Timestamps
       if (typeof value === 'string' && this.isISODateString(value)) {
         converted[key] = Timestamp.fromDate(new Date(value));
@@ -250,4 +250,7 @@ export const TerminationFeedback = new FirebaseEntity('terminationFeedbacks');
 export const BoosterPlusTaskTemplate = new FirebaseEntity('boosterPlusTaskTemplates');
 export const BoosterPlusTask = new FirebaseEntity('boosterPlusTasks');
 export const WeeklyTaskTemplate = new FirebaseEntity('weeklyTaskTemplates');
+export const FoodItem = new FirebaseEntity('foodItems');
+export const UserMeal = new FirebaseEntity('userMeals');
+
 

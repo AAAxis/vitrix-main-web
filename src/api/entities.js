@@ -34,6 +34,8 @@ export {
   GeneratedReport,
   EventParticipation,
   MealTemplate,
+  FoodItem,
+  UserMeal,
   AdminMessage,
   ContractContent,
   TerminationFeedback,

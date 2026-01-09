@@ -12,25 +12,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { UploadFile } from '@/api/integrations';
 import { Separator } from '@/components/ui/separator';
 import {
-  User as UserIcon,
-  Calendar,
-  Weight,
-  TrendingUp,
-  Clock,
-  Mail,
-  Phone,
-  X,
-  Bell,
-  Dumbbell,
-  Target,
-  Edit,
-  Ruler,
-  Camera,
-  Save,
-  Loader2,
-  MessageSquare,
-  PersonStanding,
-  LogOut
+    User as UserIcon,
+    Calendar,
+    Weight,
+    TrendingUp,
+    Clock,
+    Mail,
+    Phone,
+    X,
+    Bell,
+    Dumbbell,
+    Target,
+    Edit,
+    Ruler,
+    Camera,
+    Save,
+    Loader2,
+    MessageSquare,
+    PersonStanding,
+    LogOut
 } from 'lucide-react';
 import { formatDate, formatDetailedDateTime, getRelativeTime, formatCurrentTime, formatFullDateDisplay } from '@/components/utils/timeUtils';
 import { format, parseISO, isWithinInterval, startOfToday, subDays } from 'date-fns';
@@ -46,25 +46,25 @@ import UserStats from '@/components/home/UserStats';
 import RecentActivity from '@/components/home/RecentActivity';
 
 const motivationMessages = {
-  male: [
-    "אתה מראה מחויבות אמיתית!",
-    "תותח – עוד שלב לעבר היעד שלך!",
-    "המשמעת שלך מרשימה, תמשיך כך!",
-    "הגוף שלך מודה לך על ההשקעה!",
-  ],
-  female: [
-    "את מדהימה – ההתמדה משתלמת!",
-    "איזה כוח רצון! כל הכבוד!",
-    "את מוכיחה לעצמך כל יום מחדש!",
-    "המאמץ שלך שווה זהב!",
-  ],
+    male: [
+        "אתה מראה מחויבות אמיתית!",
+        "תותח – עוד שלב לעבר היעד שלך!",
+        "המשמעת שלך מרשימה, תמשיך כך!",
+        "הגוף שלך מודה לך על ההשקעה!",
+    ],
+    female: [
+        "את מדהימה – ההתמדה משתלמת!",
+        "איזה כוח רצון! כל הכבוד!",
+        "את מוכיחה לעצמך כל יום מחדש!",
+        "המאמץ שלך שווה זהב!",
+    ],
 };
 
 function getRandomMotivationMessage(gender = "male") {
-  const genderKey = gender?.toLowerCase() === 'female' ? 'female' : 'male';
-  const list = motivationMessages[genderKey];
-  const index = Math.floor(Math.random() * list.length);
-  return list[index];
+    const genderKey = gender?.toLowerCase() === 'female' ? 'female' : 'male';
+    const list = motivationMessages[genderKey];
+    const index = Math.floor(Math.random() * list.length);
+    return list[index];
 }
 
 // --- Helper Components defined at file scope for stability ---
@@ -86,7 +86,7 @@ const DetailItem = React.memo(({ icon: Icon, label, value, additionalInfo }) => 
 
 const ReadOnlyProfileView = React.memo(({ user, calculateAge, safeFormatDate }) => (
     <>
-        <DetailItem icon={UserIcon} label="שם מלא" value={user?.name} />
+
         <DetailItem icon={Mail} label="אימייל" value={user?.email} />
         <DetailItem icon={PersonStanding} label="מין" value={user?.gender === 'male' ? 'גבר' : user?.gender === 'female' ? 'אישה' : 'לא הוגדר'} />
         <DetailItem
@@ -200,7 +200,7 @@ export default function HomePage() {
         try {
             const currentUser = await User.me();
             setUser(currentUser);
-            
+
             // Load coach data if coach_email exists
             if (currentUser?.coach_email) {
                 try {
@@ -273,7 +273,7 @@ export default function HomePage() {
             setProfileImageFile(null); // Clear preview if no file selected (e.g., user cancels)
             return;
         }
-        
+
         setProfileImageFile(file); // Set file for immediate preview
 
         setIsUploadingImage(true);
@@ -374,7 +374,7 @@ export default function HomePage() {
             </div>
         );
     }
-    
+
     if (networkError) {
         return <NetworkErrorDisplay onRetry={loadUserData} />;
     }
@@ -417,16 +417,16 @@ export default function HomePage() {
                 )}
             </AnimatePresence>
 
-            <motion.button 
-                initial={{ opacity: 0, scale: 0.8 }} 
-                animate={{ opacity: 1, scale: 1 }} 
-                whileHover={{ scale: 1.05 }} 
-                whileTap={{ scale: 0.95 }} 
-                onClick={() => setIsProfileModalOpen(true)} 
+            <motion.button
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setIsProfileModalOpen(true)}
                 className="fixed top-4 left-4 z-50 w-12 h-12 rounded-full bg-white shadow-lg border-2 border-green-200 flex items-center justify-center hover:shadow-xl transition-all duration-300"
             >
-                {user?.profile_image_url ? 
-                    <img src={user.profile_image_url} alt="Profile" className="w-full h-full rounded-full object-cover" /> : 
+                {user?.profile_image_url ?
+                    <img src={user.profile_image_url} alt="Profile" className="w-full h-full rounded-full object-cover" /> :
                     <UserIcon className="w-6 h-6 text-green-600" />
                 }
             </motion.button>
@@ -434,7 +434,7 @@ export default function HomePage() {
             <div className="max-w-4xl mx-auto p-4 space-y-6" dir="rtl">
                 {/* Header */}
                 <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-6" dir="rtl">
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600 bg-clip-text text-transparent">שלום, {user?.name || 'מתאמן'} 👋</h1>
+
                     <p className="text-slate-600 mt-3 text-lg">ברוך הבא לפלטפורמת האימונים המתקדמת שלך</p>
                 </motion.div>
 
@@ -468,7 +468,7 @@ export default function HomePage() {
                     <div className="space-y-6">
                         {/* Quick Actions */}
                         <QuickActions />
-                        
+
                         {/* User Stats */}
                         <UserStats user={user} latestWeight={latestWeight} />
                     </div>
@@ -504,7 +504,7 @@ export default function HomePage() {
                                         className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
                                     />
                                     <label htmlFor="profile-upload" className="absolute -bottom-1 -right-1 w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-emerald-600 transition-colors shadow-md">
-                                        {isUploadingImage ? <Loader2 className="w-5 h-5 text-white animate-spin"/> : <Camera className="w-5 h-5 text-white" />}
+                                        {isUploadingImage ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Camera className="w-5 h-5 text-white" />}
                                         <input id="profile-upload" type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isUploadingImage || isSavingProfile} />
                                     </label>
                                 </div>
@@ -529,7 +529,7 @@ export default function HomePage() {
                         </div>
                         {isEditingProfile && (
                             <Button onClick={handleSaveProfile} disabled={isSavingProfile || isUploadingImage || !editForm.gender || !editForm.name.trim()} className="w-full">
-                                {isSavingProfile ? <><Loader2 className="w-4 h-4 ml-2 animate-spin"/>שומר...</> : <><Save className="w-4 h-4 ml-2"/>שמור שינויים</>}
+                                {isSavingProfile ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" />שומר...</> : <><Save className="w-4 h-4 ml-2" />שמור שינויים</>}
                             </Button>
                         )}
                         <Separator />
@@ -559,22 +559,22 @@ export default function HomePage() {
                                 {user?.coach_phone && <DetailItem icon={Phone} label="טלפון מאמן" value={user.coach_phone} />}
                             </div>
                         </div>
-                        
+
                         <Separator />
-                        
+
                         {/* Logout Section */}
                         <div>
                             <h3 className="text-lg font-semibold text-slate-800 mb-3">הגדרות חשבון</h3>
-                            <Button 
+                            <Button
                                 onClick={handleLogout}
-                                variant="outline" 
+                                variant="outline"
                                 className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
                             >
                                 <LogOut className="w-4 h-4 ml-2" />
                                 התנתק מהמערכת
                             </Button>
                         </div>
-                        
+
                         <Button onClick={() => handleModalClose(false)} className="w-full muscle-primary-gradient text-white" disabled={isSavingProfile || isUploadingImage}>סגור</Button>
                     </div>
                 </DrawerContent>

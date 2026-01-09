@@ -29,6 +29,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { SafeDataBoundary } from '../common/SafeDataHandler';
 import { formatDateTime, getRelativeTime, formatDate, formatTime, getCurrentDateString, getCurrentISOString, formatTimestampForEmail } from "@/components/utils/timeUtils";
 import CoachMenuDisplay from "@/components/nutrition/CoachMenuDisplay";
+import MealPlanner from "@/components/nutrition/MealPlanner";
 
 const mealTypeOptions = ["ארוחת בוקר", "ארוחת ביניים", "ארוחת צהריים", "ארוחת ערב", "חטיף", "אחר"];
 
@@ -705,11 +706,16 @@ export default function CalorieTracker({ user: initialUser, calorieEntries: init
                         )}
 
                         {/* AI Food Analysis Form */}
-                        <Tabs defaultValue="add" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 bg-slate-100 p-1 rounded-lg">
+                        <Tabs defaultValue="planner" className="w-full">
+                            <TabsList className="grid w-full grid-cols-3 bg-slate-100 p-1 rounded-lg">
+                                <TabsTrigger value="planner" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-400 data-[state=active]:to-blue-400 data-[state=active]:text-white data-[state=active]:shadow-md">תכנון תפריט</TabsTrigger>
                                 <TabsTrigger value="add" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-400 data-[state=active]:to-yellow-400 data-[state=active]:text-white data-[state=active]:shadow-md">הוספת ארוחה</TabsTrigger>
                                 <TabsTrigger value="templates" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-orange-400 data-[state=active]:to-yellow-400 data-[state=active]:text-white data-[state=active]:shadow-md">תבניות שמורות</TabsTrigger>
                             </TabsList>
+
+                            <TabsContent value="planner" className="mt-4">
+                                <MealPlanner user={user} onUpdateMeals={onUpdateEntries} />
+                            </TabsContent>
 
                             <TabsContent value="add" className="mt-4">
                                 <div className="mb-6 p-3 sm:p-4 bg-gradient-to-r from-orange-50 to-yellow-50 rounded-lg border border-orange-200">
@@ -1040,7 +1046,7 @@ export default function CalorieTracker({ user: initialUser, calorieEntries: init
                                             <Card key={template.id} className="p-4 bg-white shadow-sm border border-slate-100 flex flex-col justify-between">
                                                 <div>
                                                     <p className="font-semibold text-slate-800 flex items-center gap-2 mb-1">
-                                                        <Star className="w-5 h-5 text-yellow-500 flex-shrink-0"/>{template.template_name}
+                                                        <Star className="w-5 h-5 text-yellow-500 flex-shrink-0" />{template.template_name}
                                                     </p>
                                                     <p className="text-sm text-slate-600 line-clamp-2">{template.meal_description}</p>
                                                     <div className="text-xs text-slate-500 mt-2">
@@ -1052,10 +1058,10 @@ export default function CalorieTracker({ user: initialUser, calorieEntries: init
                                                 </div>
                                                 <div className="flex gap-2 mt-4 justify-end">
                                                     <Button size="sm" onClick={() => handleUseTemplate(template)} className="flex-1 sm:flex-none">
-                                                        <PlusCircle className="w-4 h-4 ml-1"/> השתמש
+                                                        <PlusCircle className="w-4 h-4 ml-1" /> השתמש
                                                     </Button>
                                                     <Button size="sm" variant="ghost" onClick={() => handleDeleteTemplate(template.id)} className="flex-1 sm:flex-none text-red-500 hover:bg-red-50">
-                                                        <Trash2 className="w-4 h-4"/> מחק
+                                                        <Trash2 className="w-4 h-4" /> מחק
                                                     </Button>
                                                 </div>
                                             </Card>

@@ -13,7 +13,7 @@ async function initializeAdmin() {
 
   try {
     let credential;
-    
+
     // Try to use environment variables first (production)
     if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
       credential = admin.credential.cert({
@@ -22,7 +22,7 @@ async function initializeAdmin() {
         privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
       });
       console.log('✅ Firebase Admin SDK initialized with environment variables');
-    } 
+    }
     // Fallback to service account file (development only - won't work on Vercel)
     else {
       try {
@@ -85,9 +85,9 @@ export default async function handler(req, res) {
 
   try {
     const requestBody = req.body;
-    const { 
-      title, 
-      body: messageBody, 
+    const {
+      title,
+      body: messageBody,
       tokens = [], // Array of FCM tokens
       topic, // Optional: send to topic instead of specific tokens
       data = {}, // Custom data payload
@@ -108,51 +108,37 @@ export default async function handler(req, res) {
     // Validation
     if (!title || !messageBody) {
       console.error('❌ Validation failed: Title and body are required');
-      res.status(400).json({ 
-        error: 'Title and body are required' 
+      res.status(400).json({
+        error: 'Title and body are required'
       });
       return;
     }
 
     if (!tokens.length && !topic) {
       console.error('❌ Validation failed: Either tokens or topic is required');
-      res.status(400).json({ 
-        error: 'Either tokens or topic is required' 
+      res.status(400).json({
+        error: 'Either tokens or topic is required'
       });
       return;
     }
 
-    // Build notification payload (exact format from admin-app)
+    // Build notification payload for Firebase Cloud Messaging V1 API
+    // V1 API only supports: notification, data, token/topic at root level
+    // Platform-specific options (android/apns) are NOT supported in V1 API
     const message = {
       notification: {
         title,
         body: messageBody,
-        ...(imageUrl && { imageUrl })
+        ...(imageUrl && { image: imageUrl }) // V1 API uses 'image' not 'imageUrl'
       },
       data: {
         ...data,
         timestamp: Date.now().toString(),
-        source: 'dashboard'
-      },
-      android: {
-        priority: 'high',
-        notification: {
-          channelId: 'vitrix_notifications',
-          sound: 'default',
-          clickAction: 'FLUTTER_NOTIFICATION_CLICK'
-        }
-      },
-      apns: {
-        payload: {
-          aps: {
-            alert: {
-              title,
-              body: messageBody
-            },
-            sound: 'default',
-            badge: 1
-          }
-        }
+        source: 'dashboard',
+        // Include notification data for custom handling in app
+        notificationTitle: title,
+        notificationBody: messageBody,
+        ...(imageUrl && { imageUrl })
       }
     };
 
@@ -160,9 +146,9 @@ export default async function handler(req, res) {
 
     // Try Firebase Admin SDK first, then FCM REST API as fallback
     const FCM_SERVER_KEY = process.env.FCM_SERVER_KEY || process.env.NEXT_PUBLIC_FIREBASE_SERVER_KEY;
-    
+
     let response;
-    
+
     if (admin.apps.length) {
       // Use Firebase Admin SDK (V1 API - Recommended)
       console.log('📱 Using Firebase Admin SDK (V1 API)');
@@ -177,7 +163,7 @@ export default async function handler(req, res) {
       } else {
         // Send to specific tokens using V1 API
         console.log('📱 Sending to', tokens.length, 'tokens using V1 API...');
-        
+
         const results = [];
         let successCount = 0;
         let failureCount = 0;
@@ -187,12 +173,12 @@ export default async function handler(req, res) {
           const token = tokens[i];
           try {
             console.log(`📤 Sending to token ${i + 1}/${tokens.length}:`, token.substring(0, 20) + '...');
-            
+
             const individualMessage = {
               ...message,
               token: token
             };
-            
+
             const result = await messaging.send(individualMessage);
             results.push({ success: true, messageId: result });
             successCount++;
@@ -218,7 +204,7 @@ export default async function handler(req, res) {
         // Send to topic using FCM REST API
         message.to = `/topics/${topic}`;
         console.log('📡 Sending to topic via REST API:', topic);
-        
+
         const fcmResponse = await fetch('https://fcm.googleapis.com/fcm/send', {
           method: 'POST',
           headers: {
@@ -229,7 +215,7 @@ export default async function handler(req, res) {
         });
 
         const fcmResult = await fcmResponse.json();
-        
+
         if (fcmResponse.ok) {
           console.log('✅ FCM notification sent to topic:', topic, 'Response:', fcmResult);
           response = { success: true, messageId: fcmResult.message_id };
@@ -240,12 +226,12 @@ export default async function handler(req, res) {
       } else {
         // Send to specific tokens using FCM REST API
         console.log('📱 Sending to', tokens.length, 'tokens via REST API...');
-        
+
         const fcmMessage = {
           ...message,
           registration_ids: tokens
         };
-        
+
         const fcmResponse = await fetch('https://fcm.googleapis.com/fcm/send', {
           method: 'POST',
           headers: {
@@ -256,7 +242,7 @@ export default async function handler(req, res) {
         });
 
         const fcmResult = await fcmResponse.json();
-        
+
         if (fcmResponse.ok) {
           console.log('✅ FCM notifications sent:', fcmResult);
           response = {
@@ -297,22 +283,22 @@ export default async function handler(req, res) {
     // Hardcoded fallback values for projectId and templateId
     const roamjetProjectId = projectId || process.env.ROAMJET_PROJECT_ID || 'eZl22S3z7Pl0oGA01qyH';
     const roamjetTemplateId = templateId || process.env.ROAMJET_TEMPLATE_ID || 'lbbVwGT1BLMw87C3oHbI';
-    
+
     let emailResults = [];
-    
+
     if (roamjetProjectId && roamjetTemplateId && admin.apps.length) {
       try {
         console.log('📧 Fetching user emails for email notifications...');
         const db = admin.firestore();
-        
+
         // Get unique userIds from FCM tokens
         const userIds = new Set();
-        
+
         if (tokens.length > 0) {
           // Query fcm_tokens collection to get userIds for the tokens
           const fcmTokensRef = db.collection('fcm_tokens');
           const tokenQueries = [];
-          
+
           // Batch queries (Firestore 'in' query limit is 10)
           for (let i = 0; i < tokens.length; i += 10) {
             const tokenBatch = tokens.slice(i, i + 10);
@@ -320,7 +306,7 @@ export default async function handler(req, res) {
               fcmTokensRef.where('token', 'in', tokenBatch).get()
             );
           }
-          
+
           const tokenSnapshots = await Promise.all(tokenQueries);
           tokenSnapshots.forEach(snapshot => {
             snapshot.forEach(doc => {
@@ -335,15 +321,15 @@ export default async function handler(req, res) {
           // Skip email sending for topics unless email is explicitly provided
           console.log('⚠️ Topic-based notifications: skipping automatic email sending');
         }
-        
+
         // If explicit email provided, use it
         if (email) {
           userIds.clear(); // Clear userIds if explicit email is provided
         }
-        
+
         // Fetch user emails from users collection
         const userEmails = [];
-        
+
         if (email) {
           // Use explicit email if provided
           userEmails.push(email);
@@ -351,12 +337,12 @@ export default async function handler(req, res) {
           // Fetch emails for all userIds
           const usersRef = db.collection('users');
           const userIdArray = Array.from(userIds);
-          
+
           // Fetch each user document by ID
-          const userDocPromises = userIdArray.map(userId => 
+          const userDocPromises = userIdArray.map(userId =>
             usersRef.doc(userId).get()
           );
-          
+
           const userDocs = await Promise.all(userDocPromises);
           userDocs.forEach(doc => {
             if (doc.exists) {
@@ -372,12 +358,12 @@ export default async function handler(req, res) {
             }
           });
         }
-        
+
         // Remove duplicates
         const uniqueEmails = [...new Set(userEmails)];
-        
+
         console.log(`📧 Sending emails to ${uniqueEmails.length} users via Roamjet API...`);
-        
+
         // Send email to each user
         for (const userEmail of uniqueEmails) {
           try {
@@ -396,7 +382,7 @@ export default async function handler(req, res) {
             });
 
             const emailRes = await roamjetRes.json();
-            
+
             if (roamjetRes.ok) {
               console.log(`✅ Email sent to ${userEmail}:`, emailRes);
               emailResults.push({
@@ -421,7 +407,7 @@ export default async function handler(req, res) {
             });
           }
         }
-        
+
         console.log(`📊 Email sending complete: ${emailResults.filter(r => r.success).length}/${emailResults.length} successful`);
       } catch (emailError) {
         console.error('❌ Error fetching user emails or sending emails:', emailError);
