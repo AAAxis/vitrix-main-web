@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { CalorieTracking, User, MealTemplate } from '@/api/entities';
 import { UploadFile, InvokeLLM } from '@/api/integrations';
+import { analyzeFoodImage } from '@/api/functions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -242,24 +243,74 @@ export default function CalorieTracker({ user: initialUser, calorieEntries: init
     };
 
     const handleAnalyzeMeal = async () => {
-        if (!newMeal.meal_description?.trim()) {
-            setError('יש להזין תיאור ארוחה לפני ניתוח AI.');
+        // Allow analysis with either image OR description
+        const hasImage = mealImageFile || newMeal.meal_image;
+        const hasDescription = newMeal.meal_description?.trim();
+        
+        if (!hasImage && !hasDescription) {
+            setError('יש להזין תיאור ארוחה או להעלות תמונה לפני ניתוח AI.');
             return;
         }
+        
         setIsAnalyzing(true);
         setError('');
         setSuccessMessage('');
         setAnalysisResult(null);
 
         try {
-            // Handle image upload separately for documentation only
+            // Handle image upload
             let imageUrlForDocumentation = newMeal.meal_image;
             if (mealImageFile) {
                 const { file_url } = await UploadFile({ file: mealImageFile });
                 imageUrlForDocumentation = file_url;
             }
 
-            const userDescription = newMeal.meal_description.trim();
+            let llmAnalysisResult;
+
+            // If we have an image, use the image analysis function
+            if (imageUrlForDocumentation) {
+                try {
+                    console.log('🔍 Analyzing food image...');
+                    const imageAnalysisResult = await analyzeFoodImage(imageUrlForDocumentation);
+                    
+                    // Convert the image analysis result to match the expected format
+                    llmAnalysisResult = {
+                        analysis_description: imageAnalysisResult.description || '',
+                        detailed_breakdown: [{
+                            food_item: 'מזון מזוהה בתמונה',
+                            quantity: 'כמות משוערת',
+                            calories_per_unit: imageAnalysisResult.calories || 0,
+                            total_calories: imageAnalysisResult.calories || 0,
+                            protein: imageAnalysisResult.protein || 0,
+                            carbs: imageAnalysisResult.carbs || 0,
+                            fat: imageAnalysisResult.fat || 0
+                        }],
+                        calories: imageAnalysisResult.calories || 0,
+                        protein: imageAnalysisResult.protein || 0,
+                        carbs: imageAnalysisResult.carbs || 0,
+                        fat: imageAnalysisResult.fat || 0,
+                        confidence_level: imageAnalysisResult.confidence || 'בינוני',
+                        limitations: imageAnalysisResult.cons?.length > 0 
+                            ? `חסרונות: ${imageAnalysisResult.cons.join(', ')}` 
+                            : 'ניתוח מבוסס על תמונה בלבד',
+                        pros: imageAnalysisResult.pros || [],
+                        cons: imageAnalysisResult.cons || []
+                    };
+                    
+                    console.log('✅ Image analysis completed');
+                } catch (imageError) {
+                    console.error('Image analysis failed, falling back to text analysis:', imageError);
+                    // Fall back to text-based analysis if image analysis fails
+                    if (!hasDescription) {
+                        throw new Error('ניתוח התמונה נכשל ואין תיאור טקסטואלי. אנא נסה שוב או הזן תיאור.');
+                    }
+                    // Continue to text-based analysis below
+                }
+            }
+
+            // If we don't have image analysis result, use text-based analysis
+            if (!llmAnalysisResult && hasDescription) {
+                const userDescription = newMeal.meal_description.trim();
 
             const prompt = `אתה מומחה תזונה מוסמך עם ניסיון של 15 שנה בניתוח ארוחות. יש לך גישה למידע תזונתי עדכני מהאינטרנט. המשימה שלך היא לבצע ניתוח מקצועי ומדויק ככל האפשר של הארוחה על בסיס התיאור הטקסטואלי בלבד.
 
@@ -334,13 +385,14 @@ export default function CalorieTracker({ user: initialUser, calorieEntries: init
                 required: ["analysis_description", "detailed_breakdown", "calories", "protein", "carbs", "fat", "confidence_level", "limitations"]
             };
 
-            const llmAnalysisResult = await InvokeLLM({
-                prompt,
-                response_json_schema,
-                add_context_from_internet: true
-            });
+                llmAnalysisResult = await InvokeLLM({
+                    prompt,
+                    response_json_schema,
+                    add_context_from_internet: true
+                });
+            }
 
-            if (llmAnalysisResult && llmAnalysisResult.analysis_description) {
+            if (llmAnalysisResult && (llmAnalysisResult.analysis_description || llmAnalysisResult.description)) {
                 // Only update fields if AI provided meaningful data
                 const calories = llmAnalysisResult.calories && llmAnalysisResult.calories > 0 ? llmAnalysisResult.calories.toString() : '';
                 const protein = llmAnalysisResult.protein && llmAnalysisResult.protein > 0 ? llmAnalysisResult.protein.toString() : '';
@@ -359,11 +411,20 @@ export default function CalorieTracker({ user: initialUser, calorieEntries: init
 
                 setAnalysisResult(llmAnalysisResult); // Store the full structured result
 
+                // Show pros and cons if available (from image analysis)
+                let additionalInfo = '';
+                if (llmAnalysisResult.pros && llmAnalysisResult.pros.length > 0) {
+                    additionalInfo += `\nיתרונות: ${llmAnalysisResult.pros.join(', ')}`;
+                }
+                if (llmAnalysisResult.cons && llmAnalysisResult.cons.length > 0) {
+                    additionalInfo += `\nחסרונות: ${llmAnalysisResult.cons.join(', ')}`;
+                }
+
                 const confidenceMessage = llmAnalysisResult.confidence_level === 'גבוה' ?
-                    'ניתוח AI הושלם בהצלחה! הערכים התזונתיים עודכנו.' :
+                    `ניתוח AI הושלם בהצלחה! הערכים התזונתיים עודכנו.${additionalInfo}` :
                     llmAnalysisResult.confidence_level === 'בינוני' ?
-                        'ניתוח AI הושלם. אנא בדוק את הערכים ועדכן במידת הצורך.' :
-                        'ניתוח AI הושלם עם ודאות נמוכה. מומלץ לעדכן ידנית את הערכים.';
+                        `ניתוח AI הושלם. אנא בדוק את הערכים ועדכן במידת הצורך.${additionalInfo}` :
+                        `ניתוח AI הושלם עם ודאות נמוכה. מומלץ לעדכן ידנית את הערכים.${additionalInfo}`;
 
                 setSuccessMessage(confidenceMessage);
             } else {
@@ -801,19 +862,24 @@ export default function CalorieTracker({ user: initialUser, calorieEntries: init
                                         </div>
 
                                         <div className="space-y-1">
-                                            <Label htmlFor="meal_image_file" className="text-sm">תמונה של הארוחה (אופציונלי - לתיעוד בלבד)</Label>
+                                            <Label htmlFor="meal_image_file" className="text-sm">תמונה של הארוחה (אופציונלי)</Label>
                                             <Input id="meal_image_file" type="file" accept="image/*" onChange={handleFileChange} ref={fileInputRef} className="text-sm" />
                                             <p className="text-xs text-slate-500 mt-1 break-words">
-                                                📸 התמונה תשמר לתיעוד ותיראה למאמן שלך, אך הניתוח מתבסס על התיאור בלבד
+                                                📸 העלה תמונה לניתוח אוטומטי עם AI - זיהוי מזון, קלוריות, חלבונים, פחמימות ושומנים
                                             </p>
                                             {newMeal.meal_image && !mealImageFile && (
                                                 <p className="text-xs text-gray-500 mt-1 break-words">
                                                     תמונה קיימת: <a href={newMeal.meal_image} target="_blank" rel="noopener noreferrer" className="underline text-blue-600">צפה בתמונה</a>
                                                 </p>
                                             )}
+                                            {mealImageFile && (
+                                                <p className="text-xs text-green-600 mt-1 break-words">
+                                                    ✓ תמונה נבחרה: {mealImageFile.name}
+                                                </p>
+                                            )}
                                         </div>
 
-                                        {newMeal.meal_description?.trim() && (
+                                        {(newMeal.meal_description?.trim() || mealImageFile || newMeal.meal_image) && (
                                             <Button
                                                 type="button"
                                                 variant="outline"
@@ -829,7 +895,11 @@ export default function CalorieTracker({ user: initialUser, calorieEntries: init
                                                 ) : (
                                                     <>
                                                         <Zap className="mr-2 h-4 w-4 flex-shrink-0" />
-                                                        <span className="truncate">נתח ארוחה עם AI (מבוסס על התיאור)</span>
+                                                        <span className="truncate">
+                                                            {mealImageFile || newMeal.meal_image 
+                                                                ? 'נתח ארוחה עם AI (מבוסס על תמונה)' 
+                                                                : 'נתח ארוחה עם AI (מבוסס על תיאור)'}
+                                                        </span>
                                                     </>
                                                 )}
                                             </Button>

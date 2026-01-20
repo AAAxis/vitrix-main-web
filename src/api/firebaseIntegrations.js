@@ -137,7 +137,7 @@ export const SendFCMNotification = async ({ userId, userEmail, title, body, data
       throw new Error(`No FCM token found for user: ${userId || userEmail}`);
     }
 
-    // Send notification using Vercel function (exact pattern from admin-app)
+    // Send notification using API route
     const apiUrl = '/api/send-notification';
     
     const response = await fetch(apiUrl, {
@@ -523,66 +523,57 @@ const generateImageFrontend = async (prompt, options = {}) => {
   }
 };
 
-// Backend DALL-E generation (fallback service)
+// Backend DALL-E generation (Firebase Cloud Function)
 const generateImageBackend = async (prompt, options = {}) => {
-  // Use proxy endpoint if available (for CORS), otherwise use direct backend URL
-  // Check if we're in browser and should use proxy (Vercel serverless function)
-  const useProxy = typeof window !== 'undefined';
-  const dalleServiceUrl = useProxy 
-    ? '/api/proxy-image'  // Use Vercel serverless proxy (handles CORS)
-    : (import.meta.env.VITE_DALLE_SERVICE_URL || 'https://dalle.roamjet.net');
+  // Use Firebase Cloud Function instead of external DALL-E server
+  const { httpsCallable } = await import('firebase/functions');
+  const { functions } = await import('./firebaseConfig');
   
-  console.log('Generating image with backend DALL-E service:', { 
-    serviceUrl: dalleServiceUrl,
-    useProxy,
-    promptLength: prompt.length 
+  console.log('Generating image with Firebase Cloud Function:', { 
+    promptLength: prompt.length,
+    size: options.size || '1024x1024',
+    model: options.model || 'dall-e-3'
   });
   
-  // Use proxy endpoint (which adds /generate internally) or direct endpoint
-  const endpoint = useProxy ? dalleServiceUrl : `${dalleServiceUrl}/generate`;
-  
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      prompt,
+  try {
+    const generateImageFunction = httpsCallable(functions, 'generateImage');
+    
+    const result = await generateImageFunction({
+      prompt: prompt,
       size: options.size || '1024x1024',
-      model: options.model || 'dall-e-3'
-    })
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(`DALL-E service error: ${response.status} ${response.statusText}. ${errorData.error || errorData.details || ''}`);
+      model: options.model || 'dall-e-3',
+    });
+    
+    console.log('Firebase Function DALL-E response received:', { 
+      hasUrl: !!result.data?.url,
+      hasRevisedPrompt: !!result.data?.revised_prompt
+    });
+    
+    return {
+      url: result.data.url,
+      revised_prompt: result.data.revised_prompt || prompt
+    };
+  } catch (error) {
+    console.error('Firebase Function error:', error);
+    if (error.code === 'functions/not-found') {
+      throw new Error('generateImage function not found. Please deploy the Firebase Cloud Function first.');
+    }
+    if (error.code === 'functions/unauthenticated') {
+      throw new Error('You must be logged in to generate images.');
+    }
+    throw error;
   }
-
-  const data = await response.json();
-  console.log('Backend DALL-E response received:', { 
-    hasUrl: !!data.url,
-    hasRevisedPrompt: !!data.revised_prompt
-  });
-  
-  return {
-    url: data.url,
-    revised_prompt: data.revised_prompt || prompt
-  };
 };
 
-// Backend chat completion (fallback service)
+// Backend chat completion (Firebase Cloud Function)
 const invokeLLMBackend = async (prompt, options = {}, responseJsonSchema = null) => {
-  // Use proxy endpoint if available (for CORS), otherwise use direct backend URL
-  // Check if we're in browser and should use proxy (Vercel serverless function)
-  const useProxy = typeof window !== 'undefined';
-  const aiServiceUrl = useProxy 
-    ? '/api/proxy-ai'  // Use Vercel serverless proxy (handles CORS)
-    : (import.meta.env.VITE_DALLE_SERVICE_URL || 'https://dalle.roamjet.net');
+  // Use Firebase Cloud Function instead of external AI service
+  const { httpsCallable } = await import('firebase/functions');
+  const { functions } = await import('./firebaseConfig');
   
-  console.log('Generating chat completion with backend AI service:', { 
-    serviceUrl: aiServiceUrl,
-    useProxy,
-    promptLength: prompt.length 
+  console.log('Generating chat completion with Firebase Cloud Function:', { 
+    promptLength: prompt.length,
+    model: options.model || 'gpt-4o-mini'
   });
 
   // Prepare messages in OpenAI format
@@ -613,66 +604,65 @@ const invokeLLMBackend = async (prompt, options = {}, responseJsonSchema = null)
     };
   }
   
-  // Use proxy endpoint (which adds /chat internally) or direct endpoint
-  const endpoint = useProxy ? aiServiceUrl : `${aiServiceUrl}/chat`;
+  try {
+    const chatCompletionFunction = httpsCallable(functions, 'chatCompletion');
+    
+    const result = await chatCompletionFunction(requestBody);
+    
+    const data = result.data;
+    console.log('Firebase Function chat response received:', { 
+      hasChoices: !!data.choices,
+      choicesLength: data.choices?.length,
+      hasContent: !!data.choices?.[0]?.message?.content
+    });
   
-  const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(requestBody)
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(`AI service error: ${response.status} ${response.statusText}. ${errorData.error || errorData.details || ''}`);
-  }
-
-  const data = await response.json();
-  console.log('Backend chat response received:', { 
-    hasChoices: !!data.choices,
-    choicesLength: data.choices?.length,
-    hasContent: !!data.choices?.[0]?.message?.content
-  });
-  
-  // Extract the content from the response
-  const content = data.choices?.[0]?.message?.content;
-  
-  if (!content) {
-    console.error('No content in backend response:', data);
-    throw new Error('No content in backend chat response. Response structure: ' + JSON.stringify(data));
-  }
-
-  // If JSON schema was requested, parse the JSON response and return it directly
-  if (responseJsonSchema) {
-    try {
-      const parsedContent = JSON.parse(content);
-      console.log('Successfully parsed JSON response from backend');
-      // Return the parsed content directly (not wrapped) when JSON schema is requested
-      return parsedContent;
-    } catch (parseError) {
-      console.error('Failed to parse JSON response from backend:', parseError);
-      console.error('Raw content:', content);
-      
-      // Try to extract JSON from the response if it's wrapped in other text
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          const parsedContent = JSON.parse(jsonMatch[0]);
-          console.log('Successfully extracted and parsed JSON from backend response');
-          // Return the parsed content directly (not wrapped) when JSON schema is requested
-          return parsedContent;
-        } catch (extractError) {
-          console.error('Failed to parse extracted JSON from backend:', extractError);
-        }
-      }
-      
-      throw new Error(`Failed to parse JSON response from backend AI: ${parseError.message}. Response preview: ${content.substring(0, 500)}`);
+    // Extract the content from the response
+    const content = data.choices?.[0]?.message?.content;
+    
+    if (!content) {
+      console.error('No content in Firebase Function response:', data);
+      throw new Error('No content in Firebase Function chat response. Response structure: ' + JSON.stringify(data));
     }
-  }
 
-  return { content };
+    // If JSON schema was requested, parse the JSON response and return it directly
+    if (responseJsonSchema) {
+      try {
+        const parsedContent = JSON.parse(content);
+        console.log('Successfully parsed JSON response from Firebase Function');
+        // Return the parsed content directly (not wrapped) when JSON schema is requested
+        return parsedContent;
+      } catch (parseError) {
+        console.error('Failed to parse JSON response from Firebase Function:', parseError);
+        console.error('Raw content:', content);
+        
+        // Try to extract JSON from the response if it's wrapped in other text
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          try {
+            const parsedContent = JSON.parse(jsonMatch[0]);
+            console.log('Successfully extracted and parsed JSON from Firebase Function response');
+            // Return the parsed content directly (not wrapped) when JSON schema is requested
+            return parsedContent;
+          } catch (extractError) {
+            console.error('Failed to parse extracted JSON from Firebase Function:', extractError);
+          }
+        }
+        
+        throw new Error(`Failed to parse JSON response from Firebase Function AI: ${parseError.message}. Response preview: ${content.substring(0, 500)}`);
+      }
+    }
+
+    return { content };
+  } catch (error) {
+    console.error('Firebase Function error:', error);
+    if (error.code === 'functions/not-found') {
+      throw new Error('chatCompletion function not found. Please deploy the Firebase Cloud Function first.');
+    }
+    if (error.code === 'functions/unauthenticated') {
+      throw new Error('You must be logged in to use chat completion.');
+    }
+    throw error;
+  }
 };
 
 // Extract Data From Uploaded File - DEPRECATED: Cloud Function removed due to CORS issues
