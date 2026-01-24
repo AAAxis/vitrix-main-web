@@ -13,20 +13,35 @@ export function Toaster() {
 
   return (
     <ToastProvider>
-      {toasts.map(function ({ id, title, description, action, onOpenChange, ...props }) {
-        return (
-          <Toast key={id} {...props}>
-            <div className="grid gap-1">
-              {title && <ToastTitle>{title}</ToastTitle>}
-              {description && (
-                <ToastDescription>{description}</ToastDescription>
-              )}
-            </div>
-            {action}
-            <ToastClose onClick={() => dismiss(id)} />
-          </Toast>
-        );
-      })}
+      {toasts
+        .filter((toast) => toast.open !== false)
+        .map(function ({ id, title, description, action, onOpenChange, open, ...props }) {
+          const handleClose = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dismiss(id);
+            if (onOpenChange) {
+              onOpenChange(false);
+            }
+          };
+
+          return (
+            <Toast 
+              key={id} 
+              {...props}
+              data-state={open ? "open" : "closed"}
+            >
+              <div className="grid gap-1">
+                {title && <ToastTitle>{title}</ToastTitle>}
+                {description && (
+                  <ToastDescription>{description}</ToastDescription>
+                )}
+              </div>
+              {action}
+              <ToastClose onClick={handleClose} />
+            </Toast>
+          );
+        })}
       <ToastViewport />
     </ToastProvider>
   );

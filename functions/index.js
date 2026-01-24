@@ -21,6 +21,66 @@ setGlobalOptions({
 // Define secrets
 const openaiApiKey = defineSecret('OPENAI_API_KEY');
 
+// Helper function to check if token is an Expo Push Token
+function isExpoPushToken(token) {
+  return token && typeof token === 'string' && token.startsWith('ExponentPushToken[');
+}
+
+// Helper function to send Expo Push Notification
+async function sendExpoPushNotification(token, title, body, data = {}) {
+  const EXPO_PUSH_API_URL = 'https://exp.host/--/api/v2/push/send';
+  
+  const message = {
+    to: token,
+    sound: 'default',
+    title: title,
+    body: body,
+    data: data,
+    priority: 'high',
+    channelId: 'vitrix_notifications',
+  };
+
+  try {
+    const response = await fetch(EXPO_PUSH_API_URL, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Accept-Encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Expo API error: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    
+    console.log('📱 Expo Push API response:', JSON.stringify(result, null, 2));
+    
+    // Check if there are any errors in the response
+    if (result.data && result.data.status === 'error') {
+      const errorMsg = result.data.message || 'Expo push notification failed';
+      console.error('❌ Expo Push API error:', errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    // Check for errors array in response
+    if (result.errors && result.errors.length > 0) {
+      const errorMsg = result.errors.map(e => e.message || e).join(', ');
+      console.error('❌ Expo Push API errors:', errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    return { success: true, receiptId: result.data?.id };
+  } catch (error) {
+    console.error('Error sending Expo push notification:', error);
+    throw error;
+  }
+}
+
 // Export the sendFCMNotification function
 exports.sendFCMNotification = onCall(async (request) => {
   const {data, auth} = request;
@@ -94,8 +154,22 @@ exports.sendFCMNotification = onCall(async (request) => {
       );
     }
 
-    // Prepare notification payload
-    const message = {
+    // Separate tokens into FCM and Expo Push Tokens
+    const fcmTokensList = [];
+    const expoTokensList = [];
+
+    fcmTokens.forEach(token => {
+      if (isExpoPushToken(token)) {
+        expoTokensList.push(token);
+      } else {
+        fcmTokensList.push(token);
+      }
+    });
+
+    console.log(`📱 Found ${fcmTokensList.length} FCM tokens and ${expoTokensList.length} Expo tokens`);
+
+    // Prepare FCM notification payload (for Flutter)
+    const fcmMessage = {
       notification: {
         title: title,
         body: body,
@@ -128,38 +202,84 @@ exports.sendFCMNotification = onCall(async (request) => {
       },
     };
 
-    // Send notifications to all tokens
-    const results = await Promise.allSettled(
-      fcmTokens.map(token =>
+    // Prepare notification data for Expo (React Native)
+    const expoNotificationData = {
+      ...(notificationData || {}),
+      source: 'fcm',
+      sentFrom: 'web',
+    };
+
+    // Send FCM notifications (Flutter)
+    const fcmResults = await Promise.allSettled(
+      fcmTokensList.map(token =>
         admin.messaging().send({
-          ...message,
+          ...fcmMessage,
           token: token,
         })
       )
     );
 
+    // Send Expo Push notifications (React Native)
+    console.log(`📱 Sending ${expoTokensList.length} Expo push notifications...`);
+    const expoResults = await Promise.allSettled(
+      expoTokensList.map(async (token, index) => {
+        console.log(`📱 [${index + 1}/${expoTokensList.length}] Sending to token: ${token.substring(0, 30)}...`);
+        try {
+          const result = await sendExpoPushNotification(token, title, body, expoNotificationData);
+          console.log(`✅ [${index + 1}/${expoTokensList.length}] Success:`, result);
+          return result;
+        } catch (error) {
+          console.error(`❌ [${index + 1}/${expoTokensList.length}] Failed:`, error.message);
+          throw error;
+        }
+      })
+    );
+
+    // Combine results
+    const allResults = [...fcmResults, ...expoResults];
+    const allTokens = [...fcmTokensList, ...expoTokensList];
+
     // Count successes and failures
-    const successes = results.filter(r => r.status === 'fulfilled').length;
-    const failures = results.filter(r => r.status === 'rejected').length;
+    const successes = allResults.filter(r => r.status === 'fulfilled').length;
+    const failures = allResults.filter(r => r.status === 'rejected').length;
 
     // Log failures and mark invalid tokens as inactive
-    results.forEach((result, index) => {
+    allResults.forEach((result, index) => {
       if (result.status === 'rejected') {
         console.error(`Failed to send to token ${index + 1}:`, result.reason);
 
-        // If token is invalid, mark it as inactive
-        if (
-          result.reason?.code === 'messaging/invalid-registration-token' ||
-          result.reason?.code === 'messaging/registration-token-not-registered'
-        ) {
-          db.collection('fcm_tokens')
-            .where('token', '==', fcmTokens[index])
-            .get()
-            .then(snapshot => {
-              snapshot.docs.forEach(doc => {
-                doc.ref.update({ active: false });
+        const token = allTokens[index];
+        const isExpo = isExpoPushToken(token);
+
+        // Mark invalid tokens as inactive
+        if (isExpo) {
+          // For Expo tokens, mark as inactive if error indicates invalid token
+          if (result.reason?.message?.includes('InvalidExpoPushToken') || 
+              result.reason?.message?.includes('DeviceNotRegistered')) {
+            db.collection('fcm_tokens')
+              .where('token', '==', token)
+              .get()
+              .then(snapshot => {
+                snapshot.docs.forEach(doc => {
+                  doc.ref.update({ active: false });
+                });
               });
-            });
+          }
+        } else {
+          // For FCM tokens, check Firebase error codes
+          if (
+            result.reason?.code === 'messaging/invalid-registration-token' ||
+            result.reason?.code === 'messaging/registration-token-not-registered'
+          ) {
+            db.collection('fcm_tokens')
+              .where('token', '==', token)
+              .get()
+              .then(snapshot => {
+                snapshot.docs.forEach(doc => {
+                  doc.ref.update({ active: false });
+                });
+              });
+          }
         }
       }
     });
@@ -176,7 +296,9 @@ exports.sendFCMNotification = onCall(async (request) => {
       message: 'Notification sent successfully',
       sent: successes,
       failed: failures,
-      totalTokens: fcmTokens.length,
+      totalTokens: allTokens.length,
+      fcmTokens: fcmTokensList.length,
+      expoTokens: expoTokensList.length,
     };
   } catch (error) {
     console.error('Error sending notification:', error);
