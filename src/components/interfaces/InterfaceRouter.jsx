@@ -10,7 +10,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
 
 // Public pages that don't require authentication
-const PUBLIC_PAGES = ['Marketing', 'PrivacyPolicy', 'TermsOfService'];
+const PUBLIC_PAGES = ['Marketing', 'PrivacyPolicy', 'TermsOfService', 'DeleteRequest', 'deleterequest', 'delete-request'];
 
 export default function InterfaceRouter({ children, currentPageName }) {
   const [user, setUser] = useState(null);
@@ -22,13 +22,15 @@ export default function InterfaceRouter({ children, currentPageName }) {
 
   // Check if current page is public - check both currentPageName and URL pathname
   const pathname = location.pathname.toLowerCase();
-  const isPublicPage = PUBLIC_PAGES.includes(currentPageName) || 
-    pathname.includes('marketing') || 
-    pathname.includes('privacypolicy') || 
+  const isPublicPage = PUBLIC_PAGES.includes(currentPageName) ||
+    pathname.includes('marketing') ||
+    pathname.includes('privacypolicy') ||
     pathname.includes('privacy-policy') ||
-    pathname.includes('termsofservice') || 
+    pathname.includes('termsofservice') ||
     pathname.includes('terms-of-service') ||
-    pathname === '/terms';
+    pathname === '/terms' ||
+    pathname.includes('delete-request') ||
+    pathname.includes('deleterequest');
 
   // Immediately set loading to false for public pages (runs synchronously before paint)
   useLayoutEffect(() => {
@@ -40,13 +42,13 @@ export default function InterfaceRouter({ children, currentPageName }) {
   const loadUser = async () => {
     setIsLoading(true);
     setNetworkError(false);
-    
+
     try {
       const currentUser = await User.me();
       setUser(currentUser);
     } catch (error) {
       console.error("Error loading user in InterfaceRouter:", error);
-      
+
       // Check if it's a "no user logged in" error - this is normal, not a network error
       if (error.message?.includes("No user logged in") || error.message?.includes("User document not found")) {
         // User is not logged in - this is expected, not an error
@@ -54,13 +56,13 @@ export default function InterfaceRouter({ children, currentPageName }) {
         setIsLoading(false);
         return;
       }
-      
+
       // Check if it's a session expired error (token refresh failed)
-      if (error.message?.includes("Session expired") || 
-          error.message?.includes("400") ||
-          error.code === 'auth/invalid-user-token' ||
-          error.code === 'auth/user-token-expired' ||
-          error.message?.includes('Bad Request')) {
+      if (error.message?.includes("Session expired") ||
+        error.message?.includes("400") ||
+        error.code === 'auth/invalid-user-token' ||
+        error.code === 'auth/user-token-expired' ||
+        error.message?.includes('Bad Request')) {
         // Session is invalid, clear it and show login
         console.warn("Session expired, clearing auth state...");
         // Try to logout to clear Firebase state
@@ -78,9 +80,9 @@ export default function InterfaceRouter({ children, currentPageName }) {
         });
         return;
       }
-      
+
       // Check for actual network errors
-      const isNetworkError = 
+      const isNetworkError =
         error.message?.includes("Network Error") ||
         error.message?.includes("Failed to fetch") ||
         error.code === 'unavailable' ||
@@ -113,11 +115,11 @@ export default function InterfaceRouter({ children, currentPageName }) {
         } catch (tokenError) {
           console.error("Token validation failed on mount:", tokenError);
           // If token is invalid, clear the session immediately
-          if (tokenError.code === 'auth/invalid-user-token' || 
-              tokenError.code === 'auth/user-token-expired' ||
-              tokenError.message?.includes('400') ||
-              tokenError.message?.includes('Bad Request') ||
-              tokenError.code?.includes('400')) {
+          if (tokenError.code === 'auth/invalid-user-token' ||
+            tokenError.code === 'auth/user-token-expired' ||
+            tokenError.message?.includes('400') ||
+            tokenError.message?.includes('Bad Request') ||
+            tokenError.code?.includes('400')) {
             console.warn("Invalid token detected on mount, clearing session...");
             try {
               await User.logout();
@@ -156,7 +158,7 @@ export default function InterfaceRouter({ children, currentPageName }) {
     const loadingTimeout = setTimeout(() => {
       if (timeoutHandled) return;
       timeoutHandled = true;
-      
+
       console.warn("Auth state loading timeout - checking current auth state...");
       // Check if there's a current user but auth state hasn't fired
       const currentUser = auth.currentUser;
@@ -165,9 +167,9 @@ export default function InterfaceRouter({ children, currentPageName }) {
         loadUser().catch((error) => {
           console.error("Error loading user after timeout:", error);
           // If it fails, clear the session
-          if (error.message?.includes("Session expired") || 
-              error.message?.includes("400") ||
-              error.code === 'auth/invalid-user-token') {
+          if (error.message?.includes("Session expired") ||
+            error.message?.includes("400") ||
+            error.code === 'auth/invalid-user-token') {
             User.logout().catch(console.error);
           }
           setUser(null);
@@ -186,10 +188,10 @@ export default function InterfaceRouter({ children, currentPageName }) {
     const unsubscribe = User.onAuthStateChanged(async (firebaseAuthUser) => {
       if (timeoutHandled) return; // Don't process if timeout already handled
       clearTimeout(loadingTimeout); // Clear timeout if auth state resolves
-      
+
       try {
         setFirebaseUser(firebaseAuthUser);
-        
+
         if (firebaseAuthUser) {
           // User is signed in, load user data from Firestore
           await loadUser();
@@ -201,13 +203,13 @@ export default function InterfaceRouter({ children, currentPageName }) {
         }
       } catch (error) {
         console.error("Error in auth state observer:", error);
-        
+
         // If token refresh failed (400 error), clear the invalid session
-        if (error.code === 'auth/invalid-user-token' || 
-            error.code === 'auth/user-token-expired' ||
-            error.message?.includes('400') ||
-            error.message?.includes('Bad Request') ||
-            error.message?.includes('Session expired')) {
+        if (error.code === 'auth/invalid-user-token' ||
+          error.code === 'auth/user-token-expired' ||
+          error.message?.includes('400') ||
+          error.message?.includes('Bad Request') ||
+          error.message?.includes('Session expired')) {
           console.warn("Invalid token detected, signing out...");
           try {
             await User.logout();
@@ -220,12 +222,12 @@ export default function InterfaceRouter({ children, currentPageName }) {
           setNetworkError(false);
         } else {
           // For other errors, show network error or set user to null
-          const isNetworkError = 
+          const isNetworkError =
             error.message?.includes("Network Error") ||
             error.message?.includes("Failed to fetch") ||
             error.code === 'unavailable' ||
             (!navigator.onLine);
-          
+
           if (isNetworkError && navigator.onLine) {
             setNetworkError(true);
           } else {
@@ -260,7 +262,7 @@ export default function InterfaceRouter({ children, currentPageName }) {
 
     // Treat 'coach' and 'admin' as admin roles
     const isAdmin = user.role === 'admin' || user.role === 'coach';
-    
+
     if (!isAdmin) {
       // Define what a complete profile is
       const isProfileComplete = user.name && user.gender && user.birth_date && user.height && user.initial_weight;
@@ -309,7 +311,7 @@ export default function InterfaceRouter({ children, currentPageName }) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-lime-50" dir="rtl">
         <div className="relative">
-          <img 
+          <img
             src="/logo.jpeg"
             alt="טוען..."
             className="w-20 h-20 rounded-2xl object-contain animate-pulse"
@@ -319,7 +321,7 @@ export default function InterfaceRouter({ children, currentPageName }) {
       </div>
     );
   }
-  
+
   if (networkError) {
     return <NetworkErrorDisplay onRetry={handleRetry} />;
   }
