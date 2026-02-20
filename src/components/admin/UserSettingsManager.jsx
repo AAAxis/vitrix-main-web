@@ -217,15 +217,25 @@ export default function UserSettingsManager({
       }
 
       // Sync is_admin checkbox to role so the user actually gets admin privileges (app checks role, not is_admin)
+      const wasSetAdmin = !!updateData.is_admin;
       if (updateData.is_admin) {
         updateData.role = 'admin';
       } else {
         updateData.role = 'trainee';
       }
+      // Persist is_admin so badge and form stay in sync
+      updateData.is_admin = wasSetAdmin;
 
-      await User.update(editingUser.id, updateData);
+      const userIdToUpdate = editingUser.uid || editingUser.id;
+      if (!userIdToUpdate) {
+        setError('לא נמצא מזהה משתמש לעדכון');
+        return;
+      }
+      await User.update(userIdToUpdate, updateData);
 
-      setMessage('פרטי המשתמש עודכנו בהצלחה');
+      setMessage(wasSetAdmin
+        ? 'פרטי המשתמש עודכנו בהצלחה. המשתמש הוגדר כאדמין — יש לבקש ממנו לרענן את הדף (או להתחבר מחדש) כדי לראות את ממשק המנהלים.'
+        : 'פרטי המשתמש עודכנו בהצלחה');
       setEditingUser(null); // Close edit mode on success
       loadUsers(); // Reload to get updated data
     } catch (error) {
