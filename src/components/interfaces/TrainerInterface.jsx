@@ -4,9 +4,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
-import { User as UserIcon, LogOut, Menu, Users, BarChart, Dumbbell, ChevronLeft, Settings, LayoutDashboard, Image } from 'lucide-react';
+import { User as UserIcon, LogOut, Menu, Users, BarChart, Dumbbell, ChevronLeft, Settings, LayoutDashboard, Image, Camera, Loader2 } from 'lucide-react';
 import AdminDashboard from '../../pages/AdminDashboard';
 import { User } from '@/api/entities';
+import { UploadFile } from '@/api/integrations';
 import TerminationFeedbackViewer from '../admin/TerminationFeedbackViewer'; // Added import
 
 export default function TrainerInterface({ user }) {
@@ -14,6 +15,9 @@ export default function TrainerInterface({ user }) {
   const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState(false);
   const [activeAdminTab, setActiveAdminTab] = useState('user-management');
   const [navigateToTab, setNavigateToTab] = useState(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [localUser, setLocalUser] = useState(user);
+  const fileInputRef = React.useRef(null);
 
   const adminMenuItems = [
     { id: 'control-center', label: 'מרכז שליטה', icon: LayoutDashboard },
@@ -43,6 +47,31 @@ export default function TrainerInterface({ user }) {
     setIsSettingsDrawerOpen(true);
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    try {
+      const { file_url } = await UploadFile({ file });
+      const updatedUser = await User.updateMyUserData({ profile_image_url: file_url });
+      setLocalUser(updatedUser);
+      // Refresh global user state if needed (InterfaceRouter should handle this but local state is faster)
+    } catch (error) {
+      console.error('Error uploading admin profile image:', error);
+      alert('שגיאה בהעלאת התמונה. אנא נסה שוב.');
+    } finally {
+      setIsUploadingImage(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const triggerFileUpload = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   const handleOpenSettings = () => {
     setIsSettingsDrawerOpen(false);
     // Navigate to programs tab with user-settings sub-tab
@@ -58,10 +87,10 @@ export default function TrainerInterface({ user }) {
     <div className="flex flex-col h-full bg-gradient-to-b from-emerald-500 to-teal-500 text-white" dir="rtl">
       <div className="p-6 border-b border-emerald-400">
         <div className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={handleLogoClick}>
-          {user?.profile_image_url ? (
-            <img 
-              src={user.profile_image_url}
-              alt={user?.name || 'מאמן'}
+          {localUser?.profile_image_url ? (
+            <img
+              src={localUser.profile_image_url}
+              alt={localUser?.name || 'מאמן'}
               className="w-12 h-12 rounded-full object-cover border-2 border-white/30"
             />
           ) : (
@@ -70,7 +99,7 @@ export default function TrainerInterface({ user }) {
             </div>
           )}
           <div>
-            <h1 className="text-xl font-bold drop-shadow-sm">{user?.name || 'מאמן'}</h1>
+            <h1 className="text-xl font-bold drop-shadow-sm">{localUser?.name || 'מאמן'}</h1>
             <p className="text-emerald-100 text-sm">ממשק ניהול מאמנים</p>
           </div>
         </div>
@@ -80,16 +109,15 @@ export default function TrainerInterface({ user }) {
         {adminMenuItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeAdminTab === item.id;
-          
+
           return (
             <button
               key={item.id}
               onClick={() => handleMenuItemClick(item.id)}
-              className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-right transition-all duration-200 font-medium ${
-                isActive 
-                  ? 'bg-white text-emerald-700 shadow-lg' 
+              className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl text-right transition-all duration-200 font-medium ${isActive
+                  ? 'bg-white text-emerald-700 shadow-lg'
                   : 'hover:bg-white/20'
-              }`}
+                }`}
             >
               <div className="flex items-center gap-3">
                 <Icon className="w-5 h-5" />
@@ -102,9 +130,9 @@ export default function TrainerInterface({ user }) {
       </nav>
 
       <div className="p-6 border-t border-emerald-400">
-        <Button 
-          onClick={handleLogout} 
-          variant="ghost" 
+        <Button
+          onClick={handleLogout}
+          variant="ghost"
           className="w-full text-white hover:bg-white/20 border border-white/30"
         >
           <LogOut className="w-4 h-4 ml-2" />
@@ -140,12 +168,12 @@ export default function TrainerInterface({ user }) {
             <div className="w-10"></div>
           </div>
         </header>
-        
+
         {/* Content */}
         <main className="flex-1 p-4 sm:p-6">
-          <AdminDashboard 
-            activeTab={activeAdminTab} 
-            setActiveTab={setActiveAdminTab} 
+          <AdminDashboard
+            activeTab={activeAdminTab}
+            setActiveTab={setActiveAdminTab}
             hideNavigation={true}
             onNavigateToTab={setNavigateToTab}
           />
@@ -157,26 +185,43 @@ export default function TrainerInterface({ user }) {
         <DrawerContent dir="rtl">
           <DrawerHeader className="text-right">
             <div className="flex items-center gap-4 mb-4">
-              {user?.profile_image_url ? (
-                <img 
-                  src={user.profile_image_url}
-                  alt={user?.name || 'מאמן'}
-                  className="w-16 h-16 rounded-full object-cover border-2 border-emerald-500"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center border-2 border-emerald-500">
-                  <UserIcon className="w-8 h-8 text-emerald-600" />
+              <div className="relative group cursor-pointer" onClick={triggerFileUpload}>
+                {localUser?.profile_image_url ? (
+                  <img
+                    src={localUser.profile_image_url}
+                    alt={localUser?.name || 'מאמן'}
+                    className="w-16 h-16 rounded-full object-cover border-2 border-emerald-500 transition-opacity group-hover:opacity-70"
+                  />
+                ) : (
+                  <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center border-2 border-emerald-500 group-hover:bg-emerald-200 transition-colors">
+                    <UserIcon className="w-8 h-8 text-emerald-600" />
+                  </div>
+                )}
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  {isUploadingImage ? (
+                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                  ) : (
+                    <Camera className="w-6 h-6 text-white" />
+                  )}
                 </div>
-              )}
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  disabled={isUploadingImage}
+                />
+              </div>
               <div>
-                <DrawerTitle className="text-2xl">{user?.name || 'מאמן'}</DrawerTitle>
+                <DrawerTitle className="text-2xl">{localUser?.name || 'מאמן'}</DrawerTitle>
                 <DrawerDescription className="text-base mt-1">
-                  {user?.email || ''}
+                  {localUser?.email || ''}
                 </DrawerDescription>
               </div>
             </div>
           </DrawerHeader>
-          
+
           <div className="px-4 pb-4 space-y-2">
             <Button
               variant="outline"

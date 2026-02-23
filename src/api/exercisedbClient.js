@@ -7,8 +7,8 @@
  * Fallback: v2.exercisedb.dev (public API)
  */
 
-const RAPIDAPI_BASE_URL = 'https://exercisedb-api1.p.rapidapi.com/api/v1';
-const RAPIDAPI_HOST = 'exercisedb-api1.p.rapidapi.com';
+const RAPIDAPI_BASE_URL = 'https://exercisedb.p.rapidapi.com';
+const RAPIDAPI_HOST = 'exercisedb.p.rapidapi.com';
 const FALLBACK_BASE_URL = 'https://v2.exercisedb.dev';
 
 // Get API key from environment variable, with fallback to provided key
@@ -18,7 +18,7 @@ const getApiKey = () => {
   if (envApiKey) {
     return envApiKey;
   }
-  
+
   // Fallback to provided API key (RapidAPI ExerciseDB API)
   return '19a9c82334msh8f9441d42ac9c20p1eb287jsnf6c9f6f8eb4b';
 };
@@ -69,7 +69,7 @@ const makeRequest = async (rapidAPIEndpoint, fallbackEndpoint, options = {}) => 
     return data;
   } catch (error) {
     console.warn('⚠️ RapidAPI request failed, trying fallback API:', error.message);
-    
+
     // Fallback to v2.exercisedb.dev
     try {
       const data = await makeFallbackRequest(fallbackEndpoint, options);
@@ -89,15 +89,15 @@ const makeRequest = async (rapidAPIEndpoint, fallbackEndpoint, options = {}) => 
  */
 export async function searchExercises(query, limit = 20) {
   try {
-    const rapidAPIEndpoint = `/exercises/search?search=${encodeURIComponent(query)}&limit=${limit}`;
+    const rapidAPIEndpoint = `/exercises/name/${encodeURIComponent(query)}?limit=${limit}`;
     const fallbackEndpoint = `/exercises?name=${encodeURIComponent(query)}&limit=${limit}`;
     const response = await makeRequest(rapidAPIEndpoint, fallbackEndpoint);
-    
+
     // Handle RapidAPI response format: {success: true, data: [...]}
     if (response && response.success && Array.isArray(response.data)) {
       return response.data;
     }
-    
+
     // Handle direct array or other formats
     return Array.isArray(response) ? response : (response.data || []);
   } catch (error) {
@@ -134,15 +134,15 @@ export async function getExercisesByBodyPart(bodyPart, limit = 20) {
     const normalizedBodyPart = bodyPart.toUpperCase();
     const rapidAPIEndpoint = `/exercises/bodyPart/${encodeURIComponent(normalizedBodyPart)}?limit=${limit}`;
     const fallbackEndpoint = `/exercises/bodyPart/${encodeURIComponent(normalizedBodyPart)}?limit=${limit}`;
-    
+
     try {
       const response = await makeRequest(rapidAPIEndpoint, fallbackEndpoint);
-      
+
       // Handle RapidAPI response format: {success: true, data: [...]}
       if (response && response.success && Array.isArray(response.data)) {
         return response.data;
       }
-      
+
       // Handle direct array or other formats
       return Array.isArray(response) ? response : (response.data || []);
     } catch (error) {
@@ -151,11 +151,11 @@ export async function getExercisesByBodyPart(bodyPart, limit = 20) {
         const altRapidAPIEndpoint = `/exercises/bodyPart/${encodeURIComponent(bodyPart)}?limit=${limit}`;
         const altFallbackEndpoint = `/exercises/bodyPart/${encodeURIComponent(bodyPart)}?limit=${limit}`;
         const altResponse = await makeRequest(altRapidAPIEndpoint, altFallbackEndpoint);
-        
+
         if (altResponse && altResponse.success && Array.isArray(altResponse.data)) {
           return altResponse.data;
         }
-        
+
         return Array.isArray(altResponse) ? altResponse : (altResponse.data || []);
       }
       throw error;
@@ -178,15 +178,15 @@ export async function getExercisesByEquipment(equipment, limit = 20) {
     const normalizedEquipment = equipment.toUpperCase();
     const rapidAPIEndpoint = `/exercises/equipment/${encodeURIComponent(normalizedEquipment)}?limit=${limit}`;
     const fallbackEndpoint = `/exercises/equipment/${encodeURIComponent(normalizedEquipment)}?limit=${limit}`;
-    
+
     try {
       const response = await makeRequest(rapidAPIEndpoint, fallbackEndpoint);
-      
+
       // Handle RapidAPI response format: {success: true, data: [...]}
       if (response && response.success && Array.isArray(response.data)) {
         return response.data;
       }
-      
+
       // Handle direct array or other formats
       return Array.isArray(response) ? response : (response.data || []);
     } catch (error) {
@@ -195,11 +195,11 @@ export async function getExercisesByEquipment(equipment, limit = 20) {
         const altRapidAPIEndpoint = `/exercises/equipment/${encodeURIComponent(equipment)}?limit=${limit}`;
         const altFallbackEndpoint = `/exercises/equipment/${encodeURIComponent(equipment)}?limit=${limit}`;
         const altResponse = await makeRequest(altRapidAPIEndpoint, altFallbackEndpoint);
-        
+
         if (altResponse && altResponse.success && Array.isArray(altResponse.data)) {
           return altResponse.data;
         }
-        
+
         return Array.isArray(altResponse) ? altResponse : (altResponse.data || []);
       }
       throw error;
@@ -236,12 +236,12 @@ export async function getBodyParts() {
   // The bodyPartList endpoint doesn't exist in RapidAPI, so we return a hardcoded list
   // These are the common body parts from ExerciseDB
   const bodyPartsEnglish = [
-    'CHEST', 'BACK', 'LEGS', 'SHOULDERS', 'ARMS', 'BICEPS', 'TRICEPS', 
-    'FOREARMS', 'CORE', 'ABS', 'GLUTES', 'CALVES', 'QUADRICEPS', 
+    'CHEST', 'BACK', 'LEGS', 'SHOULDERS', 'ARMS', 'BICEPS', 'TRICEPS',
+    'FOREARMS', 'CORE', 'ABS', 'GLUTES', 'CALVES', 'QUADRICEPS',
     'HAMSTRINGS', 'LATS', 'TRAPS', 'CARDIO', 'FULL BODY', 'NECK',
     'ADDUCTORS', 'ABDUCTORS'
   ];
-  
+
   // Translate to Hebrew
   return bodyPartsEnglish.map(bp => translateBodyPart(bp)).filter(bp => bp);
 }
@@ -253,8 +253,8 @@ export async function getBodyParts() {
 export async function getBodyPartsEnglish() {
   // The bodyPartList endpoint doesn't exist in RapidAPI, so we return a hardcoded list
   return [
-    'CHEST', 'BACK', 'LEGS', 'SHOULDERS', 'ARMS', 'BICEPS', 'TRICEPS', 
-    'FOREARMS', 'CORE', 'ABS', 'GLUTES', 'CALVES', 'QUADRICEPS', 
+    'CHEST', 'BACK', 'LEGS', 'SHOULDERS', 'ARMS', 'BICEPS', 'TRICEPS',
+    'FOREARMS', 'CORE', 'ABS', 'GLUTES', 'CALVES', 'QUADRICEPS',
     'HAMSTRINGS', 'LATS', 'TRAPS', 'CARDIO', 'FULL BODY', 'NECK',
     'ADDUCTORS', 'ABDUCTORS'
   ];
@@ -268,13 +268,13 @@ export async function getEquipmentList() {
   // The equipmentList endpoint doesn't exist in RapidAPI, so we return a hardcoded list
   // These are the common equipment types from ExerciseDB
   const equipmentEnglish = [
-    'BODYWEIGHT', 'DUMBBELL', 'BARBELL', 'KETTLEBELL', 'MACHINE', 
-    'CABLE', 'RESISTANCE BAND', 'MEDICINE BALL', 'TRX', 'BOX', 
+    'BODYWEIGHT', 'DUMBBELL', 'BARBELL', 'KETTLEBELL', 'MACHINE',
+    'CABLE', 'RESISTANCE BAND', 'MEDICINE BALL', 'TRX', 'BOX',
     'PULL-UP BAR', 'ROWER', 'BIKE', 'TREADMILL', 'SLED', 'RINGS',
     'E-Z BAR', 'SMITH MACHINE', 'LEVERAGE MACHINE', 'OLYMPIC BARBELL',
     'BAND', 'ASSISTED', 'BOSU BALL', 'STABILITY BALL'
   ];
-  
+
   // Translate to Hebrew
   return equipmentEnglish.map(eq => translateEquipment(eq)).filter(eq => eq);
 }
@@ -286,8 +286,8 @@ export async function getEquipmentList() {
 export async function getEquipmentListEnglish() {
   // The equipmentList endpoint doesn't exist in RapidAPI, so we return a hardcoded list
   return [
-    'BODYWEIGHT', 'DUMBBELL', 'BARBELL', 'KETTLEBELL', 'MACHINE', 
-    'CABLE', 'RESISTANCE BAND', 'MEDICINE BALL', 'TRX', 'BOX', 
+    'BODYWEIGHT', 'DUMBBELL', 'BARBELL', 'KETTLEBELL', 'MACHINE',
+    'CABLE', 'RESISTANCE BAND', 'MEDICINE BALL', 'TRX', 'BOX',
     'PULL-UP BAR', 'ROWER', 'BIKE', 'TREADMILL', 'SLED', 'RINGS',
     'E-Z BAR', 'SMITH MACHINE', 'LEVERAGE MACHINE', 'OLYMPIC BARBELL',
     'BAND', 'ASSISTED', 'BOSU BALL', 'STABILITY BALL'
@@ -437,7 +437,7 @@ export function reverseTranslateEquipment(hebrewEquipment) {
  */
 function translateExerciseName(name) {
   if (!name) return '';
-  
+
   // Common exercise name translations
   const exerciseNameTranslations = {
     'BENCH PRESS': 'לחיצת חזה',
@@ -467,14 +467,14 @@ function translateExerciseName(name) {
     'SQUAT': 'סקוואט',
     'LUNGE': 'פסיעה'
   };
-  
+
   const upper = name.toUpperCase();
-  
+
   // Try exact match first
   if (exerciseNameTranslations[upper]) {
     return exerciseNameTranslations[upper];
   }
-  
+
   // Try partial matches for compound names
   for (const [key, value] of Object.entries(exerciseNameTranslations)) {
     if (upper.includes(key)) {
@@ -482,7 +482,7 @@ function translateExerciseName(name) {
       return name.replace(new RegExp(key, 'gi'), value);
     }
   }
-  
+
   // If no translation found, return original name
   return name;
 }
@@ -493,7 +493,7 @@ function translateExerciseName(name) {
  */
 function translateText(text) {
   if (!text || typeof text !== 'string') return text;
-  
+
   // For now, return as-is since we'd need AI translation for full text
   // The user can manually translate or we can integrate with translation API later
   return text;
@@ -508,14 +508,14 @@ export function mapExerciseDBToExerciseDefinition(exercisedbExercise) {
   // Handle different API response formats
   // RapidAPI format: {exerciseId, name, imageUrl, ...}
   // v2.exercisedb.dev format: {id, name, bodyParts, equipments, ...}
-  
+
   // Get exercise ID (different field names in different APIs)
   const exerciseId = exercisedbExercise.exerciseId || exercisedbExercise.id || '';
-  
+
   // Get exercise name
   const exerciseName = exercisedbExercise.name || '';
   const translatedName = translateExerciseName(exerciseName);
-  
+
   // Get image URL - handle both cdn.exercisedb.dev and v2.exercisedb.dev formats
   let imageUrl = '';
   if (exercisedbExercise.imageUrl) {
@@ -527,7 +527,7 @@ export function mapExerciseDBToExerciseDefinition(exercisedbExercise) {
       imageUrl = `https://cdn.exercisedb.dev/images/${exercisedbExercise.imageUrl}`;
     }
   }
-  
+
   // Get video URL
   let videoUrl = '';
   if (exercisedbExercise.videoUrl) {
@@ -538,15 +538,15 @@ export function mapExerciseDBToExerciseDefinition(exercisedbExercise) {
       videoUrl = `https://cdn.exercisedb.dev/videos/${exercisedbExercise.videoUrl}`;
     }
   }
-  
+
   // Map body parts - ExerciseDB uses arrays, we need to pick the primary one
   const primaryBodyPart = (exercisedbExercise.bodyParts?.[0] || exercisedbExercise.bodyPart || '').toUpperCase();
   const translatedBodyPart = translateBodyPart(primaryBodyPart);
-  
+
   // Map equipment - ExerciseDB uses arrays, we need to pick the primary one
   const primaryEquipment = (exercisedbExercise.equipments?.[0] || exercisedbExercise.equipment || 'BODYWEIGHT').toUpperCase();
   const translatedEquipment = translateEquipment(primaryEquipment);
-  
+
   // Map exercise type to category
   const categoryMap = {
     'STRENGTH': 'Strength',
@@ -560,7 +560,7 @@ export function mapExerciseDBToExerciseDefinition(exercisedbExercise) {
   const exerciseType = (exercisedbExercise.exerciseType || exercisedbExercise.type || 'STRENGTH').toUpperCase();
   const category = categoryMap[exerciseType] || 'Strength';
   const translatedCategory = translateCategory(category);
-  
+
   // Build description from available fields
   const descriptionParts = [];
   if (exercisedbExercise.overview) {
@@ -575,16 +575,16 @@ export function mapExerciseDBToExerciseDefinition(exercisedbExercise) {
   if (exercisedbExercise.exerciseTips && Array.isArray(exercisedbExercise.exerciseTips) && exercisedbExercise.exerciseTips.length > 0) {
     descriptionParts.push('\n\nטיפים:\n' + exercisedbExercise.exerciseTips.map(tip => `• ${tip}`).join('\n'));
   }
-  
+
   // Translate target muscles
   const targetMuscles = exercisedbExercise.targetMuscles || exercisedbExercise.target || [];
   const secondaryMuscles = exercisedbExercise.secondaryMuscles || exercisedbExercise.secondary || [];
   const translatedTargetMuscles = Array.isArray(targetMuscles) ? targetMuscles.map(muscle => translateBodyPart(muscle)) : [];
   const translatedSecondaryMuscles = Array.isArray(secondaryMuscles) ? secondaryMuscles.map(muscle => translateBodyPart(muscle)) : [];
-  
+
   // Map muscle groups - use the translated primary body part as muscle_group
   const muscleGroup = translatedBodyPart || 'גוף מלא';
-  
+
   return {
     name_en: exerciseName,
     name_he: translatedName || exerciseName, // Use translated name, fallback to English
