@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { User, UserGroup, WeeklyTask, BoosterPlusTask, MonthlyGoal, GeneratedReport, CoachMessage, WeightEntry, PreMadeWorkout, AdminMessage } from '@/api/entities';
 import { GroupEvent } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -74,6 +75,7 @@ const QuickActionCard = ({ title, icon: Icon, color, onClick, description }) => 
 );
 
 export default function ControlCenter({ onNavigateToTab }) {
+    const { user: currentUser } = useAdminDashboard();
     const [stats, setStats] = useState(null);
     const [allUsers, setAllUsers] = useState([]);
     const [allGroups, setAllGroups] = useState([]);
@@ -285,7 +287,7 @@ export default function ControlCenter({ onNavigateToTab }) {
             setIsLoading(true);
             try {
                 const [usersData, groupsData, tasksData, eventsData, notificationsData] = await Promise.all([
-                    User.list(),
+                    User.listForStaff(currentUser),
                     UserGroup.list(),
                     WeeklyTask.list('-week_start_date'),
                     GroupEvent.list('start_datetime'),
@@ -297,7 +299,7 @@ export default function ControlCenter({ onNavigateToTab }) {
 
                 const filteredGroups = groupsData.filter(group => group.name !== 'מנהלה');
                 const usersForStatsAndProgress = (usersData || []).filter(user =>
-                    user.role !== 'admin' && user.role !== 'coach' && (!user.group_names?.includes('מנהלה'))
+                    user.role !== 'admin' && user.role !== 'coach' && user.role !== 'trainer' && (!user.group_names?.includes('מנהלה'))
                 );
                 setFilteredUsers(usersForStatsAndProgress);
 
@@ -417,7 +419,7 @@ export default function ControlCenter({ onNavigateToTab }) {
         };
 
         fetchAllData();
-    }, []);
+    }, [currentUser]);
 
     const upcomingEvents = useMemo(() => {
         if (!allEvents) return [];
@@ -519,9 +521,9 @@ export default function ControlCenter({ onNavigateToTab }) {
         setCurrentGroupTask(null);
         
         try {
-            // Fetch all users in the group, including inactive ones for comprehensive data
-            const users = await User.filter({ group_names: { $in: [groupName] } });
-            const traineeUsersInGroup = users.filter(u => u.role !== 'admin' && u.role !== 'coach'); // Filter out admins/coaches
+            // Use already-loaded scoped users and filter by group
+            const users = (allUsers || []).filter(u => Array.isArray(u.group_names) && u.group_names.includes(groupName));
+            const traineeUsersInGroup = users.filter(u => u.role !== 'admin' && u.role !== 'coach' && u.role !== 'trainer');
             setGroupUsers(traineeUsersInGroup); // Store all users for potential future use or display
 
             const now = new Date();

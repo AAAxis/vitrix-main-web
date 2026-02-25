@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { UserGroup, Invitation, User } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,6 +15,7 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 export default function UserInvitation() {
+  const { user: currentUser, isSystemAdmin } = useAdminDashboard();
   const [invitations, setInvitations] = useState([]);
   const [groups, setGroups] = useState([]);
   const [coaches, setCoaches] = useState([]);
@@ -50,12 +52,25 @@ export default function UserInvitation() {
     }
   };
 
-  // Function to load coaches
+  // Function to load coaches (system admin: all admin/coach/trainer; trainer: only self)
   const loadCoaches = async () => {
     setIsLoadingCoaches(true);
     try {
+      if (!isSystemAdmin && currentUser) {
+        setCoaches([currentUser]);
+        if (!selectedCoach) {
+          setSelectedCoach(currentUser);
+          setNewInvitation(prev => ({
+            ...prev,
+            coachName: currentUser.name || '',
+            coachEmail: currentUser.email || '',
+            coachPhone: currentUser.phone || ''
+          }));
+        }
+        return;
+      }
       const allUsers = await User.list();
-      const adminUsers = allUsers.filter(u => (u.role === 'admin' || u.role === 'coach') && u.email && u.name);
+      const adminUsers = allUsers.filter(u => (u.role === 'admin' || u.role === 'coach' || u.role === 'trainer') && u.email && u.name);
       setCoaches(adminUsers);
     } catch (error) {
       console.error('Error loading coaches:', error);
@@ -67,7 +82,7 @@ export default function UserInvitation() {
   useEffect(() => {
     loadInitialData();
     loadCoaches();
-  }, []);
+  }, [currentUser, isSystemAdmin]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

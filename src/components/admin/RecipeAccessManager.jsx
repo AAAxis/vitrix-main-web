@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Recipe, User } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,6 +32,7 @@ import {
 } from 'lucide-react';
 
 export default function RecipeAccessManager() {
+  const { user: currentUser } = useAdminDashboard();
   const [recipes, setRecipes] = useState([]);
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,17 +69,17 @@ export default function RecipeAccessManager() {
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentUser]);
 
   const loadData = async () => {
     setIsLoading(true);
     try {
       const [recipesData, usersData] = await Promise.all([
         Recipe.list(),
-        User.list()
+        User.listForStaff(currentUser)
       ]);
       setRecipes(recipesData);
-      setUsers(usersData.filter(u => u.role !== 'admin' && u.role !== 'coach'));
+      setUsers(usersData.filter(u => u.role !== 'admin' && u.role !== 'coach' && u.role !== 'trainer'));
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {

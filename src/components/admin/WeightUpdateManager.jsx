@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { User, WeightEntry, WeightReminder } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -153,6 +154,7 @@ const calculateBMI = (weight, height) => {
 
 
 export default function WeightUpdateManager() {
+    const { user: currentUser } = useAdminDashboard();
     const [users, setUsers] = useState([]); // Renamed from usersWithWeight
     const [isLoading, setIsLoading] = useState(true);
     const [sendingStates, setSendingStates] = useState({});
@@ -191,8 +193,9 @@ export default function WeightUpdateManager() {
     const loadData = useCallback(async () => {
         setIsLoading(true);
         try {
-            // Fetch ALL users with the role 'user', regardless of status
-            const allUsers = await User.filter({ role: 'user' }, '-created_date');
+            // Fetch users scoped by role (admin/coach: all; trainer: only their invitees), then only trainee/user role
+            const allUsersRaw = await User.listForStaff(currentUser, '-created_date');
+            const allUsers = allUsersRaw.filter(u => u.role !== 'admin' && u.role !== 'coach' && u.role !== 'trainer');
             
             const allWeightEntries = await WeightEntry.list('-date');
             
@@ -230,7 +233,7 @@ export default function WeightUpdateManager() {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [currentUser]);
 
     useEffect(() => {
         try {

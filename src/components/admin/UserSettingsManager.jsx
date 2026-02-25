@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { User, UserGroup, WeightEntry, WeeklyTask, MonthlyGoal, ProgressPicture, CalorieTracking, WaterTracking, LectureView, CoachMenu, CoachMessage, CoachNotification, Workout, WorkoutLog, ExerciseDefault, Reminder, WeightReminder, GeneratedReport, WeeklyCheckin, NotificationResponse, EventParticipation, Recipe, FavoriteRecipe } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -76,6 +77,7 @@ export default function UserSettingsManager({
   initialUserEmail, 
   startInEditMode = false, 
 }) {
+  const { user: currentUser, isSystemAdmin } = useAdminDashboard();
   const [users, setUsers] = useState([]);
   const [groups, setGroups] = useState([]);
   // Renamed from selectedGroup to groupFilter for consistency with outline
@@ -110,7 +112,7 @@ export default function UserSettingsManager({
     setError(null);
     try {
       const [allUsersData, userGroups] = await Promise.all([
-        User.list('-created_date'),
+        User.listForStaff(currentUser, '-created_date'),
         UserGroup.list()
       ]);
       // The user wants to see all users, including admins, so no filter is applied.
@@ -126,7 +128,7 @@ export default function UserSettingsManager({
   
   useEffect(() => {
     loadUsers();
-  }, []);
+  }, [currentUser]);
 
   // Effect to filter users based on search term and selected group
   // Refactored to use useMemo for better performance for derived state
@@ -179,7 +181,6 @@ export default function UserSettingsManager({
     const userToEdit = { ...user };
     // Sync role to is_admin so the checkbox reflects actual admin status (app uses role for access)
     userToEdit.is_admin = userToEdit.role === 'admin' || userToEdit.role === 'coach' || !!userToEdit.is_admin;
-    // Ensure 'name' is populated, using 'full_name' if 'name' is empty.
     if (!userToEdit.name && userToEdit.full_name) {
       userToEdit.name = userToEdit.full_name;
     }
@@ -216,15 +217,25 @@ export default function UserSettingsManager({
         updateData.group_names = [];
       }
 
-      // Sync is_admin checkbox to role so the user actually gets admin privileges (app checks role, not is_admin)
-      const wasSetAdmin = !!updateData.is_admin;
-      if (updateData.is_admin) {
-        updateData.role = 'admin';
-      } else {
-        updateData.role = 'trainee';
+      // Sync role: only system admin can set role; trainer cannot change role or set admin
+      if (isSystemAdmin) {
+        const chosenRole = updateData.role || editingUser.role;
+        if (chosenRole === 'admin' || updateData.is_admin) {
+          updateData.role = 'admin';
+          updateData.is_admin = true;
+        } else if (chosenRole === 'trainer') {
+          updateData.role = 'trainer';
+          updateData.is_admin = false;
+        } else {
+          updateData.role = 'trainee';
+          updateData.is_admin = false;
+        }
       }
-      // Persist is_admin so badge and form stay in sync
-      updateData.is_admin = wasSetAdmin;
+      // If not system admin, do not change role or is_admin
+      if (!isSystemAdmin) {
+        delete updateData.role;
+        delete updateData.is_admin;
+      }
 
       const userIdToUpdate = editingUser.uid || editingUser.id;
       if (!userIdToUpdate) {
@@ -233,7 +244,7 @@ export default function UserSettingsManager({
       }
       await User.update(userIdToUpdate, updateData);
 
-      setMessage(wasSetAdmin
+      setMessage(updateData.role === 'admin'
         ? 'פרטי המשתמש עודכנו בהצלחה. המשתמש הוגדר כאדמין — יש לבקש ממנו לרענן את הדף (או להתחבר מחדש) כדי לראות את ממשק המנהלים.'
         : 'פרטי המשתמש עודכנו בהצלחה');
       setEditingUser(null); // Close edit mode on success
@@ -595,10 +606,10 @@ export default function UserSettingsManager({
                         {/* Status Badges */}
                         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200/80">
                           {getStatusBadge(user.status)}
-                          {(user.is_admin || user.role === 'admin' || user.role === 'coach') && (
+                          {(user.is_admin || user.role === 'admin' || user.role === 'coach' || user.role === 'trainer') && (
                               <Badge className="bg-purple-100 text-purple-800 border border-purple-200">
                                 <UserCog className="w-3 h-3 mr-1" />
-                                אדמין
+                                {user.role === 'trainer' ? 'מאמן' : 'אדמין'}
                               </Badge>
                           )}
                           <Badge variant={user.contract_signed ? "default" : "outline"} className={user.contract_signed ? "bg-green-100 text-green-800" : ""}>
@@ -887,6 +898,27 @@ export default function UserSettingsManager({
                     />
                     <Label htmlFor="nutrition_access">גישה לתפריט תזונה</Label>
                   </div>
+                  {isSystemAdmin && (
+                  <div className="flex flex-col gap-2">
+                    <Label>תפקיד</Label>
+                    <Select
+                      value={editingUser.role === 'admin' || editingUser.role === 'coach' ? 'admin' : (editingUser.role || 'trainee')}
+                      onValueChange={(v) => {
+                        setEditingUser({ ...editingUser, role: v, is_admin: v === 'admin' });
+                      }}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="בחר תפקיד" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="trainee">מתאמן</SelectItem>
+                        <SelectItem value="trainer">מאמן</SelectItem>
+                        <SelectItem value="admin">אדמין</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  )}
+                  {isSystemAdmin && (
                   <div className="flex items-center space-x-2 space-x-reverse">
                     <input
                       type="checkbox"
@@ -897,6 +929,7 @@ export default function UserSettingsManager({
                     />
                     <Label htmlFor="is_admin">הגדר כאדמין</Label>
                   </div>
+                  )}
                 </div>
               </div>
             </ScrollArea>

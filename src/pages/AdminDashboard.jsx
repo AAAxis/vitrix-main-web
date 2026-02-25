@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { User } from '@/api/entities';
 import LockedScreen from '@/components/auth/LockedScreen';
+import { AdminDashboardContext } from '@/contexts/AdminDashboardContext';
 
 // Lucide Icons for navigation
 import { Users, BarChart, Dumbbell, MessageSquare, ClipboardCheck, Mail, TrendingUp, Scale, Settings, Key, LayoutDashboard, FileText, Activity, Lock, Bell } from 'lucide-react'; // Added Activity, Lock, and Bell
@@ -289,8 +290,8 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
   const memoizedUserManagement = useMemo(() => {
     // By using a key, we ensure the component re-mounts with new initial props
     // This is crucial for making the initialUserEmail prop work reliably if UserManagement itself doesn't react to prop changes
-    return <UserManagement key={userManagementProps.initialUserEmail || 'default-user-management'} {...userManagementProps} />;
-  }, [userManagementProps]);
+    return <UserManagement key={userManagementProps.initialUserEmail || 'default-user-management'} {...userManagementProps} adminUser={user} />;
+  }, [userManagementProps, user]);
 
   // Memoized UserSettingsManager component to re-render when initialUserEmail changes
   const memoizedUserSettingsManager = useMemo(() => {
@@ -328,8 +329,10 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
     );
   }
 
-  // Treat 'coach' and 'admin' as admin roles
-  const isAdmin = user?.role === 'admin' || user?.role === 'coach';
+  // Treat 'coach' and 'admin' as system admin; 'trainer' as staff (same dashboard, scoped to their users)
+  const isSystemAdmin = user?.role === 'admin' || user?.role === 'coach';
+  const isTrainer = user?.role === 'trainer';
+  const isStaff = isSystemAdmin || isTrainer;
   if (!user) {
     console.warn('AdminDashboard: No user found');
     return (
@@ -340,9 +343,9 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
       </div>
     );
   }
-  if (!isAdmin) {
-    console.warn('AdminDashboard: User is not admin/coach. Role:', user?.role);
-    return <LockedScreen message="גישה מוגבלת - נדרשות הרשאות מנהל" />;
+  if (!isStaff) {
+    console.warn('AdminDashboard: User is not admin/coach/trainer. Role:', user?.role);
+    return <LockedScreen message="גישה מוגבלת - נדרשות הרשאות מנהל או מאמן" />;
   }
 
   // Define programs & settings sub-categories with enhanced layout
@@ -624,6 +627,7 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
   };
 
   return (
+    <AdminDashboardContext.Provider value={{ user, isSystemAdmin }}>
     <div className="max-w-full mx-auto p-2 sm:p-4 space-y-6" dir="rtl">
       {/* Header - Only show when navigation is not hidden */}
       {!hideNavigation && (
@@ -699,5 +703,6 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
         </div>
       )}
     </div>
+    </AdminDashboardContext.Provider>
   );
 }

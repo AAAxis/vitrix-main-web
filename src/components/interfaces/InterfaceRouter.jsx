@@ -260,10 +260,12 @@ export default function InterfaceRouter({ children, currentPageName }) {
       return null;
     }
 
-    // Treat 'coach' and 'admin' as admin roles
+    // Treat 'coach', 'admin' as system admin; 'trainer' as staff (dashboard access, scoped data)
     const isAdmin = user.role === 'admin' || user.role === 'coach';
+    const isTrainer = user.role === 'trainer';
+    const isStaff = isAdmin || isTrainer;
 
-    if (!isAdmin) {
+    if (!isStaff) {
       // Define what a complete profile is
       const isProfileComplete = user.name && user.gender && user.birth_date && user.height && user.initial_weight;
 
@@ -327,9 +329,11 @@ export default function InterfaceRouter({ children, currentPageName }) {
   }
 
   // Route to appropriate interface based on user role
-  // Treat 'coach' and 'admin' as admin roles
+  // System admin (admin/coach) see everything; trainer sees only their invited users
   const isAdmin = user?.role === 'admin' || user?.role === 'coach';
-  if (isAdmin) {
+  const isTrainer = user?.role === 'trainer';
+  const isStaff = isAdmin || isTrainer;
+  if (isStaff) {
     return <TrainerInterface user={user} />;
   } else if (user) {
     return (

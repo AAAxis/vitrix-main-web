@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { User, UserGroup, GroupWorkoutPlan, GroupReminder, GroupMessage, GroupEvent } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,6 +35,7 @@ import GroupMessaging from './GroupMessaging';
 import GroupWeightFocus from './GroupWeightFocus'; // Added GroupWeightFocus import
 
 export default function GroupManagement() {
+    const { user: currentUser } = useAdminDashboard();
     const [groups, setGroups] = useState([]);
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -53,12 +55,12 @@ export default function GroupManagement() {
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [currentUser]);
 
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [allGroups, allUsers] = await Promise.all([UserGroup.list(), User.filter({})]);
+            const [allGroups, allUsers] = await Promise.all([UserGroup.list(), User.listForStaff(currentUser)]);
             setGroups(allGroups);
             setUsers(allUsers);
         } catch (error) {

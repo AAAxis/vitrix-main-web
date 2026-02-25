@@ -342,8 +342,9 @@ export default function UserManagement({ initialUserEmail, startInEditMode, admi
     setError(null);
 
     try {
+      const listUsers = adminUser ? () => User.listForStaff(adminUser) : () => User.list();
       const [allUsers, allGroupsData] = await Promise.all([
-        User.list().catch(e => { console.warn("Failed to load users:", e); return []; }), // Fetches all users, including admins
+        listUsers().catch(e => { console.warn("Failed to load users:", e); return []; }),
         UserGroup.list().catch(e => { console.warn("Failed to load user groups:", e); return []; })
       ]);
       
@@ -422,7 +423,7 @@ export default function UserManagement({ initialUserEmail, startInEditMode, admi
     } finally {
       setIsLoading(false);
     }
-  }, [handleNetworkError, syncUserWithLatestMeasurements]);
+  }, [handleNetworkError, syncUserWithLatestMeasurements, adminUser]);
 
   useEffect(() => {
     loadData();
@@ -1159,8 +1160,8 @@ export default function UserManagement({ initialUserEmail, startInEditMode, admi
     if (!Array.isArray(validUsers)) return [];
 
     return validUsers.filter(user => {
-      // Exclude admins/coaches and the current admin user from the displayed list
-      if ((user.role === 'admin' || user.role === 'coach') || user.email === adminUser?.email) {
+      // Exclude staff (admin/coach/trainer) and the current staff user from the displayed list
+      if ((user.role === 'admin' || user.role === 'coach' || user.role === 'trainer') || user.email === adminUser?.email) {
         return false;
       }
 

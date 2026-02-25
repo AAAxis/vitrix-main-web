@@ -165,6 +165,24 @@ class FirebaseUser {
     }
   }
 
+  /**
+   * List users scoped by role: system admin/coach see all; trainer sees only users they invited (coach_email match).
+   * @param {Object} currentUser - { role, email }
+   * @param {string} [orderByField] - e.g. '-created_date'
+   * @returns {Promise<Array>} users
+   */
+  async listForStaff(currentUser, orderByField = null) {
+    if (!currentUser?.email) return [];
+    const isSystemAdmin = currentUser.role === 'admin' || currentUser.role === 'coach';
+    if (isSystemAdmin) {
+      return orderByField ? this.filter({}, orderByField) : this.list();
+    }
+    if (currentUser.role === 'trainer') {
+      return this.filter({ coach_email: currentUser.email }, orderByField);
+    }
+    return [];
+  }
+
   // Filter users (mimics FirebaseEntity filter API)
   async filter(filters = {}, orderByField = null, limitCount = null) {
     try {

@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { User, BoosterPlusTask, BoosterPlusTaskTemplate } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { format, parseISO, startOfWeek, endOfWeek, addWeeks } from 'date-fns';
 
 export default function BoosterPlusManager() {
+    const { user: currentUser } = useAdminDashboard();
     const { toast } = useToast();
     const [users, setUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState('');
@@ -34,9 +36,9 @@ export default function BoosterPlusManager() {
             setIsLoadingUsers(true);
             try {
                 // Load all users (not just active ones) to include trainers/admins
-                const allUsers = await User.list();
-                // Filter out admins/coaches from the list (only show trainees)
-                const trainees = allUsers.filter(u => u.role !== 'admin' && u.role !== 'coach');
+                const allUsers = await User.listForStaff(currentUser);
+                // Filter out admins/coaches/trainers from the list (only show trainees)
+                const trainees = allUsers.filter(u => u.role !== 'admin' && u.role !== 'coach' && u.role !== 'trainer');
                 setUsers(trainees);
             } catch (error) {
                 console.error("Error loading users:", error);

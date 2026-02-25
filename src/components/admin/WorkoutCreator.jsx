@@ -1,6 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { PreMadeWorkout, WorkoutTemplate, User, UserGroup, ExerciseDefinition, CoachNotification } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
 import { InvokeLLM } from '@/api/integrations'; // Added InvokeLLM
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -1279,7 +1280,9 @@ const AIWorkoutBuilder = ({ user }) => {
 };
 
 
-export default function WorkoutCreator({ templateToLoad, onTemplateLoaded, user }) {
+export default function WorkoutCreator({ templateToLoad, onTemplateLoaded, user: userProp }) {
+    const { user: currentUser } = useAdminDashboard();
+    const user = userProp ?? currentUser;
   const [users, setUsers] = useState([]);
   const [groups, setGroups] = useState([]);
   const [exercises, setExercises] = useState([]); 
@@ -1305,7 +1308,7 @@ export default function WorkoutCreator({ templateToLoad, onTemplateLoaded, user 
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [currentUser]);
 
   const loadData = async (isRetry = false) => {
     if (!isRetry) {
@@ -1335,7 +1338,7 @@ export default function WorkoutCreator({ templateToLoad, onTemplateLoaded, user 
       };
 
       const [usersData, groupsData, exercisesData, templatesData, workoutsData] = await Promise.all([
-        loadWithRetry(() => User.filter({ role: 'user' }), 'Users'),
+        loadWithRetry(() => User.listForStaff(currentUser).then(us => us.filter(u => u.role !== 'admin' && u.role !== 'coach' && u.role !== 'trainer')), 'Users'),
         loadWithRetry(() => UserGroup.list(), 'UserGroups'),
         loadWithRetry(() => ExerciseDefinition.list(), 'ExerciseDefinitions'),
         loadWithRetry(() => WorkoutTemplate.list('-created_date'), 'WorkoutTemplates'),
