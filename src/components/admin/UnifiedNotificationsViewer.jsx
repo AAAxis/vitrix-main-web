@@ -620,11 +620,13 @@ export default function UnifiedNotificationsViewer() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Filter className="w-5 h-5 text-slate-600" />
-            סינונים
-          </CardTitle>
+        <CardHeader className="p-6" dir="rtl">
+          <div className="me-auto w-fit max-w-full flex flex-col items-start gap-1.5 text-end">
+            <CardTitle className="flex items-center gap-2 justify-start w-full text-lg">
+              <span>סינונים</span>
+              <Filter className="w-5 h-5 text-slate-600 shrink-0" />
+            </CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -668,7 +670,7 @@ export default function UnifiedNotificationsViewer() {
                     <ChevronsUpDown className="me-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0" dir="rtl">
                   <Command>
                     <CommandInput placeholder="חפש מתאמן..." />
                     <CommandList>
@@ -752,12 +754,14 @@ export default function UnifiedNotificationsViewer() {
         {/* 'notifications' tab content */}
         <TabsContent value="notifications" className="mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ClipboardCheck className="w-5 h-5 text-blue-600" />
-                סטטוס התראות ({filteredNotificationStatuses.length} דוחות)
-              </CardTitle>
-              <CardDescription>סיכום כללי של דוחות וסטטוסים</CardDescription>
+            <CardHeader className="p-6" dir="rtl">
+              <div className="me-auto w-fit max-w-full flex flex-col items-start gap-1.5 text-end">
+                <CardTitle className="flex items-center gap-2 justify-start w-full">
+                  <span>סטטוס התראות ({filteredNotificationStatuses.length} דוחות)</span>
+                  <ClipboardCheck className="w-5 h-5 text-blue-600 shrink-0" />
+                </CardTitle>
+                <CardDescription className="text-end">סיכום כללי של דוחות וסטטוסים</CardDescription>
+              </div>
             </CardHeader>
             <CardContent>
               {isLoadingNotifications ? (
@@ -773,14 +777,14 @@ export default function UnifiedNotificationsViewer() {
                   <ScrollArea className="h-[400px]">
                       <div className="space-y-2">
                           {filteredNotificationStatuses.map((report, index) => (
-                              <div key={report.id || index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-                                  <div className="flex-1">
+                              <div key={report.id || index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg text-end gap-4">
+                                  <div className="flex-1 min-w-0">
                                       <p className="font-medium text-slate-800">{report.user_name || report.user_email}</p>
                                       <p className="text-sm text-slate-600">
                                           סוג: {report.report_type}, תקופה: {format(parseISO(report.start_date), 'dd/MM')} - {format(parseISO(report.end_date), 'dd/MM')}
                                       </p>
                                   </div>
-                                  <span className="text-xs text-slate-500">
+                                  <span className="text-xs text-slate-500 shrink-0">
                                       {formatDateTime(report.generated_at)}
                                   </span>
                               </div>
@@ -795,12 +799,14 @@ export default function UnifiedNotificationsViewer() {
         {/* 'checkins' tab content */}
         <TabsContent value="checkins" className="mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageCircle className="w-5 h-5 text-green-600" />
-                צ'ק-אינים שבועיים
-              </CardTitle>
-              <CardDescription>סיכום דיווחי צ'ק-אין שבועיים מהמתאמנים</CardDescription>
+            <CardHeader className="p-6" dir="rtl">
+              <div className="me-auto w-fit max-w-full flex flex-col items-start gap-1.5 text-end">
+                <CardTitle className="flex items-center gap-2 justify-start w-full">
+                  <span>צ'ק-אינים שבועיים</span>
+                  <MessageCircle className="w-5 h-5 text-green-600 shrink-0" />
+                </CardTitle>
+                <CardDescription className="text-end">סיכום דיווחי צ'ק-אין שבועיים מהמתאמנים</CardDescription>
+              </div>
             </CardHeader>
             <CardContent>
               {isLoadingCheckins ? (
@@ -817,7 +823,7 @@ export default function UnifiedNotificationsViewer() {
                   {weeklyCheckinsSummary.map((week) => (
                     <AccordionItem key={`week-${week.week_number}`} value={`week-${week.week_number}`} className="border rounded-lg">
                       <AccordionTrigger className="p-4 hover:no-underline">
-                        <div className="flex justify-between w-full">
+                        <div className="flex justify-between w-full items-center text-end">
                           <span className="font-semibold">שבוע {week.week_number}</span>
                           <Badge>{week.responses.length} תגובות</Badge>
                         </div>
@@ -825,7 +831,7 @@ export default function UnifiedNotificationsViewer() {
                       <AccordionContent className="p-4 border-t">
                         <div className="space-y-3">
                           {week.responses.map(checkin => (
-                            <div key={checkin.id} className="p-3 bg-slate-50 rounded-md">
+                            <div key={checkin.id} className="p-3 bg-slate-50 rounded-md text-end">
                               <p className="font-semibold text-sm">{checkin.user_name || checkin.user_email}</p>
                               <p className="text-xs text-slate-600 mt-1">
                                 <strong>שאלה:</strong> {checkin.question_text}
@@ -833,7 +839,7 @@ export default function UnifiedNotificationsViewer() {
                               <p className="text-sm mt-1">
                                 <strong>תשובה:</strong> {checkin.answer_text}
                               </p>
-                              <p className="text-xs text-slate-400 mt-2 text-right">{formatDateTime(checkin.submitted_at)}</p>
+                              <p className="text-xs text-slate-400 mt-2 text-end">{formatDateTime(checkin.submitted_at)}</p>
                             </div>
                           ))}
                         </div>
@@ -849,14 +855,16 @@ export default function UnifiedNotificationsViewer() {
         {/* 'responses' tab content - Now displays detailed trainee responses */}
         <TabsContent value="responses" className="mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <UsersIcon className="w-5 h-5 text-purple-600" />
-                תגובות מתאמנים ({filteredTraineeResponses.length})
-              </CardTitle>
-              <CardDescription>
-                תגובות המתאמנים להתראות שהונפקו
-              </CardDescription>
+            <CardHeader className="p-6" dir="rtl">
+              <div className="me-auto w-fit max-w-full flex flex-col items-start gap-1.5 text-end">
+                <CardTitle className="flex items-center gap-2 justify-start w-full">
+                  <span>תגובות מתאמנים ({filteredTraineeResponses.length})</span>
+                  <UsersIcon className="w-5 h-5 text-purple-600 shrink-0" />
+                </CardTitle>
+                <CardDescription className="text-end">
+                  תגובות המתאמנים להתראות שהונפקו
+                </CardDescription>
+              </div>
             </CardHeader>
             <CardContent>
               {/* Search and Filter Controls are intentionally removed from here as per outline's implied change */}
@@ -883,15 +891,15 @@ export default function UnifiedNotificationsViewer() {
                           exit={{ opacity: 0, y: -20 }}
                         >
                           <Card className="hover:shadow-md transition-all duration-200">
-                            <CardContent className="p-4 flex justify-between items-start">
-                              <div className="flex-1">
+                            <CardContent className="p-4 flex justify-between items-start gap-4">
+                              <div className="flex-1 min-w-0 text-end">
                                 <h3 className="font-semibold text-slate-800 text-md">
                                   {response.notification_title || 'התראה ללא כותרת'}
                                 </h3>
                                 <p className="text-sm text-slate-600 mb-1">
                                   {response.user_name || response.user_email}
                                 </p>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 justify-end">
                                   <Badge variant="outline">{response.notification_type}</Badge>
                                   <Badge className={`${
                                     response.response_status === 'participating' ? 'bg-green-100 text-green-800' :
@@ -909,7 +917,7 @@ export default function UnifiedNotificationsViewer() {
                                   </p>
                                 )}
                               </div>
-                              <span className="text-xs text-slate-500 text-right">
+                              <span className="text-xs text-slate-500 shrink-0 text-end">
                                 {formatDateTime(response.responded_at)}
                               </span>
                             </CardContent>
@@ -927,14 +935,16 @@ export default function UnifiedNotificationsViewer() {
         {/* 'booster' tab content */}
         <TabsContent value="booster" className="mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="w-5 h-5 text-orange-600" />
-                בקשות להצטרפות לתכנית הבוסטר ({boosterRequests.length})
-              </CardTitle>
-              <CardDescription>
-                בקשות מתאמנים להצטרף לתכנית הבוסטר
-              </CardDescription>
+            <CardHeader className="p-6" dir="rtl">
+              <div className="me-auto w-fit max-w-full flex flex-col items-start gap-1.5 text-end">
+                <CardTitle className="flex items-center gap-2 justify-start w-full">
+                  <span>בקשות להצטרפות לתכנית הבוסטר ({boosterRequests.length})</span>
+                  <Bell className="w-5 h-5 text-orange-600 shrink-0" />
+                </CardTitle>
+                <CardDescription className="text-end">
+                  בקשות מתאמנים להצטרף לתכנית הבוסטר
+                </CardDescription>
+              </div>
             </CardHeader>
             <CardContent>
               {isLoadingBoosterRequests ? (
@@ -951,15 +961,15 @@ export default function UnifiedNotificationsViewer() {
                 <ScrollArea className="h-[400px]">
                   <div className="space-y-3">
                     {boosterRequests.map((request) => (
-                      <Card key={request.id} className="border-s-4 border-l-orange-500">
+                      <Card key={request.id} className="border-s-4 border-s-orange-500">
                         <CardContent className="p-4">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-2">
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex-1 min-w-0 text-end">
+                              <div className="flex items-center gap-2 mb-2 justify-end">
                                 <h3 className="font-semibold text-slate-800 text-lg">
                                   {request.notification_title}
                                 </h3>
-                                <Badge className="bg-orange-100 text-orange-800">חדש</Badge>
+                                <Badge className="bg-orange-100 text-orange-800 shrink-0">חדש</Badge>
                               </div>
                               <p className="text-sm text-slate-600 mb-2">
                                 <strong>מתאמן/ת:</strong> {request.user_name || request.user_email}
@@ -968,10 +978,10 @@ export default function UnifiedNotificationsViewer() {
                                 {request.notification_message}
                               </p>
                               {request.notification_details && (
-                                <div className="mt-3 p-3 bg-slate-50 rounded-lg text-sm">
-                                  <p><strong>אימייל:</strong> {request.notification_details.user_email}</p>
+                                <div className="mt-3 p-3 bg-slate-50 rounded-lg text-sm text-end" dir="rtl">
+                                  <p><strong>אימייל:</strong> <span dir="ltr" className="inline-block">{request.notification_details.user_email}</span></p>
                                   {request.notification_details.coach_name && (
-                                    <p><strong>מאמן:</strong> {request.notification_details.coach_name}</p>
+                                    <p><strong>מאמן:</strong> <span dir="ltr" className="inline-block">{request.notification_details.coach_name}</span></p>
                                   )}
                                   <p className="text-xs text-slate-500 mt-2">
                                     תאריך בקשה: {formatDateTime(request.created_date)}
@@ -979,7 +989,7 @@ export default function UnifiedNotificationsViewer() {
                                 </div>
                               )}
                             </div>
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-2 shrink-0">
                               <Button
                                 size="sm"
                                 variant="outline"
@@ -1011,14 +1021,16 @@ export default function UnifiedNotificationsViewer() {
         {/* New 'events' tab content from outline */}
         <TabsContent value="events" className="mt-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-red-600" />
-                סיכום תגובות לאירועים
-              </CardTitle>
-              <CardDescription>
-                מעקב אחר התגובות של המתאמנים לאירועים שנוצרו
-              </CardDescription>
+            <CardHeader className="p-6" dir="rtl">
+              <div className="me-auto w-fit max-w-full flex flex-col items-start gap-1.5 text-end">
+                <CardTitle className="flex items-center gap-2 justify-start w-full">
+                  <span>סיכום תגובות לאירועים</span>
+                  <Calendar className="w-5 h-5 text-red-600 shrink-0" />
+                </CardTitle>
+                <CardDescription className="text-end">
+                  מעקב אחר התגובות של המתאמנים לאירועים שנוצרו
+                </CardDescription>
+              </div>
             </CardHeader>
             <CardContent>
               {isLoadingEvents ? (

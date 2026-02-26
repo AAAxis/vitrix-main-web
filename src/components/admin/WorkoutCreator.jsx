@@ -10,10 +10,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Plus, Trash2, Copy, Save, Send, Calendar, Users, User as UserIcon, Dumbbell, Clock, CheckCircle, Edit, AlertTriangle, RefreshCw, Repeat, Weight, ChevronsUpDown, Check, Sparkles, FileText, Loader2, AlertCircle, Wand2 } from 'lucide-react'; // Added AlertCircle, Wand2
+import { Plus, Trash2, Copy, Save, Send, Calendar, Users, User as UserIcon, Dumbbell, Clock, CheckCircle, Edit, AlertTriangle, RefreshCw, Repeat, Weight, ChevronsUpDown, Check, FileText, Loader2, AlertCircle, Wand2 } from 'lucide-react'; // Added AlertCircle, Wand2
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -28,6 +28,14 @@ const statusColors = {
   'Sent': 'bg-green-100 text-green-800'
 };
 
+const statusLabels = {
+  'Draft': 'טיוטה',
+  'Scheduled': 'מתוזמן',
+  'Sent': 'נשלח'
+};
+
+const getStatusLabel = (status) => statusLabels[status] || status;
+
 const partLabels = {
   part_1_exercises: 'חלק 1 - תרגילים ראשיים',
   part_2_exercises: 'חלק 2 - תרגילים מתקדמים',
@@ -37,7 +45,7 @@ const partLabels = {
 
 
 // ManualWorkoutBuilder component encapsulating the original WorkoutCreator's functionality
-const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, groups, exercises, templates, existingWorkouts, isLoadingData, loadError, retryCount, handleRetry, onWorkoutSaved, initialWorkoutState }) => {
+const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, groups, exercises, templates, existingWorkouts, isLoadingData, loadError, retryCount, handleRetry, onWorkoutSaved, initialWorkoutState, onOpenAICreate }) => {
   const [workoutData, setWorkoutData] = useState(() => initialWorkoutState || {
     workout_title: 'אימון חדש',
     workout_description: '',
@@ -620,7 +628,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
 
   const renderWorkoutPart = (partKey) => (
     <div>
-      <h3 className="text-base font-semibold mb-3">{partLabels[partKey]}</h3>
+      <h3 className="text-base font-semibold mb-3 text-center">{partLabels[partKey]}</h3>
       <div>
         <AnimatePresence>
           {workoutData[partKey].map((exercise, index) => (
@@ -702,9 +710,9 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
   );
 
   return (
-    <div className="max-w-7xl mx-auto p-0 space-y-4 sm:space-y-6 bg-slate-50 min-h-screen">
+    <div className="max-w-7xl mx-auto p-0 space-y-4 sm:space-y-6 bg-slate-50 min-h-screen" dir="rtl">
       <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center">
-        <div>
+        <div className="me-auto text-end">
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-800">🏗️ בונה אימונים</h1>
             <p className="text-sm sm:text-base text-slate-500">בנה, שלח ונהל תוכניות אימון למתאמנים שלך.</p>
         </div>
@@ -719,21 +727,23 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                     </Button>
                 </DialogTrigger>
                 <DialogContent dir="rtl" className="w-[95vw] max-w-lg max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>שכפל אימון קיים</DialogTitle>
+                    <DialogHeader className="text-end ps-12 pt-2">
+                        <div className="me-auto w-fit">
+                            <DialogTitle>שכפל אימון קיים</DialogTitle>
+                        </div>
                     </DialogHeader>
                     <ScrollArea className="max-h-[60vh] w-full">
                         <div className="space-y-4 pe-4">
                             {existingWorkouts.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)).map(workout => (
-                                <Card key={workout.id} className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => duplicateWorkout(workout)}>
+                                <Card key={workout.id} className="cursor-pointer hover:bg-slate-50 transition-colors text-end" onClick={() => duplicateWorkout(workout)}>
                                     <CardContent className="p-4">
-                                        <div className="flex justify-between items-start">
-                                            <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between items-start gap-3">
+                                            <div className="flex-1 min-w-0 text-end">
                                                 <h4 className="font-semibold text-sm sm:text-base truncate">{workout.workout_title}</h4>
                                                 <p className="text-xs sm:text-sm text-slate-600 line-clamp-2">{workout.workout_description}</p>
                                             </div>
-                                            <Badge className={`ms-2 text-xs ${statusColors[workout.status || 'Draft']}`}>
-                                                {workout.status || 'Draft'}
+                                            <Badge className={`shrink-0 text-xs ${statusColors[workout.status || 'Draft']}`}>
+                                                {getStatusLabel(workout.status || 'Draft')}
                                             </Badge>
                                         </div>
                                     </CardContent>
@@ -760,9 +770,11 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
             {/* Left Pane: Library - Mobile Optimized */}
             <div className="xl:col-span-4 space-y-4 order-2 xl:order-1">
               <Card>
-                <CardHeader className="p-4 sm:p-6">
+                <CardHeader className="p-4 sm:p-6" dir="rtl">
+                  <div className="me-auto w-fit max-w-full flex flex-col items-start gap-1.5 text-end">
                     <CardTitle className="text-lg sm:text-xl">התבניות שלי</CardTitle>
-                    <CardDescription className="text-xs sm:text-sm">טען תבנית קיימת</CardDescription>
+                    <CardDescription className="text-xs sm:text-sm text-end">טען תבנית קיימת</CardDescription>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 pt-0">
                   {isLoadingData ? (
@@ -832,8 +844,10 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader className="p-4 sm:p-6">
+                <CardHeader className="p-4 sm:p-6" dir="rtl">
+                  <div className="me-auto w-fit max-w-full flex flex-col items-start gap-1.5 text-end">
                     <CardTitle className="text-lg sm:text-xl">ספריית תרגילים</CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 pt-0">
                   <Input
@@ -880,8 +894,10 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
             {/* Middle Pane: Builder - Mobile Optimized */}
             <div className="xl:col-span-5 space-y-4 order-1 xl:order-2">
               <Card>
-                <CardHeader className="p-4 sm:p-6">
+                <CardHeader className="p-4 sm:p-6" dir="rtl">
+                  <div className="me-auto w-fit max-w-full flex flex-col items-start gap-1.5 text-end">
                     <CardTitle className="text-lg sm:text-xl">חימום</CardTitle>
+                  </div>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 pt-0">
                     <div className="space-y-4">
@@ -918,8 +934,10 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
             <div className="xl:col-span-3 space-y-4 order-3">
               <div className="xl:sticky xl:top-4 space-y-4">
                 <Card>
-                  <CardHeader className="p-4 sm:p-6">
-                    <CardTitle className="text-lg sm:text-xl">פרטי אימון</CardTitle>
+                  <CardHeader className="p-4 sm:p-6" dir="rtl">
+                    <div className="me-auto w-fit max-w-full flex flex-col items-start gap-1.5 text-end">
+                      <CardTitle className="text-lg sm:text-xl">פרטי אימון</CardTitle>
+                    </div>
                   </CardHeader>
                   <CardContent className="p-4 sm:p-6 pt-0">
                     <div className="space-y-3">
@@ -996,8 +1014,10 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                 </Card>
 
                 <Card>
-                    <CardHeader className="p-4 sm:p-6">
+                    <CardHeader className="p-4 sm:p-6" dir="rtl">
+                      <div className="me-auto w-fit max-w-full flex flex-col items-start gap-1.5 text-end">
                         <CardTitle className="text-lg sm:text-xl">קהל יעד</CardTitle>
+                      </div>
                     </CardHeader>
                     <CardContent className="p-4 sm:p-6 pt-0">
                         <div className="space-y-3">
@@ -1068,8 +1088,10 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                 </Card>
 
                 <Card className="bg-white">
-                  <CardHeader className="p-4 sm:p-6">
-                    <CardTitle className="text-lg sm:text-xl">תצוגה מקדימה</CardTitle>
+                  <CardHeader className="p-4 sm:p-6" dir="rtl">
+                    <div className="me-auto w-fit max-w-full flex flex-col items-start gap-1.5 text-end">
+                      <CardTitle className="text-lg sm:text-xl">תצוגה מקדימה</CardTitle>
+                    </div>
                   </CardHeader>
                   <CardContent className="p-4 sm:p-6 pt-0">
                     <div className="space-y-2 text-sm">
@@ -1117,6 +1139,17 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                   </div>
 
                   <div className="flex flex-wrap gap-2">
+                    {typeof onOpenAICreate === 'function' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-xs flex-1 sm:flex-none border-purple-300 text-purple-700 hover:bg-purple-50"
+                        onClick={onOpenAICreate}
+                      >
+                        <Wand2 className="w-4 h-4 ms-2" />
+                        יצירה עם AI
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       onClick={handleSaveAsDraft}
@@ -1192,22 +1225,22 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
             <DialogContent className="w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden" dir="rtl">
               {viewedWorkout && (
                 <>
-                  <DialogHeader className="p-4 sm:p-6">
+                  <DialogHeader className="p-4 sm:p-6 text-end">
                     <DialogTitle className="text-xl sm:text-2xl">{viewedWorkout.workout_title}</DialogTitle>
-                    <div className="text-sm text-slate-500 pt-2">
+                    <div className="text-sm text-slate-500 pt-2 text-end">
                       <p className="line-clamp-3">{viewedWorkout.workout_description}</p>
-                      <div className="flex flex-wrap items-center gap-4 mt-2">
-                        <Badge className={statusColors[viewedWorkout.status || 'Draft']}>{viewedWorkout.status}</Badge>
+                      <div className="flex flex-wrap items-center gap-4 mt-2 justify-end">
+                        <Badge className={statusColors[viewedWorkout.status || 'Draft']}>{getStatusLabel(viewedWorkout.status || 'Draft')}</Badge>
                         {viewedWorkout.created_date && <span><strong>נוצר:</strong> {format(new Date(viewedWorkout.created_date), 'dd/MM/yyyy HH:mm')}</span>}
                       </div>
-                      <div className="mt-2 space-y-1">
+                      <div className="mt-2 space-y-1 text-end">
                         <p><strong>יעד:</strong> <span className="break-words">{viewedWorkout.target_user_email === 'all' ? 'כל המתאמנים' : viewedWorkout.target_user_email}</span></p>
                         {viewedWorkout.sent_date && <p><strong>נשלח/תוזמן:</strong> {format(new Date(viewedWorkout.sent_date), 'dd/MM/yyyy HH:mm')}</p>}
                       </div>
                     </div>
                   </DialogHeader>
                   <ScrollArea className="max-h-[60vh] p-4 sm:p-6">
-                    <div className="space-y-4">
+                    <div className="space-y-4 text-end">
                       {viewedWorkout.warmup_description && (
                           <div>
                               <h4 className="font-semibold text-lg mb-2">חימום ({viewedWorkout.warmup_duration} דקות)</h4>
@@ -1220,7 +1253,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                             <h4 className="font-semibold text-lg mb-2">{partLabels[part]}</h4>
                             <div className="space-y-2">
                               {viewedWorkout[part].map((ex, index) => (
-                                <div key={index} className="p-3 bg-slate-50 rounded-md border">
+                                <div key={index} className="p-3 bg-slate-50 rounded-md border text-end">
                                   <p className="font-bold text-slate-800">{ex.name} ({ex.category})</p>
                                   <p className="text-sm text-slate-600">
                                     {ex.suggested_sets} סטים &times; {ex.suggested_reps} חזרות
@@ -1243,7 +1276,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                       ))}
                     </div>
                   </ScrollArea>
-                  <DialogFooter className="gap-2 p-4 sm:p-6">
+                  <DialogFooter className="gap-2 p-4 sm:p-6 justify-start">
                     <Button variant="outline" onClick={() => setViewedWorkout(null)} size="sm">סגור</Button>
                     <Button onClick={() => handleEditWorkout(viewedWorkout)} size="sm">
                       <Edit className="w-4 h-4 ms-2" />
@@ -1258,26 +1291,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
   );
 };
 
-// Placeholder for AIWorkoutBuilder
-const AIWorkoutBuilder = ({ user }) => {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>בניית אימון באמצעות AI</CardTitle>
-        <CardDescription>
-          (פונקציונליות זו בפיתוח)
-          <br/>
-          תוכלו ליצור אימונים חכמים המותאמים למתאמן שלכם
-          באמצעות טכנולוגיות מתקדמות
-          {user && <p>שלום {user.name}!</p>}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {/* AI workout builder content goes here */}
-      </CardContent>
-    </Card>
-  );
-};
+// (AIWorkoutBuilder tab removed - was "בניית אימון חכם")
 
 
 export default function WorkoutCreator({ templateToLoad, onTemplateLoaded, user: userProp }) {
@@ -1293,6 +1307,7 @@ export default function WorkoutCreator({ templateToLoad, onTemplateLoaded, user:
   const [retryCount, setRetryCount] = useState(0);
 
   const [activeTab, setActiveTab] = useState('manual');
+  const [isAIDialogOpen, setIsAIDialogOpen] = useState(false);
   const [textWorkout, setTextWorkout] = useState('');
   const [textTemplateName, setTextTemplateName] = useState('');
   const [isSavingText, setIsSavingText] = useState(false);
@@ -1671,101 +1686,68 @@ ${exercisesList.map(ex => `- ${ex.name_he} (${ex.category}, ${ex.muscle_group}, 
           {successMessage}
         </motion.div>
       )}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3 h-12">
-          <TabsTrigger value="ai" className="flex items-center gap-2 text-sm">
-            <Sparkles className="w-4 h-4" />
-            בניית אימון חכם
-          </TabsTrigger>
-          <TabsTrigger value="manual" className="flex items-center gap-2 text-sm">
-            <Dumbbell className="w-4 h-4" />
-            בניית אימון ידני
-          </TabsTrigger>
-          <TabsTrigger value="text" className="flex items-center gap-2 text-sm">
-            <FileText className="w-4 h-4" />
-            יצירה מטקסט חכמה
-          </TabsTrigger>
-        </TabsList>
+      <ManualWorkoutBuilder
+        templateToLoad={templateToLoadForManualBuilder || templateToLoad}
+        onTemplateLoaded={() => {
+          if (onTemplateLoaded) onTemplateLoaded();
+          setTemplateToLoadForManualBuilder(null);
+        }}
+        user={user}
+        users={users}
+        groups={groups}
+        exercises={exercises}
+        templates={templates}
+        existingWorkouts={existingWorkouts}
+        isLoadingData={isLoadingData}
+        loadError={loadError}
+        retryCount={retryCount}
+        handleRetry={handleRetry}
+        onWorkoutSaved={loadData}
+        onOpenAICreate={() => setIsAIDialogOpen(true)}
+      />
 
-        <TabsContent value="ai" className="mt-6">
-          <AIWorkoutBuilder user={user} />
-        </TabsContent>
-
-        <TabsContent value="manual" className="mt-6">
-          <ManualWorkoutBuilder
-            templateToLoad={templateToLoadForManualBuilder || templateToLoad}
-            onTemplateLoaded={() => {
-              if (onTemplateLoaded) onTemplateLoaded();
-              setTemplateToLoadForManualBuilder(null); // Clear the internal state after it's been loaded
-            }}
-            user={user}
-            users={users}
-            groups={groups}
-            exercises={exercises} 
-            templates={templates}
-            existingWorkouts={existingWorkouts}
-            isLoadingData={isLoadingData} 
-            loadError={loadError}
-            retryCount={retryCount}
-            handleRetry={handleRetry}
-            onWorkoutSaved={loadData}
-          />
-        </TabsContent>
-        
-        <TabsContent value="text" className="mt-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Input Panel */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wand2 className="w-5 h-5 text-purple-600" />
-                  יצירת אימון חכמה מטקסט
-                </CardTitle>
-                <CardDescription>
-                  הדבק או כתוב טקסט אימון - AI יזהה את התרגילים ויכין אימון מוכן לשליחה
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="text-template-name">שם האימון</Label>
-                  <Input 
-                    id="text-template-name" 
-                    placeholder="לדוגמה: אימון רגליים מתחילים"
-                    value={textTemplateName}
-                    onChange={(e) => setTextTemplateName(e.target.value)}
-                  />
-                </div>
-                
-                <div>
-                  <Label htmlFor="text-workout">טקסט האימון</Label>
-                  <Textarea 
-                    id="text-workout"
-                    rows={12}
-                    placeholder={`הדבק או כתוב כאן את האימון, למשל:
-
-חימום: ריצה קלה 5 דקות
-
-חלק 1:
-- סקוואט 4 סטים של 12 חזרות
-- לחיצת חזה במכונה 3x10 במשקל 40 קילו
-- משיכה רחבה 3 סטים 12 חזרות
-
-חלק 2:  
-- פלאנק 3x30 שניות
-- דחיפות 2 סטים של 15
-- הליכה מהירה על הליכון
-
-הערות: שתו הרבה מים`}
-                    value={textWorkout}
-                    onChange={(e) => setTextWorkout(e.target.value)}
-                  />
-                </div>
-
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={analyzeWorkoutText} 
+      {/* Create with AI – dialog (content from former "יצירה מטקסט חכמה" tab) */}
+      <Dialog open={isAIDialogOpen} onOpenChange={setIsAIDialogOpen}>
+        <DialogContent dir="rtl" className="w-[95vw] max-w-4xl max-h-[90vh] overflow-hidden flex flex-col p-0">
+          <DialogHeader className="p-6 pb-0 text-end">
+            <DialogTitle className="flex items-center gap-2 justify-start">
+              <span>יצירת אימון חכמה מטקסט</span>
+              <Wand2 className="w-5 h-5 text-purple-600 shrink-0" />
+            </DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="flex-1 px-6 pb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pr-4">
+              <Card className="text-end">
+                <CardHeader className="text-end">
+                  <CardTitle className="text-base">טקסט האימון</CardTitle>
+                  <CardDescription className="text-end">הדבק או כתוב את האימון בפורמט חופשי</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-end">
+                  <div>
+                    <Label htmlFor="text-template-name" className="text-end">שם האימון</Label>
+                    <Input
+                      id="text-template-name"
+                      placeholder="לדוגמה: אימון רגליים מתחילים"
+                      value={textTemplateName}
+                      onChange={(e) => setTextTemplateName(e.target.value)}
+                      className="mt-1 text-end"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="text-workout" className="text-end">טקסט האימון</Label>
+                    <Textarea
+                      id="text-workout"
+                      rows={10}
+                      placeholder={`חימום: ריצה קלה 5 דקות\n\nחלק 1:\n- סקוואט 4 סטים של 12 חזרות\n- לחיצת חזה 3x10\n\nחלק 2:\n- פלאנק 3x30 שניות`}
+                      value={textWorkout}
+                      onChange={(e) => setTextWorkout(e.target.value)}
+                      className="mt-1 text-end"
+                    />
+                  </div>
+                  <Button
+                    onClick={analyzeWorkoutText}
                     disabled={isAnalyzing || !textWorkout.trim()}
-                    className="flex-1"
+                    className="w-full justify-center"
                   >
                     {isAnalyzing ? (
                       <><Loader2 className="w-4 h-4 ms-2 animate-spin" /> מנתח...</>
@@ -1773,130 +1755,106 @@ ${exercisesList.map(ex => `- ${ex.name_he} (${ex.category}, ${ex.muscle_group}, 
                       <><Wand2 className="w-4 h-4 ms-2" /> נתח עם AI</>
                     )}
                   </Button>
-                </div>
+                  {parseError && (
+                    <Alert variant="destructive" className="text-end">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{parseError}</AlertDescription>
+                    </Alert>
+                  )}
+                </CardContent>
+              </Card>
 
-                {parseError && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{parseError}</AlertDescription>
-                  </Alert>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Results Panel */}
-            <Card>
-              <CardHeader>
-                <CardTitle>תצוגה מקדימה</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {!parsedWorkout && !isAnalyzing && (
-                  <div className="text-center py-12 text-slate-500">
-                    <FileText className="w-16 h-16 mx-auto mb-4 opacity-30" />
-                    <p>הכנס טקסט אימון ולחץ "נתח עם AI" לראות תצוגה מקדימה</p>
-                  </div>
-                )}
-
-                {isAnalyzing && (
-                  <div className="text-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-purple-600" />
-                    <p>AI מנתח את האימון ומזהה תרגילים...</p>
-                  </div>
-                )}
-
-                {parsedWorkout && (
-                  <div className="space-y-4">
-                    <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                        <span className="font-semibold text-green-800">ניתוח הושלם בהצלחה!</span>
-                      </div>
-                      
-                      {analysisResults && (
-                        <div className="text-sm space-y-1">
-                          <p>זוהו {analysisResults.total_exercises} תרגילים במאגר</p>
-                          {analysisResults.unmatched_exercises?.length > 0 && (
-                            <p className="text-orange-600">
-                              {analysisResults.unmatched_exercises.length} תרגילים לא זוהו: {analysisResults.unmatched_exercises.join(', ')}
-                            </p>
-                          )}
-                        </div>
-                      )}
+              <Card className="text-end">
+                <CardHeader className="text-end">
+                  <CardTitle className="text-base">תצוגה מקדימה</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {!parsedWorkout && !isAnalyzing && (
+                    <div className="text-center py-12 text-slate-500 text-sm">
+                      <FileText className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                      <p>הכנס טקסט אימון ולחץ "נתח עם AI"</p>
                     </div>
-
-                    <div className="space-y-3">
-                      <h4 className="font-semibold">{parsedWorkout.workout_title}</h4>
-                      {parsedWorkout.workout_description && (
-                        <p className="text-sm text-slate-600">{parsedWorkout.workout_description}</p>
-                      )}
-
-                      {/* Warmup */}
-                      {parsedWorkout.warmup_description && (
-                        <div className="p-3 bg-blue-50 rounded-md">
-                          <p className="text-sm font-medium text-blue-800">חימום ({parsedWorkout.warmup_duration} דק')</p>
-                          <p className="text-sm text-blue-600">{parsedWorkout.warmup_description}</p>
-                        </div>
-                      )}
-
-                      {/* Exercise Parts */}
-                      {['part_1_exercises', 'part_2_exercises', 'part_3_exercises'].map((partKey, index) => (
-                        parsedWorkout[partKey]?.length > 0 && (
-                          <div key={partKey} className="space-y-2">
-                            <h5 className="font-medium">חלק {index + 1}</h5>
-                            {parsedWorkout[partKey].map((exercise, i) => (
-                              <div key={i} className="p-2 bg-slate-50 rounded text-sm">
-                                <div className="flex justify-between items-start">
-                                  <span className="font-medium">{exercise.name}</span>
-                                  <Badge variant="outline" className={
-                                    exercise.confidence >= 90 ? 'bg-green-100 text-green-800' :
-                                    exercise.confidence >= 70 ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-red-100 text-red-800'
-                                  }>
-                                    {exercise.confidence}%
-                                  </Badge>
-                                </div>
-                                <p className="text-xs text-slate-500">{exercise.original_text}</p>
-                                <p className="text-xs">
-                                  {exercise.suggested_sets} סטים × {exercise.suggested_reps} חזרות
-                                  {exercise.suggested_weight > 0 && ` @ ${exercise.suggested_weight}ק"ג`}
-                                </p>
-                                {exercise.notes && <p className="text-xs text-slate-600">{exercise.notes}</p>}
-                              </div>
-                            ))}
-                          </div>
-                        )
-                      ))}
+                  )}
+                  {isAnalyzing && (
+                    <div className="text-center py-12">
+                      <Loader2 className="w-8 h-8 animate-spin mx-auto mb-3 text-purple-600" />
+                      <p className="text-sm">AI מנתח את האימון...</p>
                     </div>
-
-                    <div className="flex gap-2 pt-4">
-                      <Button 
-                        onClick={handleSaveAnalyzedTemplate} 
-                        disabled={isSavingText}
-                        variant="outline"
-                        className="flex-1"
-                      >
-                        {isSavingText ? (
-                          <><Loader2 className="w-4 h-4 ms-2 animate-spin" /> שומר...</>
-                        ) : (
-                          <><Save className="w-4 h-4 ms-2" /> שמור כתבנית</>
+                  )}
+                  {parsedWorkout && (
+                    <div className="space-y-4 text-end">
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-end">
+                        <div className="flex items-center gap-2 mb-1 justify-end">
+                          <CheckCircle className="w-4 h-4 text-green-600 shrink-0" />
+                          <span className="font-semibold text-green-800 text-sm">ניתוח הושלם בהצלחה!</span>
+                        </div>
+                        {analysisResults?.unmatched_exercises?.length > 0 && (
+                          <p className="text-xs text-orange-600 mt-1 text-end">
+                            לא זוהו: {analysisResults.unmatched_exercises.join(', ')}
+                          </p>
                         )}
-                      </Button>
-                      
-                      <Button 
-                        onClick={handleSendAnalyzedWorkout}
-                        className="flex-1"
-                      >
-                        <Send className="w-4 h-4 ms-2" />
-                        שלח למתאמנים
-                      </Button>
+                      </div>
+                      <div className="space-y-2 text-end">
+                        <h4 className="font-semibold text-sm">{parsedWorkout.workout_title}</h4>
+                        {parsedWorkout.warmup_description && (
+                          <div className="p-2 bg-blue-50 rounded text-xs text-end">
+                            חימום: {parsedWorkout.warmup_description}
+                          </div>
+                        )}
+                        {['part_1_exercises', 'part_2_exercises', 'part_3_exercises'].map((partKey, idx) => (
+                          parsedWorkout[partKey]?.length > 0 && (
+                            <div key={partKey} className="text-end">
+                              <h5 className="font-medium text-xs mt-2">חלק {idx + 1}</h5>
+                              {parsedWorkout[partKey].map((ex, i) => (
+                                <div key={i} className="p-2 bg-slate-50 rounded text-xs text-end">
+                                  {ex.name} — {ex.suggested_sets}×{ex.suggested_reps}
+                                  {ex.suggested_weight > 0 && ` @ ${ex.suggested_weight}ק"ג`}
+                                </div>
+                              ))}
+                            </div>
+                          )
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-3 justify-end">
+                        <Button
+                          size="sm"
+                          variant="default"
+                          onClick={() => {
+                            setTemplateToLoadForManualBuilder({
+                              ...parsedWorkout,
+                              estimated_duration: parsedWorkout.estimated_duration || 60,
+                              target_user_email: '',
+                              scheduled_date: '',
+                              status: 'Draft',
+                              is_sent: false,
+                              sent_date: null
+                            });
+                            setIsAIDialogOpen(false);
+                            setTextWorkout('');
+                            setTextTemplateName('');
+                            setParsedWorkout(null);
+                            setAnalysisResults(null);
+                          }}
+                        >
+                          <Dumbbell className="w-4 h-4 ms-2" />
+                          טען לבנאי הידני
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleSaveAnalyzedTemplate} disabled={isSavingText}>
+                          {isSavingText ? <Loader2 className="w-4 h-4 ms-2 animate-spin" /> : <Save className="w-4 h-4 ms-2" />}
+                          שמור כתבנית
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={handleSendAnalyzedWorkout}>
+                          <Send className="w-4 h-4 ms-2" />שלח למתאמנים
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-      </Tabs>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
