@@ -54,7 +54,8 @@ export default function GroupManagement() {
         description: '',
         assigned_coach: '',
         color_tag: '#3b82f6',
-        status: 'Active'
+        status: 'Active',
+        logo_url: ''
     });
     const [assignToGroupSearchTerm, setAssignToGroupSearchTerm] = useState('');
     const [isAssigningToGroup, setIsAssigningToGroup] = useState(false);
@@ -84,7 +85,8 @@ export default function GroupManagement() {
                 description: group.description || '',
                 assigned_coach: group.assigned_coach || '',
                 color_tag: group.color_tag || '#3b82f6',
-                status: group.status || 'Active'
+                status: group.status || 'Active',
+                logo_url: group.logo_url || ''
             });
             setAssignToGroupSearchTerm('');
         } else {
@@ -94,7 +96,8 @@ export default function GroupManagement() {
                 description: '',
                 assigned_coach: currentUser?.email || '',
                 color_tag: '#3b82f6',
-                status: 'Active'
+                status: 'Active',
+                logo_url: ''
             });
             setIsDialogOpen(true);
         }
@@ -133,7 +136,14 @@ export default function GroupManagement() {
                 // Unassign users from the group
                 for (const user of usersInGroup) {
                     const updatedGroups = user.group_names.filter(g => g !== groupName);
-                    await User.update(user.id, { group_names: updatedGroups });
+                    const payload = { group_names: updatedGroups };
+                    if (updatedGroups.length > 0) {
+                        const firstGroup = groups.find(g => updatedGroups.includes(g.name));
+                        if (firstGroup?.logo_url) payload.organization_logo_url = firstGroup.logo_url;
+                    } else {
+                        payload.organization_logo_url = null;
+                    }
+                    await User.update(user.id, payload);
                 }
 
                 await UserGroup.delete(groupId);
@@ -193,7 +203,9 @@ export default function GroupManagement() {
         try {
             const current = Array.isArray(user.group_names) ? user.group_names : [];
             const next = current.includes(editingGroup.name) ? current : [...current, editingGroup.name];
-            await User.update(uid, { group_names: next });
+            const payload = { group_names: next };
+            if (editingGroup.logo_url) payload.organization_logo_url = editingGroup.logo_url;
+            await User.update(uid, payload);
             loadData();
         } catch (err) {
             console.error('Error assigning user to group:', err);
@@ -243,6 +255,11 @@ export default function GroupManagement() {
                             <div>
                                 <Label htmlFor="description">תיאור</Label>
                                 <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="תיאור קצר של הקבוצה..." rows={3} />
+                            </div>
+                            <div>
+                                <Label htmlFor="logo_url">לוגו ארגון (כתובת URL)</Label>
+                                <Input id="logo_url" type="url" value={formData.logo_url} onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })} placeholder="https://..." />
+                                <p className="text-xs text-slate-500 mt-1">יוצג במסך הפתיחה ובמסכי ההתחברות של האפליקציה למשתמשים בקבוצה זו.</p>
                             </div>
                             <div>
                                 <Label htmlFor="assigned_coach">מאמן מוקצה (אימייל)</Label>
@@ -566,6 +583,17 @@ export default function GroupManagement() {
                                 placeholder="תיאור קצר של הקבוצה..."
                                 rows={3}
                             />
+                        </div>
+                        <div>
+                            <Label htmlFor="logo_url">לוגו ארגון (כתובת URL)</Label>
+                            <Input
+                                id="logo_url"
+                                type="url"
+                                value={formData.logo_url}
+                                onChange={(e) => setFormData({...formData, logo_url: e.target.value})}
+                                placeholder="https://..."
+                            />
+                            <p className="text-xs text-slate-500 mt-1">יוצג במסך הפתיחה ובמסכי ההתחברות של האפליקציה למשתמשים בקבוצה זו.</p>
                         </div>
                         {editingGroup && (
                         <div>

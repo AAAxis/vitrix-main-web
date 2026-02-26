@@ -333,12 +333,7 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="relative">
-          <img
-            src="/logo.jpeg"
-            alt="טוען..."
-            className="w-12 h-12 rounded-2xl object-contain animate-pulse"
-          />
-          <div className="absolute -inset-1 w-14 h-14 rounded-full border-4 border-blue-300 border-t-transparent animate-spin"></div>
+          <div className="w-14 h-14 rounded-full border-4 border-blue-300 border-t-transparent animate-spin"></div>
         </div>
       </div>
     );
@@ -631,18 +626,6 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
   return (
     <AdminDashboardContext.Provider value={{ user, isSystemAdmin, refreshUser: loadUser }}>
     <div className="max-w-full mx-auto p-2 sm:p-4 space-y-6" dir="rtl">
-      {/* Header - Only show when navigation is not hidden */}
-      {!hideNavigation && (
-        <div className="text-center mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-green-600 via-yellow-500 to-blue-500 bg-clip-text text-transparent">
-            🏋️‍♂️ לוח ניהול מאמנים
-          </h1>
-          <p className="text-slate-600 mt-3 max-w-2xl mx-auto">
-            ניהול מתאמנים, יצירת אימונים ותוכניות, מעקב התקדמות ועוד.
-          </p>
-        </div>
-      )}
-
       {/* Navigation Tabs - buttons that call navigate() so URL always updates */}
       {!hideNavigation && (
         <>

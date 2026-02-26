@@ -242,6 +242,17 @@ export default function UserSettingsManager({
         setError('לא נמצא מזהה משתמש לעדכון');
         return;
       }
+      if (updateData.group_names && updateData.group_names.length > 0) {
+        try {
+          const allGroups = await UserGroup.list();
+          const firstGroup = (allGroups || []).find(g => g.name === updateData.group_names[0]);
+          updateData.organization_logo_url = firstGroup?.logo_url ?? null;
+        } catch (e) {
+          console.warn('Could not resolve organization logo:', e);
+        }
+      } else if (updateData.group_names && updateData.group_names.length === 0) {
+        updateData.organization_logo_url = null;
+      }
       await User.update(userIdToUpdate, updateData);
 
       setMessage(updateData.role === 'admin'

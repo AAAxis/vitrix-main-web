@@ -32,21 +32,6 @@ export default function LoginScreen() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-green-50 to-lime-50 flex items-center justify-center p-4" dir="rtl">
             <div className="max-w-md w-full space-y-8">
-                {/* Logo and Header */}
-                <div className="text-center">
-                    <div className="mx-auto mb-6 flex items-center justify-center">
-                        <img 
-                            src="/logo.jpeg"
-                            alt="Vitrix"
-                            className="w-20 h-20 object-contain rounded-2xl"
-                        />
-                    </div>
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-green-600 via-yellow-500 to-blue-500 bg-clip-text text-transparent">
-                        Vitrix
-                    </h1>
-                    <p className="text-slate-600 mt-2 text-lg">טוב יותר מאתמול</p>
-                </div>
-
                 {/* Login Card */}
                 <Card className="muscle-glass border-0 shadow-2xl">
                     <CardHeader className="text-center pb-4">
