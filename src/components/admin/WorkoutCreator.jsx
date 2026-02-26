@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { PreMadeWorkout, WorkoutTemplate, User, UserGroup, ExerciseDefinition, CoachNotification } from '@/api/entities';
 import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { groupsForStaff } from '@/lib/groupUtils';
 import { InvokeLLM } from '@/api/integrations'; // Added InvokeLLM
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -1295,7 +1296,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
 
 
 export default function WorkoutCreator({ templateToLoad, onTemplateLoaded, user: userProp }) {
-    const { user: currentUser } = useAdminDashboard();
+    const { user: currentUser, isSystemAdmin } = useAdminDashboard();
     const user = userProp ?? currentUser;
   const [users, setUsers] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -1361,7 +1362,7 @@ export default function WorkoutCreator({ templateToLoad, onTemplateLoaded, user:
       ]);
 
       setUsers(usersData || []);
-      setGroups(groupsData || []);
+      setGroups(groupsForStaff(groupsData || [], currentUser, isSystemAdmin));
       setExercises(exercisesData || []); 
       setTemplates(templatesData || []);
       setExistingWorkouts(workoutsData || []);

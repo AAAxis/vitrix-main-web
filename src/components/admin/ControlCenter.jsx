@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { User, UserGroup, WeeklyTask, BoosterPlusTask, MonthlyGoal, GeneratedReport, CoachMessage, WeightEntry, PreMadeWorkout, AdminMessage } from '@/api/entities';
 import { GroupEvent } from '@/api/entities';
 import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { groupsForStaff } from '@/lib/groupUtils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -77,7 +78,7 @@ const QuickActionCard = ({ title, icon: Icon, color, onClick, description }) => 
 );
 
 export default function ControlCenter({ onNavigateToTab }) {
-    const { user: currentUser } = useAdminDashboard();
+    const { user: currentUser, isSystemAdmin } = useAdminDashboard();
     const [stats, setStats] = useState(null);
     const [allUsers, setAllUsers] = useState([]);
     const [allGroups, setAllGroups] = useState([]);
@@ -297,9 +298,10 @@ export default function ControlCenter({ onNavigateToTab }) {
                 ]);
 
                 setAllUsers(usersData || []);
-                setAllGroups(groupsData || []);
+                const myGroups = groupsForStaff(groupsData || [], currentUser, isSystemAdmin);
+                setAllGroups(myGroups);
 
-                const filteredGroups = groupsData.filter(group => group.name !== 'מנהלה');
+                const filteredGroups = myGroups.filter(group => group.name !== 'מנהלה');
                 const usersForStatsAndProgress = (usersData || []).filter(user =>
                     user.role !== 'admin' && user.role !== 'trainer' && (!user.group_names?.includes('מנהלה'))
                 );
@@ -1077,7 +1079,9 @@ export default function ControlCenter({ onNavigateToTab }) {
     return (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <div className="space-y-4" dir="rtl">
-                <h1 className="text-xl sm:text-2xl font-bold">מרכז שליטה</h1>
+                <div className="flex justify-center w-full">
+                    <h1 className="text-xl sm:text-2xl font-bold">מרכז שליטה</h1>
+                </div>
 
                 <div className="grid gap-2 grid-cols-2 sm:grid-cols-4 md:grid-cols-4">
                     <DialogTrigger asChild>

@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { WeightEntry, User, UserGroup } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { groupsForStaff } from '@/lib/groupUtils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -12,6 +14,7 @@ import { he } from 'date-fns/locale';
 import { orderBy } from 'lodash';
 
 export default function GroupWeightFocus() {
+    const { user: currentUser, isSystemAdmin } = useAdminDashboard();
     const [allUsers, setAllUsers] = useState([]);
     const [allGroups, setAllGroups] = useState([]);
     const [allWeightEntries, setAllWeightEntries] = useState([]);
@@ -31,7 +34,7 @@ export default function GroupWeightFocus() {
                 ]);
 
                 setAllUsers(users);
-                setAllGroups(groups);
+                setAllGroups(groupsForStaff(groups || [], currentUser, isSystemAdmin));
                 setAllWeightEntries(weightEntries || []);
             } catch (err) {
                 console.error("Failed to load group weight data:", err);
@@ -42,7 +45,7 @@ export default function GroupWeightFocus() {
         };
 
         fetchData();
-    }, []);
+    }, [currentUser, isSystemAdmin]);
 
     const filteredUsers = useMemo(() => {
         let users = selectedGroup === 'all' ? allUsers : allUsers.filter(user => 

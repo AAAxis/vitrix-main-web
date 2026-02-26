@@ -548,9 +548,8 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
 
     return (
       <div className="space-y-6">
-        <div className="text-center mb-8">
-          <h2 className="text-xl font-bold text-slate-800 mb-2">⚙️ תוכניות והגדרות</h2>
-          <p className="text-slate-600">ניהול מתקדם של תוכניות אימון והגדרות מערכת</p>
+        <div className="flex justify-center w-full mb-8">
+          <h2 className="text-xl font-bold text-slate-800 mb-2">תוכניות והגדרות</h2>
         </div>
 
         <div className="flex flex-col gap-4">

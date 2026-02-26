@@ -25,6 +25,7 @@ import { format, parseISO, subDays, isBefore, isWithinInterval, startOfToday, di
 import { he } from 'date-fns/locale';
 import { formatDate, formatDateTime, getRelativeTime, formatDetailedDateTime } from '@/components/utils/timeUtils';
 import UserTrackingTab from '@/components/admin/UserTrackingTab';
+import InviteLinkCard from '@/components/admin/InviteLinkCard';
 
 // Translate status to Hebrew for display (handles both English and Hebrew stored values)
 const getStatusLabel = (status) => {
@@ -855,7 +856,12 @@ export default function UserManagement({ initialUserEmail, startInEditMode, admi
         <ScrollArea className="h-[60vh] bg-slate-50">
           <div className="space-y-4 p-4">
             {displayedUsers.length === 0 ? (
-              <div className="text-center text-slate-500 py-8"><p>לא נמצאו מתאמנים התואמים את המסננים.</p></div>
+              <div className="space-y-2">
+                <div className="rounded border border-blue-200 bg-blue-50/80 px-2 py-1.5 text-center text-xs text-blue-900" dir="rtl">
+                  עדיין אין מתאמנים — הזמן מתאמנים עם הקישור למטה.
+                </div>
+                <InviteLinkCard compact />
+              </div>
             ) : (
               displayedUsers.map((user) => <div key={user.id}>{generateUserReport(user)}</div>)
             )}

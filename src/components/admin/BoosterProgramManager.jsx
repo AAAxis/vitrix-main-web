@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { User, WeeklyTask, MonthlyGoal, ProgressPicture, CalorieTracking, UserGroup, WaterTracking, LectureView, WeeklyTaskTemplate, CoachNotification } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { groupsForStaff } from '@/lib/groupUtils';
 import { SendFCMNotification } from '@/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +15,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import WeeklyTaskTemplateManager from './WeeklyTaskTemplateManager';
 
 export default function BoosterProgramManager() {
+    const { user: currentUser, isSystemAdmin } = useAdminDashboard();
     const { toast } = useToast();
     const [users, setUsers] = useState([]);
     const [groups, setGroups] = useState([]);
@@ -28,7 +31,7 @@ export default function BoosterProgramManager() {
             try {
                 const [allUsers, allGroups] = await Promise.all([User.filter({}), UserGroup.list()]);
                 setUsers(allUsers);
-                setGroups(allGroups);
+                setGroups(groupsForStaff(allGroups || [], currentUser, isSystemAdmin));
             } catch (error) {
                 console.error('Error loading data:', error);
                 showFeedback('error', 'שגיאה בטעינת הנתונים');

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { User, CoachMessage, UserGroup } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { groupsForStaff } from '@/lib/groupUtils';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 export default function CoachMessenger() {
+    const { user: currentUser, isSystemAdmin } = useAdminDashboard();
     const [users, setUsers] = useState([]);
     const [groups, setGroups] = useState([]);
     const [sendTo, setSendTo] = useState('individual'); // Fixed: properly defined
@@ -22,7 +25,7 @@ export default function CoachMessenger() {
             try {
                 const [allUsers, allGroups] = await Promise.all([User.list(), UserGroup.list()]);
                 setUsers(allUsers);
-                setGroups(allGroups);
+                setGroups(groupsForStaff(allGroups || [], currentUser, isSystemAdmin));
             } catch (error) {
                 console.error('Error fetching data:', error);
                 setStatus('שגיאה בטעינת הנתונים.');

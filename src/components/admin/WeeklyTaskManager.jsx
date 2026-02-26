@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { WeeklyTask, User, UserGroup, CoachNotification } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { groupsForStaff } from '@/lib/groupUtils';
 import { SendFCMNotification } from '@/api/integrations';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -244,6 +246,7 @@ const predefinedTasksFemale = [
 ];
 
 export default function WeeklyTaskManager() {
+    const { user: currentUser, isSystemAdmin } = useAdminDashboard();
     const [users, setUsers] = useState([]);
     const [groups, setGroups] = useState([]);
     const [tasks, setTasks] = useState([]);
@@ -278,13 +281,15 @@ export default function WeeklyTaskManager() {
     const loadData = useCallback(async () => {
         setIsLoading(true);
         try {
+            const listUsers = isSystemAdmin ? () => User.filter({}) : () => User.listForStaff(currentUser);
             const [allUsers, allGroups, allTasks] = await Promise.all([
-                User.filter({}),
+                listUsers(),
                 UserGroup.list(),
                 WeeklyTask.list()
             ]);
-            setUsers(allUsers || []);
-            setGroups(allGroups || []);
+            const traineesOnly = (allUsers || []).filter(u => (u.role || '').toLowerCase() !== 'admin' && (u.role || '').toLowerCase() !== 'trainer');
+            setUsers(traineesOnly);
+            setGroups(groupsForStaff(allGroups || [], currentUser, isSystemAdmin));
             setTasks(allTasks || []);
         } catch (error) {
             console.error('Error loading data:', error);
@@ -292,7 +297,7 @@ export default function WeeklyTaskManager() {
         } finally {
             setIsLoading(false);
         }
-    }, [setIsLoading, setUsers, setGroups, setTasks, setFeedback]);
+    }, [setIsLoading, setUsers, setGroups, setTasks, setFeedback, currentUser, isSystemAdmin]);
 
     useEffect(() => {
         loadData();

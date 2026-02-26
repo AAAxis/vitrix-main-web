@@ -1,6 +1,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { GroupEvent, EventParticipation, UserGroup, User } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { groupsForStaff } from '@/lib/groupUtils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -34,6 +36,7 @@ const initialFormState = {
 };
 
 export default function GroupCalendar() {
+    const { user: currentUser, isSystemAdmin } = useAdminDashboard();
     const [groups, setGroups] = useState([]);
     const [events, setEvents] = useState([]);
     const [participations, setParticipations] = useState([]);
@@ -59,8 +62,9 @@ export default function GroupCalendar() {
                 EventParticipation.list()
             ]);
             
-            groupsData.sort((a, b) => a.name.localeCompare(b.name));
-            setGroups(groupsData);
+            const myGroups = groupsForStaff(groupsData || [], currentUser, isSystemAdmin);
+            myGroups.sort((a, b) => a.name.localeCompare(b.name));
+            setGroups(myGroups);
             setEvents(eventsData);
             setParticipations(participationsData);
         } catch (err) {
@@ -69,7 +73,7 @@ export default function GroupCalendar() {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [currentUser, isSystemAdmin]);
 
     useEffect(() => {
         loadData();

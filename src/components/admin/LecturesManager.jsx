@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lecture, LectureView, User, UserGroup } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { groupsForStaff } from '@/lib/groupUtils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +47,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function LecturesManager() {
+    const { user: currentUser, isSystemAdmin } = useAdminDashboard();
     const [lectures, setLectures] = useState([]);
     const [users, setUsers] = useState([]);
     const [groups, setGroups] = useState([]);
@@ -86,7 +89,7 @@ export default function LecturesManager() {
                 LectureView.list()
             ]);
             setUsers(allUsers || []);
-            setGroups(allGroups || []);
+            setGroups(groupsForStaff(allGroups || [], currentUser, isSystemAdmin));
             setLectureViews(allViews || []);
         } catch (error) {
             console.error('Error loading data:', error);

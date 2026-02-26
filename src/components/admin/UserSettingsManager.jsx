@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { User, UserGroup, WeightEntry, WeeklyTask, MonthlyGoal, ProgressPicture, CalorieTracking, WaterTracking, LectureView, CoachMenu, CoachMessage, CoachNotification, Workout, WorkoutLog, ExerciseDefault, Reminder, WeightReminder, GeneratedReport, WeeklyCheckin, NotificationResponse, EventParticipation, Recipe, FavoriteRecipe } from '@/api/entities';
 import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { groupsForStaff } from '@/lib/groupUtils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -115,9 +116,8 @@ export default function UserSettingsManager({
         User.listForStaff(currentUser, '-created_date'),
         UserGroup.list()
       ]);
-      // The user wants to see all users, including admins, so no filter is applied.
       setUsers(allUsersData);
-      setGroups(userGroups);
+      setGroups(groupsForStaff(userGroups || [], currentUser, isSystemAdmin));
     } catch (err) {
       console.error("Failed to load users or groups:", err);
       setError("שגיאה בטעינת המשתמשים או הקבוצות.");

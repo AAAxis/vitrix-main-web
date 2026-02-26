@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserGroup, User } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { groupsForStaff } from '@/lib/groupUtils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +22,7 @@ import {
 import { motion } from 'framer-motion';
 
 export default function GroupNotifications() {
+  const { user: currentUser, isSystemAdmin } = useAdminDashboard();
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState('');
   const [notificationTitle, setNotificationTitle] = useState('');
@@ -49,7 +52,7 @@ export default function GroupNotifications() {
     setIsLoading(true);
     try {
       const allGroups = await UserGroup.list();
-      setGroups(allGroups || []);
+      setGroups(groupsForStaff(allGroups || [], currentUser, isSystemAdmin));
     } catch (error) {
       console.error('Error loading groups:', error);
       setFeedback({ type: 'error', message: 'שגיאה בטעינת הקבוצות.' });

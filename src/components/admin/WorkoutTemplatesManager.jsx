@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { WorkoutTemplate, PreMadeWorkout, User, UserGroup } from '@/api/entities';
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { groupsForStaff } from '@/lib/groupUtils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,6 +17,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import VideoPlayer from '../workout/VideoPlayer';
 
 export default function WorkoutTemplatesManager() {
+  const { user: currentUser, isSystemAdmin } = useAdminDashboard();
   const [templates, setTemplates] = useState([]);
   const [users, setUsers] = useState([]);
   const [groups, setGroups] = useState([]);
@@ -52,7 +55,7 @@ export default function WorkoutTemplatesManager() {
       ]);
       setTemplates(templatesData);
       setUsers(usersData.filter(u => u.role !== 'admin' && u.role !== 'trainer'));
-      setGroups(groupsData.filter(g => g.status === 'Active'));
+      setGroups(groupsForStaff(groupsData || [], currentUser, isSystemAdmin).filter(g => g.status === 'Active'));
     } catch (error) {
       console.error('Error loading templates:', error);
       alert('שגיאה בטעינת התבניות');

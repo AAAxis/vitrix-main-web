@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, UserGroup, GroupWorkoutPlan, GroupReminder, GroupMessage, GroupEvent } from '@/api/entities';
 import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { groupsForStaff } from '@/lib/groupUtils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,7 +39,7 @@ import GroupMessaging from './GroupMessaging';
 import GroupWeightFocus from './GroupWeightFocus'; // Added GroupWeightFocus import
 
 export default function GroupManagement() {
-    const { user: currentUser } = useAdminDashboard();
+    const { user: currentUser, isSystemAdmin } = useAdminDashboard();
     const [groups, setGroups] = useState([]);
     const [users, setUsers] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -66,7 +67,7 @@ export default function GroupManagement() {
         setIsLoading(true);
         try {
             const [allGroups, allUsers] = await Promise.all([UserGroup.list(), User.listForStaff(currentUser)]);
-            setGroups(allGroups);
+            setGroups(groupsForStaff(allGroups || [], currentUser, isSystemAdmin));
             setUsers(allUsers);
         } catch (error) {
             console.error("Error loading groups/users:", error);
@@ -88,7 +89,13 @@ export default function GroupManagement() {
             setAssignToGroupSearchTerm('');
         } else {
             setEditingGroup(null);
-            setFormData({ name: '', description: '', assigned_coach: '', color_tag: '#3b82f6', status: 'Active' });
+            setFormData({
+                name: '',
+                description: '',
+                assigned_coach: currentUser?.email || '',
+                color_tag: '#3b82f6',
+                status: 'Active'
+            });
             setIsDialogOpen(true);
         }
     };
@@ -560,6 +567,7 @@ export default function GroupManagement() {
                                 rows={3}
                             />
                         </div>
+                        {editingGroup && (
                         <div>
                             <Label htmlFor="assigned_coach">מאמן מוקצה (אימייל)</Label>
                             <Input
@@ -570,6 +578,7 @@ export default function GroupManagement() {
                                 placeholder="coach@example.com"
                             />
                         </div>
+                        )}
                         <div className="flex items-center gap-4">
                             <div>
                                 <Label htmlFor="color_tag">תג צבע</Label>

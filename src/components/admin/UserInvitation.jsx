@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserGroup, Invitation, User } from '@/api/entities';
 import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { groupsForStaff } from '@/lib/groupUtils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,9 +43,9 @@ export default function UserInvitation() {
     try {
       const [groupsData, invitationsData] = await Promise.all([
         UserGroup.list(),
-        Invitation.list() // Assuming we want to fetch existing invitations
+        Invitation.list()
       ]);
-      setGroups(groupsData);
+      setGroups(groupsForStaff(groupsData || [], currentUser, isSystemAdmin));
       setInvitations(invitationsData);
     } catch (err) {
       console.error('Failed to load initial data:', err);
