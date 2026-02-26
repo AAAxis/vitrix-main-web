@@ -30,15 +30,15 @@ export default function LockedContent() {
         return;
       }
       
-      // Use coach email from user profile, or fallback to admin
+      // Use trainer email from user profile, or fallback to admin
       let coachEmail = currentUser.coach_email;
       
       if (!coachEmail) {
         // Find the admin as fallback
-        // Get both admins and coaches
+        // Get both admins and trainers
         const admins = await User.filter({ role: 'admin' });
-        const coaches = await User.filter({ role: 'coach' });
-        const allAdmins = [...(admins || []), ...(coaches || [])];
+        const trainers = await User.filter({ role: 'trainer' });
+        const allAdmins = [...(admins || []), ...(trainers || [])];
         if (!allAdmins || allAdmins.length === 0) {
           setRequestStatus("❌ שגיאה: לא נמצא מאמן ליצירת קשר.");
           setIsSendingRequest(false);
@@ -168,12 +168,12 @@ export default function LockedContent() {
               >
                 {isSendingRequest ? (
                   <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    <Loader2 className="w-5 h-5 me-2 animate-spin" />
                     שולח בקשה...
                   </>
                 ) : (
                   <>
-                    <Mail className="w-5 h-5 mr-2" />
+                    <Mail className="w-5 h-5 me-2" />
                     שלח בקשה למאמן
                   </>
                 )}

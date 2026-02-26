@@ -175,7 +175,7 @@ export default function Marketing() {
               className="bg-emerald-600 text-white hover:bg-emerald-700 font-semibold px-8 py-6 text-lg"
             >
               <a href={googlePlayUrl} target="_blank" rel="noopener noreferrer">
-                <Smartphone className="w-5 h-5 ml-2" />
+                <Smartphone className="w-5 h-5 ms-2" />
                 הורד מ-Google Play
               </a>
             </Button>
@@ -186,7 +186,7 @@ export default function Marketing() {
               className="border-2 border-emerald-600 bg-transparent text-emerald-600 hover:bg-emerald-600 hover:text-white font-semibold px-8 py-6 text-lg"
             >
               <a href={appStoreUrl} target="_blank" rel="noopener noreferrer">
-                <Smartphone className="w-5 h-5 ml-2" />
+                <Smartphone className="w-5 h-5 ms-2" />
                 הורד מ-App Store
               </a>
             </Button>

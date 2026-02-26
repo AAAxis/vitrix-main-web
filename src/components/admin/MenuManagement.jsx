@@ -447,11 +447,11 @@ export default function MenuManagement() {
                                 className="bg-slate-100 hover:bg-slate-200"
                                 size="sm"
                             >
-                                <RefreshCw className="w-4 h-4 mr-2" />
+                                <RefreshCw className="w-4 h-4 me-2" />
                                 רענן
                             </Button>
                             <Button onClick={() => setIsDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
-                                <Upload className="w-4 h-4 mr-2" />
+                                <Upload className="w-4 h-4 me-2" />
                                 העלה תפריט חדש
                             </Button>
                         </div>
@@ -564,9 +564,9 @@ export default function MenuManagement() {
                                                                 }`}
                                                             >
                                                                 {user.menu.viewed_by_trainee ? (
-                                                                    <><CheckCircle className="w-3 h-3 mr-1" />נצפה</>
+                                                                    <><CheckCircle className="w-3 h-3 me-1" />נצפה</>
                                                                 ) : (
-                                                                    <><AlertCircle className="w-3 h-3 mr-1" />לא נצפה</>
+                                                                    <><AlertCircle className="w-3 h-3 me-1" />לא נצפה</>
                                                                 )}
                                                             </Badge>
                                                             <Badge variant="outline" className="bg-blue-50 text-blue-700">
@@ -630,7 +630,7 @@ export default function MenuManagement() {
                                                                     onClick={() => handleViewMenu(user.menu)}
                                                                     className="text-blue-600 hover:text-blue-800"
                                                                 >
-                                                                    <Eye className="w-4 h-4 mr-1" />
+                                                                    <Eye className="w-4 h-4 me-1" />
                                                                     צפה
                                                                 </Button>
                                                                 <Button
@@ -643,7 +643,7 @@ export default function MenuManagement() {
                                                                     }}
                                                                     className="text-green-600 hover:text-green-800"
                                                                 >
-                                                                    <Edit3 className="w-4 h-4 mr-1" />
+                                                                    <Edit3 className="w-4 h-4 me-1" />
                                                                     עדכן
                                                                 </Button>
                                                                 <Button
@@ -654,9 +654,9 @@ export default function MenuManagement() {
                                                                     className="text-red-600 hover:text-red-800"
                                                                 >
                                                                     {deletingId === user.menu.id ? (
-                                                                        <Loader2 className="w-4 h-4 animate-spin mr-1" />
+                                                                        <Loader2 className="w-4 h-4 animate-spin me-1" />
                                                                     ) : (
-                                                                        <Trash2 className="w-4 h-4 mr-1" />
+                                                                        <Trash2 className="w-4 h-4 me-1" />
                                                                     )}
                                                                     מחק
                                                                 </Button>
@@ -676,7 +676,7 @@ export default function MenuManagement() {
                                                                 className="bg-blue-600 hover:bg-blue-700"
                                                                 size="sm"
                                                             >
-                                                                <Plus className="w-4 h-4 mr-1" />
+                                                                <Plus className="w-4 h-4 me-1" />
                                                                 העלה תפריט
                                                             </Button>
                                                         </div>
@@ -742,7 +742,7 @@ export default function MenuManagement() {
                                     type="file"
                                     accept=".jpg,.jpeg,.png,.pdf"
                                     onChange={handleFileUpload}
-                                    className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                                    className="block w-full text-sm text-slate-500 file:me-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                                     disabled={isUploading}
                                 />
                                 <p className="text-xs text-slate-500 mt-1">
@@ -820,7 +820,7 @@ export default function MenuManagement() {
                                 </div>
                                 <div>
                                     <strong>סטטוס צפייה:</strong>
-                                    <Badge className={`mr-2 ${
+                                    <Badge className={`me-2 ${
                                         viewingMenu.viewed_by_trainee
                                             ? 'bg-green-100 text-green-800'
                                             : 'bg-orange-100 text-orange-800'
@@ -884,7 +884,7 @@ export default function MenuManagement() {
               <DialogContent className="max-w-[95vw] w-[95vw] h-[95vh] p-0 bg-black/90 border-0 overflow-hidden flex items-center justify-center">
                 <div className="relative w-full h-full">
                   {/* Zoom Controls */}
-                  <div className="absolute top-4 right-4 z-10 flex gap-2 bg-black/60 rounded-lg p-2">
+                  <div className="absolute top-4 end-4 z-10 flex gap-2 bg-black/60 rounded-lg p-2">
                     <Button
                       variant="ghost"
                       size="icon"
@@ -922,7 +922,7 @@ export default function MenuManagement() {
                     variant="ghost"
                     size="icon"
                     onClick={handleCloseZoom}
-                    className="absolute top-4 left-4 z-10 text-white hover:bg-white/20"
+                    className="absolute top-4 start-4 z-10 text-white hover:bg-white/20"
                     title="סגור"
                   >
                     ✕

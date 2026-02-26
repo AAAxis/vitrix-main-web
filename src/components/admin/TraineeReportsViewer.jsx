@@ -178,7 +178,7 @@ export default function TraineeReportsViewer() {
                             <CardDescription>כל הדוחות שנשלחו מהמתאמנים, מקובצים לפי שם.</CardDescription>
                         </div>
                         <Button variant="outline" onClick={loadReports} disabled={isLoading}>
-                            <RefreshCw className={`w-4 h-4 ml-2 ${isLoading ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`w-4 h-4 ms-2 ${isLoading ? 'animate-spin' : ''}`} />
                             רענן
                         </Button>
                     </div>
@@ -195,10 +195,10 @@ export default function TraineeReportsViewer() {
                     {isLoading ? (
                         <div className="flex justify-center items-center py-12">
                             <Loader2 className="w-8 h-8 animate-spin text-slate-500" />
-                            <span className="mr-3 text-slate-600">טוען דוחות...</span>
+                            <span className="me-3 text-slate-600">טוען דוחות...</span>
                         </div>
                     ) : (
-                        <ScrollArea className="h-[60vh] pr-4">
+                        <ScrollArea className="h-[60vh] pe-4">
                             {filteredGroupedReports.length > 0 ? (
                                  <Accordion type="single" collapsible className="w-full space-y-3">
                                     {filteredGroupedReports.map(group => ( // Use filteredGroupedReports here
@@ -214,7 +214,7 @@ export default function TraineeReportsViewer() {
                                                     </div>
                                                     <div className="flex items-center gap-2">
                                                         {group.hasUnread && (
-                                                            <Badge className="bg-red-500 hover:bg-red-600 animate-pulse"><Bell className="w-3 h-3 ml-1"/>חדש</Badge>
+                                                            <Badge className="bg-red-500 hover:bg-red-600 animate-pulse"><Bell className="w-3 h-3 ms-1"/>חדש</Badge>
                                                         )}
                                                         <AlertDialog>
                                                             <AlertDialogTrigger asChild>
@@ -269,7 +269,7 @@ export default function TraineeReportsViewer() {
                                                             </div>
                                                             <div className="flex gap-2 w-full sm:w-auto">
                                                                 <Button variant="outline" size="sm" onClick={() => handleViewReport(report)} className="flex-1 sm:flex-none bg-white">
-                                                                    <Eye className="w-4 h-4 ml-2" />
+                                                                    <Eye className="w-4 h-4 ms-2" />
                                                                     צפה בדוח
                                                                 </Button>
                                                                 <AlertDialog>
@@ -345,7 +345,7 @@ export default function TraineeReportsViewer() {
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                         <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                                            <Trash2 className="w-4 h-4 ml-2" />
+                                            <Trash2 className="w-4 h-4 ms-2" />
                                             מחק דוח
                                         </Button>
                                     </AlertDialogTrigger>
@@ -368,14 +368,14 @@ export default function TraineeReportsViewer() {
                                     </AlertDialogContent>
                                 </AlertDialog>
                                 <Button variant="outline" size="sm" onClick={() => setSelectedReport(null)}>
-                                    <X className="w-4 h-4 ml-2" />
+                                    <X className="w-4 h-4 ms-2" />
                                     סגור
                                 </Button>
                             </div>
                         </div>
                     </DialogHeader>
                     <div className="flex-grow overflow-hidden border-t mt-4 pt-4">
-                        <ScrollArea className="h-full pr-2">
+                        <ScrollArea className="h-full pe-2">
                             {selectedReport?.report_html && (
                                 <div 
                                     dangerouslySetInnerHTML={{ __html: selectedReport.report_html }} 

@@ -49,7 +49,7 @@ export default function UserManagement() {
             {users.length === 0 ? (
                 <p className="text-sm text-slate-500 text-center">לא נמצאו משתמשים לניהול.</p>
             ) : (
-                <div className="space-y-3 max-h-96 overflow-y-auto pr-2">
+                <div className="space-y-3 max-h-96 overflow-y-auto pe-2">
                     {users.map(user => (
                         <div key={user.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                             <div>
@@ -62,7 +62,7 @@ export default function UserManagement() {
                                 ) : (
                                     <>
                                         <Badge variant={user.status === 'פעיל' ? 'default' : 'destructive'} className={`${user.status === 'פעיל' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'} border-none`}>
-                                            {user.status === 'פעיל' ? <UserCheck className="w-3 h-3 mr-1" /> : <UserX className="w-3 h-3 mr-1" />}
+                                            {user.status === 'פעיל' ? <UserCheck className="w-3 h-3 me-1" /> : <UserX className="w-3 h-3 me-1" />}
                                             {user.status}
                                         </Badge>
                                         <Switch

@@ -23,6 +23,83 @@ import {
     mapExerciseDBArrayToExerciseDefinitions
 } from '@/api/exercisedbClient';
 
+// Use Firebase Cloud Function to proxy ExerciseDB media on web (avoids CORS; Expo loads URLs directly).
+// In development, use local /api/exercise-image (Express) when available; otherwise Firebase.
+const EXERCISE_MEDIA_ORIGINS = [
+  'https://cdn.exercisedb.dev',
+  'https://v2.exercisedb.dev',
+  'https://v2.exercisedb.io',
+  'https://exercisedb.p.rapidapi.com',
+];
+const FIREBASE_PROJECT_ID = import.meta.env.VITE_FIREBASE_PROJECT_ID || 'muscule-up';
+const isDev = import.meta.env.DEV;
+const EXERCISE_IMAGE_PROXY_BASE = isDev
+  ? '/api/exercise-image'
+  : `https://us-central1-${FIREBASE_PROJECT_ID}.cloudfunctions.net/exerciseImageProxy`;
+
+function proxyMediaUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  // Proxy any ExerciseDB URL – RapidAPI /image endpoint needs auth headers
+  // that <img> tags can't send, and CDN URLs may also need proxying.
+  const needsProxy = EXERCISE_MEDIA_ORIGINS.some(origin => url.startsWith(origin));
+  return needsProxy ? `${EXERCISE_IMAGE_PROXY_BASE}?url=${encodeURIComponent(url)}` : url;
+}
+
+// Force-proxy a URL through the image proxy (used as fallback when direct CDN load fails)
+function forceProxyMediaUrl(url) {
+  if (!url || typeof url !== 'string') return url;
+  return `${EXERCISE_IMAGE_PROXY_BASE}?url=${encodeURIComponent(url)}`;
+}
+
+// All known ExerciseDB CDN domains for fallback swapping
+const EXERCISEDB_CDN_DOMAINS = ['v2.exercisedb.io', 'v2.exercisedb.dev', 'cdn.exercisedb.dev'];
+
+/**
+ * Handle <img> onError by cycling through CDN domains, then proxy as last resort.
+ * Tracks attempts via data-* attributes to avoid infinite loops.
+ */
+function handleExerciseImgError(e) {
+  const img = e.target;
+  let src = img.src || '';
+
+  // Unwrap proxy URL to get original
+  if (src.includes('/api/exercise-image?url=') || src.includes('exerciseImageProxy?url=')) {
+    try {
+      src = decodeURIComponent(src.split('url=')[1] || '');
+    } catch { src = ''; }
+  }
+
+  const attempt = parseInt(img.dataset.fallbackAttempt || '0', 10);
+
+  if (attempt < EXERCISEDB_CDN_DOMAINS.length && src) {
+    // Try next CDN domain
+    const currentDomain = EXERCISEDB_CDN_DOMAINS.find(d => src.includes(d));
+    const nextIdx = currentDomain ? (EXERCISEDB_CDN_DOMAINS.indexOf(currentDomain) + 1) % EXERCISEDB_CDN_DOMAINS.length : 0;
+    const nextDomain = EXERCISEDB_CDN_DOMAINS[nextIdx];
+    let newUrl = src;
+    for (const d of EXERCISEDB_CDN_DOMAINS) {
+      newUrl = newUrl.replace(d, nextDomain);
+    }
+    if (newUrl !== src) {
+      img.dataset.fallbackAttempt = String(attempt + 1);
+      img.src = newUrl;
+      return;
+    }
+  }
+
+  // Last resort: try via proxy (handles cases where CDN blocks direct hotlinking)
+  if (!img.dataset.triedProxy && src) {
+    img.dataset.triedProxy = '1';
+    img.src = forceProxyMediaUrl(src);
+    return;
+  }
+
+  // All fallbacks exhausted – hide image
+  img.style.display = 'none';
+  const placeholder = img.nextElementSibling;
+  if (placeholder) placeholder.classList.remove('hidden');
+}
+
 export default function ExerciseLibraryManager() {
     const [exercises, setExercises] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -403,20 +480,19 @@ export default function ExerciseLibraryManager() {
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">ניהול מאגר תרגילים</h2>
                 <div className="flex gap-2">
-                    <Button variant="outline" onClick={handleExport}><Download className="w-4 h-4 ml-2"/>ייצוא מאגר</Button>
-                    <Button variant="outline" onClick={() => setIsImportModalOpen(true)}><FileUp className="w-4 h-4 ml-2"/>ייבוא מקובץ</Button>
-                    <Button variant="outline" onClick={() => setIsExerciseDBModalOpen(true)}><Database className="w-4 h-4 ml-2"/>ייבוא מ-ExerciseDB</Button>
-                    <Button onClick={() => handleOpenForm()}><Plus className="w-4 h-4 ml-2" />הוסף תרגיל</Button>
+                    <Button variant="outline" onClick={() => setIsImportModalOpen(true)}><FileUp className="w-4 h-4 ms-2"/>ייבוא מקובץ</Button>
+                    <Button variant="outline" onClick={() => setIsExerciseDBModalOpen(true)}><Database className="w-4 h-4 ms-2"/>ייבוא מ-ExerciseDB</Button>
+                    <Button onClick={() => handleOpenForm()}><Plus className="w-4 h-4 ms-2" />הוסף תרגיל</Button>
                 </div>
             </div>
 
             <div className="mb-4 relative">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                     placeholder="חיפוש תרגיל..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pr-10"
+                    className="pe-10"
                 />
             </div>
             
@@ -428,13 +504,19 @@ export default function ExerciseLibraryManager() {
                 <ScrollArea className="h-[60vh] border rounded-lg p-2">
                     <div className="space-y-2">
                         {paginatedExercises.map(ex => {
-                            // Helper functions to get image/video URLs
-                            const getImageUrl = (exercise) => {
+                            // Prefer GIF over static image when available (ExerciseDB provides gifs by default)
+                            const getMediaUrl = (exercise) => {
+                                if (exercise?.exercisedb_gif_url) {
+                                    if (exercise.exercisedb_gif_url.startsWith('http')) return exercise.exercisedb_gif_url;
+                                    return `https://cdn.exercisedb.dev/gifs/${exercise.exercisedb_gif_url}`;
+                                }
                                 if (exercise?.exercisedb_image_url) {
-                                    if (exercise.exercisedb_image_url.startsWith('http')) {
-                                        return exercise.exercisedb_image_url;
-                                    }
+                                    if (exercise.exercisedb_image_url.startsWith('http')) return exercise.exercisedb_image_url;
                                     return `https://v2.exercisedb.dev/images/${exercise.exercisedb_image_url}`;
+                                }
+                                // Fallback: RapidAPI image endpoint (web proxy adds key; Expo can use direct URL)
+                                if (exercise?.exercisedb_id) {
+                                    return `https://exercisedb.p.rapidapi.com/image?exerciseId=${encodeURIComponent(exercise.exercisedb_id)}&resolution=180`;
                                 }
                                 return null;
                             };
@@ -453,23 +535,21 @@ export default function ExerciseLibraryManager() {
                                 return null;
                             };
 
-                            const imageUrl = getImageUrl(ex);
+                            const mediaUrl = getMediaUrl(ex);
                             const videoUrl = getVideoUrl(ex);
 
                             return (
                                 <div key={ex.id} className="flex items-center justify-between p-3 bg-white rounded-md shadow-sm hover:shadow-md transition-shadow">
                                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        {/* Thumbnail */}
-                                        {(imageUrl || videoUrl) && (
+                                        {/* Thumbnail - prefer GIF, then image, then video */}
+                                        {(mediaUrl || videoUrl) && (
                                             <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
-                                                {imageUrl ? (
+                                                {mediaUrl ? (
                                                     <img
-                                                        src={imageUrl}
+                                                        src={proxyMediaUrl(mediaUrl)}
                                                         alt={ex.name_he}
                                                         className="w-full h-full object-cover"
-                                                        onError={(e) => {
-                                                            e.target.style.display = 'none';
-                                                        }}
+                                                        onError={handleExerciseImgError}
                                                     />
                                                 ) : videoUrl ? (
                                                     <div className="w-full h-full flex items-center justify-center bg-slate-200 relative">
@@ -493,8 +573,6 @@ export default function ExerciseLibraryManager() {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <p className="font-bold truncate">{ex.name_he} <span className="text-slate-500 text-sm">({ex.name_en})</span></p>
-                                                {imageUrl && <ImageIcon className="w-3 h-3 text-blue-500 flex-shrink-0" />}
-                                                {videoUrl && <Video className="w-3 h-3 text-red-500 flex-shrink-0" />}
                                             </div>
                                             <p className="text-sm text-slate-600">{ex.muscle_group} | {ex.equipment}</p>
                                         </div>
@@ -603,12 +681,17 @@ export default function ExerciseLibraryManager() {
                         <div className="space-y-4 py-4">
                             {/* Image/Video Display */}
                             {(() => {
-                                const getImageUrl = (ex) => {
+                                const getMediaUrl = (ex) => {
+                                    if (ex?.exercisedb_gif_url) {
+                                        if (ex.exercisedb_gif_url.startsWith('http')) return ex.exercisedb_gif_url;
+                                        return `https://cdn.exercisedb.dev/gifs/${ex.exercisedb_gif_url}`;
+                                    }
                                     if (ex?.exercisedb_image_url) {
-                                        if (ex.exercisedb_image_url.startsWith('http')) {
-                                            return ex.exercisedb_image_url;
-                                        }
+                                        if (ex.exercisedb_image_url.startsWith('http')) return ex.exercisedb_image_url;
                                         return `https://v2.exercisedb.dev/images/${ex.exercisedb_image_url}`;
+                                    }
+                                    if (ex?.exercisedb_id) {
+                                        return `https://exercisedb.p.rapidapi.com/image?exerciseId=${encodeURIComponent(ex.exercisedb_id)}&resolution=180`;
                                     }
                                     return null;
                                 };
@@ -627,13 +710,13 @@ export default function ExerciseLibraryManager() {
                                     return null;
                                 };
 
-                                const imageUrl = getImageUrl(currentExercise);
+                                const mediaUrl = getMediaUrl(currentExercise);
                                 const videoUrl = getVideoUrl(currentExercise);
 
-                                if (imageUrl || videoUrl) {
+                                if (mediaUrl || videoUrl) {
                                     return (
                                         <div className="space-y-3 pb-4 border-b">
-                                            {imageUrl && (
+                                            {mediaUrl && (
                                                 <div>
                                                     <h4 className="font-semibold mb-2 text-slate-800 flex items-center gap-2 text-sm">
                                                         <ImageIcon className="w-4 h-4" />
@@ -641,16 +724,10 @@ export default function ExerciseLibraryManager() {
                                                     </h4>
                                                     <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
                                                         <img
-                                                            src={imageUrl}
+                                                            src={proxyMediaUrl(mediaUrl)}
                                                             alt={currentExercise?.name_he}
                                                             className="w-full h-auto max-h-64 object-contain"
-                                                            onError={(e) => {
-                                                                e.target.style.display = 'none';
-                                                                const errorDiv = e.target.nextElementSibling;
-                                                                if (errorDiv) {
-                                                                    errorDiv.classList.remove('hidden');
-                                                                }
-                                                            }}
+                                                            onError={handleExerciseImgError}
                                                         />
                                                         <div className="hidden text-center p-4 text-slate-400 text-sm">
                                                             לא ניתן לטעון את התמונה
@@ -734,7 +811,7 @@ export default function ExerciseLibraryManager() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsFormOpen(false)}>ביטול</Button>
                         <Button onClick={handleSave} disabled={isSaving}>
-                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}
+                            {isSaving ? <Loader2 className="w-4 h-4 animate-spin ms-2" /> : null}
                             {isEditing ? 'שמור שינויים' : 'הוסף תרגיל'}
                         </Button>
                     </DialogFooter>
@@ -762,7 +839,7 @@ export default function ExerciseLibraryManager() {
                             <h4 className="font-bold mb-2">שלב 1: הכנת הקובץ</h4>
                             <p className="text-sm text-blue-800">ודא שהקובץ שלך כולל את העמודות הבאות (הסדר לא משנה): <code className="text-xs bg-blue-100 p-1 rounded">name_he, name_en, muscle_group, category, equipment, description, video_url, default_weight</code>.</p>
                              <Button variant="link" onClick={handleDownloadTemplate} className="p-0 h-auto mt-2">
-                                <Download className="w-4 h-4 ml-2"/>
+                                <Download className="w-4 h-4 ms-2"/>
                                 הורד קובץ תבנית (CSV)
                             </Button>
                         </div>
@@ -807,7 +884,7 @@ export default function ExerciseLibraryManager() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsImportModalOpen(false)}>סגור</Button>
                         <Button onClick={handleConfirmImport} disabled={isImporting || importedExercises.length === 0}>
-                            {isImporting ? <Loader2 className="w-4 h-4 animate-spin ml-2"/> : <FileCheck2 className="w-4 h-4 ml-2"/>}
+                            {isImporting ? <Loader2 className="w-4 h-4 animate-spin ms-2"/> : <FileCheck2 className="w-4 h-4 ms-2"/>}
                             אישור וייבוא נתונים
                         </Button>
                     </DialogFooter>
@@ -865,13 +942,13 @@ export default function ExerciseLibraryManager() {
                         <div className="flex gap-2">
                             {exerciseDBSearchType === 'name' && (
                                 <div className="flex-1 relative">
-                                    <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                    <Search className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                     <Input
                                         placeholder="חיפוש תרגיל (לדוגמה: bench press, squat, deadlift)..."
                                         value={exerciseDBSearchTerm}
                                         onChange={(e) => setExerciseDBSearchTerm(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleExerciseDBSearch()}
-                                        className="pr-10"
+                                        className="pe-10"
                                     />
                                 </div>
                             )}
@@ -916,9 +993,9 @@ export default function ExerciseLibraryManager() {
                                 disabled={isSearchingExerciseDB}
                             >
                                 {isSearchingExerciseDB ? (
-                                    <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                                    <Loader2 className="w-4 h-4 animate-spin ms-2" />
                                 ) : (
-                                    <Search className="w-4 h-4 ml-2" />
+                                    <Search className="w-4 h-4 ms-2" />
                                 )}
                                 חפש
                             </Button>
@@ -950,12 +1027,12 @@ export default function ExerciseLibraryManager() {
                                     >
                                         {selectedExerciseDBExercises.size === exerciseDBResults.length ? (
                                             <>
-                                                <CheckSquare className="w-4 h-4 ml-2" />
+                                                <CheckSquare className="w-4 h-4 ms-2" />
                                                 בטל בחירה
                                             </>
                                         ) : (
                                             <>
-                                                <Square className="w-4 h-4 ml-2" />
+                                                <Square className="w-4 h-4 ms-2" />
                                                 בחר הכל
                                             </>
                                         )}
@@ -966,13 +1043,19 @@ export default function ExerciseLibraryManager() {
                                         {exerciseDBResults.map((exercise) => {
                                             const isSelected = selectedExerciseDBExercises.has(exercise.exercisedb_id);
                                             
-                                            // Helper functions to get image/video URLs
-                                            const getImageUrl = (ex) => {
+                                            // Helper: prefer GIF, then image; fallback to image endpoint by id (list APIs often omit media URLs)
+                                            const getMediaUrl = (ex) => {
+                                                if (ex?.exercisedb_gif_url) {
+                                                    if (ex.exercisedb_gif_url.startsWith('http')) return ex.exercisedb_gif_url;
+                                                    return `https://cdn.exercisedb.dev/gifs/${ex.exercisedb_gif_url}`;
+                                                }
                                                 if (ex?.exercisedb_image_url) {
-                                                    if (ex.exercisedb_image_url.startsWith('http')) {
-                                                        return ex.exercisedb_image_url;
-                                                    }
+                                                    if (ex.exercisedb_image_url.startsWith('http')) return ex.exercisedb_image_url;
                                                     return `https://v2.exercisedb.dev/images/${ex.exercisedb_image_url}`;
+                                                }
+                                                const id = ex?.exercisedb_id;
+                                                if (id != null && id !== '') {
+                                                    return `https://exercisedb.p.rapidapi.com/image?exerciseId=${encodeURIComponent(String(id))}&resolution=180`;
                                                 }
                                                 return null;
                                             };
@@ -990,7 +1073,7 @@ export default function ExerciseLibraryManager() {
                                                 return null;
                                             };
 
-                                            const imageUrl = getImageUrl(exercise);
+                                            const mediaUrl = getMediaUrl(exercise);
                                             const videoUrl = getVideoUrl(exercise);
 
                                             return (
@@ -1012,43 +1095,46 @@ export default function ExerciseLibraryManager() {
                                                             )}
                                                         </div>
                                                         
-                                                        {/* Thumbnail */}
-                                                        {(imageUrl || videoUrl) && (
-                                                            <div className="flex-shrink-0 w-16 h-16 rounded overflow-hidden bg-slate-100 border border-slate-200">
-                                                                {imageUrl ? (
+                                                        {/* Thumbnail - always show box; use placeholder when no media or image fails */}
+                                                        <div className="flex-shrink-0 w-16 h-16 rounded overflow-hidden bg-slate-100 border border-slate-200 relative flex items-center justify-center">
+                                                            {mediaUrl ? (
+                                                                <>
                                                                     <img
-                                                                        src={imageUrl}
+                                                                        src={proxyMediaUrl(mediaUrl)}
                                                                         alt={exercise.name_en}
+                                                                        className="w-full h-full object-cover absolute inset-0"
+                                                                        onError={handleExerciseImgError}
+                                                                    />
+                                                                    <div className="hidden absolute inset-0 flex items-center justify-center bg-slate-100 text-slate-400" aria-hidden="true">
+                                                                        <ImageIcon className="w-8 h-8" />
+                                                                    </div>
+                                                                </>
+                                                            ) : videoUrl ? (
+                                                                <div className="w-full h-full flex items-center justify-center bg-slate-200 relative">
+                                                                    <video
+                                                                        src={videoUrl}
                                                                         className="w-full h-full object-cover"
+                                                                        muted
                                                                         onError={(e) => {
                                                                             e.target.style.display = 'none';
                                                                         }}
                                                                     />
-                                                                ) : videoUrl ? (
-                                                                    <div className="w-full h-full flex items-center justify-center bg-slate-200 relative">
-                                                                        <video
-                                                                            src={videoUrl}
-                                                                            className="w-full h-full object-cover"
-                                                                            muted
-                                                                            onError={(e) => {
-                                                                                e.target.style.display = 'none';
-                                                                            }}
-                                                                        />
-                                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
-                                                                            <Play className="w-4 h-4 text-white" />
-                                                                        </div>
+                                                                    <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                                                        <Play className="w-4 h-4 text-white" />
                                                                     </div>
-                                                                ) : null}
-                                                            </div>
-                                                        )}
+                                                                </div>
+                                                            ) : (
+                                                                <div className="flex items-center justify-center text-slate-400" aria-hidden="true">
+                                                                    <ImageIcon className="w-8 h-8" />
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                         
                                                         <div className="flex-1">
                                                             <div className="flex items-center gap-2">
                                                                 <p className="font-bold text-slate-800">
                                                                     {exercise.name_en}
                                                                 </p>
-                                                                {imageUrl && <ImageIcon className="w-3 h-3 text-blue-500 flex-shrink-0" />}
-                                                                {videoUrl && <Video className="w-3 h-3 text-red-500 flex-shrink-0" />}
                                                             </div>
                                                             <p className="text-sm text-slate-600 mt-1">
                                                                 {exercise.muscle_group} | {exercise.equipment} | {exercise.category}
@@ -1077,9 +1163,9 @@ export default function ExerciseLibraryManager() {
                             disabled={exerciseDBImporting || selectedExerciseDBExercises.size === 0}
                         >
                             {exerciseDBImporting ? (
-                                <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                                <Loader2 className="w-4 h-4 animate-spin ms-2" />
                             ) : (
-                                <FileCheck2 className="w-4 h-4 ml-2" />
+                                <FileCheck2 className="w-4 h-4 ms-2" />
                             )}
                             ייבא {selectedExerciseDBExercises.size > 0 && `(${selectedExerciseDBExercises.size})`}
                         </Button>

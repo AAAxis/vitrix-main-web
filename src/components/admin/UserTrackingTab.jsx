@@ -43,7 +43,7 @@ import {
 import { formatDate, formatDateTime } from '@/components/utils/timeUtils';
 import { useToast } from '@/components/ui/use-toast';
 
-export default function UserTrackingTab({ user }) {
+export default function UserTrackingTab({ user, showUserHeader = true }) {
   const { toast } = useToast();
   const [weightEntries, setWeightEntries] = useState([]);
   const [calorieEntries, setCalorieEntries] = useState([]);
@@ -410,7 +410,7 @@ export default function UserTrackingTab({ user }) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="w-8 h-8 animate-spin text-green-600" />
-        <span className="mr-3 text-slate-600">טוען נתוני מעקב...</span>
+        <span className="me-3 text-slate-600">טוען נתוני מעקב...</span>
       </div>
     );
   }
@@ -421,15 +421,17 @@ export default function UserTrackingTab({ user }) {
   return (
     <>
       <div className="space-y-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-            <User className="w-6 h-6 text-blue-600" />
+        {showUserHeader && (
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <User className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-800">{user.name}</h2>
+              <p className="text-slate-600">{user.email}</p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-slate-800">{user.name}</h2>
-            <p className="text-slate-600">{user.email}</p>
-          </div>
-        </div>
+        )}
 
         {/* Coach Feedback Card - Collapsible */}
         <Card className="border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white">
@@ -482,12 +484,12 @@ export default function UserTrackingTab({ user }) {
                 >
                   {isSendingFeedback ? (
                     <>
-                      <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                      <Loader2 className="w-4 h-4 ms-2 animate-spin" />
                       שולח...
                     </>
                   ) : (
                     <>
-                      <Send className="w-4 h-4 ml-2" />
+                      <Send className="w-4 h-4 ms-2" />
                       שלח משוב
                     </>
                   )}
@@ -689,7 +691,7 @@ export default function UserTrackingTab({ user }) {
                 {weightEntries.length === 0 ? (
                   <p className="text-center text-slate-500 py-8">אין מדידות להצגה</p>
                 ) : (
-                  <ScrollArea className="h-[600px] w-full pr-4">
+                  <ScrollArea className="h-[600px] w-full pe-4">
                     <div className="space-y-3">
                       {weightEntries.map((entry) => (
                         <Card key={entry.id} className="p-4 hover:bg-slate-50 transition-colors">
@@ -804,7 +806,7 @@ export default function UserTrackingTab({ user }) {
                 {workouts.length === 0 ? (
                   <p className="text-center text-slate-500 py-8">אין אימונים להצגה</p>
                 ) : (
-                  <ScrollArea className="h-96 w-full pr-4">
+                  <ScrollArea className="h-96 w-full pe-4">
                     <div className="space-y-3">
                       {workouts.slice(0, 10).map((workout) => (
                         <Card key={workout.id} className="p-4 hover:bg-slate-50 transition-colors">
@@ -896,7 +898,7 @@ export default function UserTrackingTab({ user }) {
                       onClick={() => window.open(coachMenu.menu_file_url, '_blank')}
                       className="bg-green-600 hover:bg-green-700 text-white"
                     >
-                      <Camera className="w-4 h-4 ml-2" />
+                      <Camera className="w-4 h-4 ms-2" />
                       צפה בתפריט
                     </Button>
                     <Button
@@ -1053,7 +1055,7 @@ export default function UserTrackingTab({ user }) {
                 </DialogDescription>
               </DialogHeader>
 
-              <ScrollArea className="max-h-[70vh] pr-4">
+              <ScrollArea className="max-h-[70vh] pe-4">
                 <div className="space-y-6">
 
                   {/* Basic Info */}
@@ -1470,7 +1472,7 @@ export default function UserTrackingTab({ user }) {
               onClick={() => setIsEditDialogOpen(false)}
               disabled={isSaving}
             >
-              <X className="w-4 h-4 ml-2" />
+              <X className="w-4 h-4 ms-2" />
               ביטול
             </Button>
             <Button
@@ -1479,12 +1481,12 @@ export default function UserTrackingTab({ user }) {
             >
               {isSaving ? (
                 <>
-                  <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 ms-2 animate-spin" />
                   שומר...
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4 ml-2" />
+                  <Save className="w-4 h-4 ms-2" />
                   שמור
                 </>
               )}

@@ -75,19 +75,19 @@ export default function NotificationStatusViewer() {
                 </CardHeader>
                 <CardContent>
                     <div className="relative">
-                        <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <Search className="absolute end-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                         <Input 
                             placeholder="חפש לפי כותרת התראה או שם משתמש..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pr-10"
+                            className="pe-10"
                         />
                     </div>
                 </CardContent>
             </Card>
 
             <ScrollArea className="h-[60vh]">
-                <div className="space-y-4 pr-2">
+                <div className="space-y-4 pe-2">
                     {Object.keys(groupedResponses).length > 0 ? (
                         Object.entries(groupedResponses).map(([notificationId, responseGroup]) => (
                             <Card key={notificationId} className="shadow-md">

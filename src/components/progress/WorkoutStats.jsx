@@ -33,7 +33,7 @@ export default function WorkoutStats({ workouts }) {
       </Card>
       
       {workouts.map((workout) => (
-        <Card key={workout.id} className="muscle-glass border-l-4 border-green-500 shadow-md">
+        <Card key={workout.id} className="muscle-glass border-s-4 border-green-500 shadow-md">
           <CardHeader>
             <div className="flex justify-between items-start flex-wrap gap-2">
               <div>

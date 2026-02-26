@@ -300,7 +300,7 @@ export default function UserRegistration() {
                                 className="w-full h-12 mt-4" 
                                 disabled={isRegistering}
                             >
-                                <LogIn className="mr-2 h-4 w-4" />
+                                <LogIn className="me-2 h-4 w-4" />
                                 התחבר עם Google להשלמת הרשמה
                             </Button>
                         </>

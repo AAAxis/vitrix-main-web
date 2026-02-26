@@ -432,7 +432,7 @@ export default function BoosterOverview({ user, workouts, weightEntries }) {
                         <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-red-500" /> : 
                         <TrendingDown className="w-4 h-4 md:w-5 md:h-5 text-green-500" />
                       }
-                      <span className={`ml-1 font-semibold text-sm md:text-base ${
+                      <span className={`ms-1 font-semibold text-sm md:text-base ${
                         weightTrend.direction === 'up' ? 'text-red-500' : 'text-green-500'
                       }`}>
                         {Math.abs(parseFloat(weightTrend.change))} ק"ג

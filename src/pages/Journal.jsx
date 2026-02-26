@@ -48,7 +48,7 @@ const enrichExercisesWithDefinitions = async (exercises, exerciseDefinitionsMap)
     
     return exercises.map(exercise => {
         // If exercise already has image data, return as is
-        if (exercise.exercisedb_image_url || exercise.video_url) {
+        if (exercise.exercisedb_image_url || exercise.exercisedb_gif_url || exercise.video_url) {
             return exercise;
         }
         
@@ -58,6 +58,7 @@ const enrichExercisesWithDefinitions = async (exercises, exerciseDefinitionsMap)
             return {
                 ...exercise,
                 exercisedb_image_url: definition.exercisedb_image_url,
+                exercisedb_gif_url: definition.exercisedb_gif_url,
                 video_url: exercise.video_url || definition.video_url,
                 category: exercise.category || definition.category,
                 muscle_group: exercise.muscle_group || definition.muscle_group,
@@ -664,7 +665,7 @@ export default function JournalPage() {
 
             {/* Fixed Floating Complete Button */}
             {activeWorkout?.warmup_completed && (
-                <div className="fixed bottom-0 left-0 right-0 z-[60] bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg">
+                <div className="fixed bottom-0 start-0 end-0 z-[60] bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg">
                     <div className="max-w-4xl mx-auto p-3 pb-20 md:pb-3 min-w-0">
                         <Button
                             onClick={handleFinishWorkout}
@@ -677,7 +678,7 @@ export default function JournalPage() {
                         >
                             {isLoading ? (
                                 <>
-                                    <Loader2 className="w-5 h-5 ml-2 animate-spin" />
+                                    <Loader2 className="w-5 h-5 ms-2 animate-spin" />
                                     מסכם אימון...
                                 </>
                             ) : (
@@ -735,7 +736,7 @@ export default function JournalPage() {
                                         </CardDescription>
                                     </div>
                                     <Button onClick={() => setSelectedWorkout(workout)}>
-                                        <Eye className="w-4 h-4 ml-2"/>
+                                        <Eye className="w-4 h-4 ms-2"/>
                                         צפה בפרטים
                                     </Button>
                                 </CardHeader>
@@ -760,7 +761,7 @@ export default function JournalPage() {
                           ניתן ליצור אימון חדש בלשונית "סייקל".
                         </p>
                         <Button className="mt-4" onClick={() => navigate(createPageUrl('ExercisesSetup'))}>
-                          <Plus className="w-4 h-4 ml-2"/>
+                          <Plus className="w-4 h-4 ms-2"/>
                           צור אימון חדש
                         </Button>
                       </Card>
@@ -777,7 +778,7 @@ export default function JournalPage() {
                                 <div className="mt-2 text-sm text-blue-600 bg-blue-50 p-3 rounded-lg"><strong>הערות מאמן:</strong> {selectedWorkout.notes}</div>
                             )}
                           </DialogHeader>
-                          <ScrollArea className="max-h-[70vh] pr-4">
+                          <ScrollArea className="max-h-[70vh] pe-4">
                             <div className="space-y-6 py-4">
                                 {['part_1_exercises', 'part_2_exercises', 'part_3_exercises', 'exercises'].map(partKey => {
                                     const exercisesInPart = selectedWorkout[partKey] || [];

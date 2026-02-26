@@ -134,16 +134,16 @@ export default function ExerciseProgressTracker({ workouts }) {
         </CardHeader>
         <CardContent>
           <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" />
             <Input
               placeholder="חפש תרגיל..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
+              className="ps-10"
             />
           </div>
           <ScrollArea className="h-72">
-            <div className="space-y-2 pr-2">
+            <div className="space-y-2 pe-2">
               {filteredExercises.length > 0 ? (
                 filteredExercises.map(exercise => (
                   <DialogTrigger key={exercise.name} asChild>
@@ -185,7 +185,7 @@ export default function ExerciseProgressTracker({ workouts }) {
                 {selectedExercise.videoUrl && (
                     <a href={selectedExercise.videoUrl} target="_blank" rel="noopener noreferrer">
                         <Button variant="outline" size="sm">
-                            <ExternalLink className="w-4 h-4 ml-2" />
+                            <ExternalLink className="w-4 h-4 ms-2" />
                             צפה בסרטון
                         </Button>
                     </a>

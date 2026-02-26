@@ -224,7 +224,7 @@ export default function BoosterEventsCalendar() {
         <CardContent className="text-center py-8">
           <p className="text-slate-600 mb-4">{error}</p>
           <Button onClick={loadData} variant="outline">
-            <RefreshCw className="w-4 h-4 ml-2" />
+            <RefreshCw className="w-4 h-4 ms-2" />
             נסה שוב
           </Button>
         </CardContent>
@@ -296,7 +296,7 @@ export default function BoosterEventsCalendar() {
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.1 }}
                         >
-                          <Card className="border-l-4 border-l-purple-500 hover:shadow-lg transition-shadow">
+                          <Card className="border-s-4 border-l-purple-500 hover:shadow-lg transition-shadow">
                             <CardContent className="p-4">
                               <div className="flex items-start justify-between mb-3">
                                 <div className="flex items-start gap-3">
@@ -349,7 +349,7 @@ export default function BoosterEventsCalendar() {
                                         disabled={isUpdatingParticipation}
                                         className="text-xs"
                                       >
-                                        <CheckCircle className="w-4 h-4 mr-1" />
+                                        <CheckCircle className="w-4 h-4 me-1" />
                                         {genderedTexts.participating}
                                       </Button>
                                       <Button
@@ -359,7 +359,7 @@ export default function BoosterEventsCalendar() {
                                         disabled={isUpdatingParticipation}
                                         className="text-xs"
                                       >
-                                        <XCircle className="w-4 h-4 mr-1" />
+                                        <XCircle className="w-4 h-4 me-1" />
                                         {genderedTexts.notParticipating}
                                       </Button>
                                     </div>
@@ -387,7 +387,7 @@ export default function BoosterEventsCalendar() {
                                 <div className="mt-3 pt-3 border-t border-gray-200">
                                   <div className="flex items-center gap-2">
                                     <Badge variant="secondary" className="text-xs">
-                                      <CheckCircle className="w-3 h-3 mr-1" />
+                                      <CheckCircle className="w-3 h-3 me-1" />
                                       תגובתך: {participation.status === 'participating' ? genderedTexts.participating : genderedTexts.notParticipating}
                                     </Badge>
                                   </div>
@@ -428,7 +428,7 @@ export default function BoosterEventsCalendar() {
                         <div className="relative w-full h-full flex items-center justify-center">
                           <span>{format(date, 'd')}</span>
                           {dayEvents.length > 0 && (
-                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 rounded-full"></div>
+                            <div className="absolute -top-1 -end-1 w-2 h-2 bg-purple-500 rounded-full"></div>
                           )}
                         </div>
                       );
@@ -561,7 +561,7 @@ export default function BoosterEventsCalendar() {
                               variant={getUserParticipation(selectedEvent.id)?.status === 'participating' ? 'default' : 'outline'}
                               disabled={isUpdatingParticipation}
                           >
-                              <CheckCircle className="w-4 h-4 mr-2" />
+                              <CheckCircle className="w-4 h-4 me-2" />
                               {genderedTexts.participating}
                           </Button>
                           <Button
@@ -573,7 +573,7 @@ export default function BoosterEventsCalendar() {
                               variant={getUserParticipation(selectedEvent.id)?.status === 'not_participating' ? 'destructive' : 'outline'}
                               disabled={isUpdatingParticipation}
                           >
-                              <XCircle className="w-4 h-4 mr-2" />
+                              <XCircle className="w-4 h-4 me-2" />
                               {genderedTexts.notParticipating}
                           </Button>
                       </div>

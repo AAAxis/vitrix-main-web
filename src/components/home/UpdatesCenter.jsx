@@ -491,7 +491,7 @@ export default function UpdatesCenter() {
                 <CardHeader className="pb-3">
                     <CardTitle className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <AlertTriangle className="w-5 h-5 ml-2 text-red-600" />
+                            <AlertTriangle className="w-5 h-5 ms-2 text-red-600" />
                             שגיאה בטעינת העדכונים
                         </div>
                     </CardTitle>
@@ -500,7 +500,7 @@ export default function UpdatesCenter() {
                     <div className="text-center py-4">
                         <p className="text-slate-600 mb-4">{loadError}</p>
                         <Button onClick={handleRetryLoad} variant="outline">
-                            <RefreshCw className="w-4 h-4 ml-2" />
+                            <RefreshCw className="w-4 h-4 ms-2" />
                             נסה שוב
                         </Button>
                     </div>
@@ -514,7 +514,7 @@ export default function UpdatesCenter() {
             <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                        <Bell className="w-5 h-5 ml-2 text-yellow-600" />
+                        <Bell className="w-5 h-5 ms-2 text-yellow-600" />
                         מרכז עדכונים
                     </div>
                 </CardTitle>
@@ -538,7 +538,7 @@ export default function UpdatesCenter() {
                     )
                 ) : (
                     <ScrollArea className="h-60">
-                        <div className="space-y-3 pl-2" dir="rtl">
+                        <div className="space-y-3 ps-2" dir="rtl">
                             <AnimatePresence>
                                 {displayedNotifications.map(item => {
                                     const Icon = iconMapForDisplay[item.icon];
@@ -571,7 +571,7 @@ export default function UpdatesCenter() {
                                                 <div className="flex-shrink-0 order-first">
                                                     {isResponded ? (
                                                         <div className="flex items-center gap-1 text-green-600 text-sm font-semibold px-2 py-1 rounded-md bg-green-100">
-                                                            <CheckCircle2 className="w-4 h-4 ml-1" />
+                                                            <CheckCircle2 className="w-4 h-4 ms-1" />
                                                             <span>הגבת</span>
                                                         </div>
                                                     ) : item.type === 'event_reminder' ? (

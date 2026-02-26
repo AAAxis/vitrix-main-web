@@ -125,7 +125,7 @@ export default function NutritionNumerology({ user }) {
             <Card className="muscle-glass border-0 shadow-lg">
                 <CardContent className="flex justify-center items-center p-8">
                     <Loader2 className="w-8 h-8 animate-spin text-slate-500" />
-                    <p className="mr-4 text-slate-600">טוען נתונים תזונתיים...</p>
+                    <p className="me-4 text-slate-600">טוען נתונים תזונתיים...</p>
                 </CardContent>
             </Card>
         );

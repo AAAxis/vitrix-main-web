@@ -22,7 +22,7 @@ export default function RecipePermissions() {
       setIsLoading(true);
       try {
         const [fetchedUsers, fetchedGroups, adminUser] = await Promise.all([User.list(), UserGroup.list(), User.me()]);
-        setUsers(fetchedUsers.filter(u => u.role !== 'admin' && u.role !== 'coach')); // Exclude admins/coaches from this list
+        setUsers(fetchedUsers.filter(u => u.role !== 'admin')); // Exclude admins from this list
         setGroups(fetchedGroups);
         setCurrentUser(adminUser);
       } catch (error) {
@@ -87,7 +87,7 @@ export default function RecipePermissions() {
       }
 
       const updatedUsers = await User.list();
-      setUsers(updatedUsers.filter(u => u.role !== 'admin' && u.role !== 'coach'));
+      setUsers(updatedUsers.filter(u => u.role !== 'admin'));
       setStatusMessage(`ההרשאה למתכונים עודכנה בהצלחה ל-${usersInGroup.length} חברי קבוצת "${group.name}".`);
     } catch (error) {
       console.error('Error updating group access:', error);
@@ -139,12 +139,12 @@ export default function RecipePermissions() {
       )}
 
       {assignMode === 'individual' && (
-        <div className="space-y-2 max-h-72 overflow-y-auto pr-2">
+        <div className="space-y-2 max-h-72 overflow-y-auto pe-2">
           {users.map(user => (
             <div key={user.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-50">
               <Label htmlFor={`access-${user.id}`} className="flex-1 cursor-pointer">
                 {user.name || user.email}
-                {user.group_name && <span className="text-xs text-blue-500 mr-2">({user.group_name})</span>}
+                {user.group_name && <span className="text-xs text-blue-500 me-2">({user.group_name})</span>}
               </Label>
               <div className="flex items-center gap-2">
                 {updatingUserId === user.id && <Loader2 className="w-4 h-4 animate-spin text-slate-400" />}

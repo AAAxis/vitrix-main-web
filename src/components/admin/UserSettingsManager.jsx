@@ -38,7 +38,7 @@ const getStatusBadge = (status) => {
   if (normalizedStatus === 'פעיל' || normalizedStatus === 'active' || !status || status === 'null' || normalizedStatus === 'undefined') {
     return (
       <Badge className="bg-green-100 text-green-800 border border-green-200">
-        <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
+        <span className="w-2 h-2 rounded-full bg-green-500 me-2 animate-pulse"></span>
         פעיל
       </Badge>
     );
@@ -48,7 +48,7 @@ const getStatusBadge = (status) => {
   if (normalizedStatus === 'מוקפא' || normalizedStatus === 'frozen' || normalizedStatus === 'on_hold') {
     return (
       <Badge className="bg-yellow-100 text-yellow-800 border border-yellow-200">
-        <span className="w-2 h-2 rounded-full bg-yellow-500 mr-2"></span>
+        <span className="w-2 h-2 rounded-full bg-yellow-500 me-2"></span>
         מוקפא
       </Badge>
     );
@@ -58,7 +58,7 @@ const getStatusBadge = (status) => {
   if (normalizedStatus === 'לא פעיל' || normalizedStatus === 'inactive' || normalizedStatus === 'הסתיים' || normalizedStatus === 'ended') {
     return (
       <Badge className="bg-red-100 text-red-800 border border-red-200">
-        <span className="w-2 h-2 rounded-full bg-red-500 mr-2"></span>
+        <span className="w-2 h-2 rounded-full bg-red-500 me-2"></span>
         לא פעיל
       </Badge>
     );
@@ -67,7 +67,7 @@ const getStatusBadge = (status) => {
   // Default fallback - show as active if status is unknown
   return (
     <Badge className="bg-green-100 text-green-800 border border-green-200">
-      <span className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></span>
+      <span className="w-2 h-2 rounded-full bg-green-500 me-2 animate-pulse"></span>
       פעיל
     </Badge>
   );
@@ -180,7 +180,7 @@ export default function UserSettingsManager({
   const handleEditUser = (user) => {
     const userToEdit = { ...user };
     // Sync role to is_admin so the checkbox reflects actual admin status (app uses role for access)
-    userToEdit.is_admin = userToEdit.role === 'admin' || userToEdit.role === 'coach' || !!userToEdit.is_admin;
+    userToEdit.is_admin = userToEdit.role === 'admin' || !!userToEdit.is_admin;
     if (!userToEdit.name && userToEdit.full_name) {
       userToEdit.name = userToEdit.full_name;
     }
@@ -527,12 +527,12 @@ export default function UserSettingsManager({
         <CardContent>
           <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="relative flex-1">
-              <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Search className="absolute end-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
                 placeholder="חפש לפי שם, מייל או מאמן..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pr-10"
+                className="pe-10"
               />
             </div>
             
@@ -585,7 +585,7 @@ export default function UserSettingsManager({
                             <p className="text-sm text-slate-600">{user.email}</p>
                             {user.start_date && (
                               <p className="text-xs text-slate-500">
-                                <Calendar className="w-3 h-3 inline-block ml-1" />
+                                <Calendar className="w-3 h-3 inline-block ms-1" />
                                 הצטרף ב-{format(new Date(user.start_date), 'dd/MM/yyyy')}
                               </p>
                             )}
@@ -606,9 +606,9 @@ export default function UserSettingsManager({
                         {/* Status Badges */}
                         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-200/80">
                           {getStatusBadge(user.status)}
-                          {(user.is_admin || user.role === 'admin' || user.role === 'coach' || user.role === 'trainer') && (
+                          {(user.is_admin || user.role === 'admin' || user.role === 'trainer') && (
                               <Badge className="bg-purple-100 text-purple-800 border border-purple-200">
-                                <UserCog className="w-3 h-3 mr-1" />
+                                <UserCog className="w-3 h-3 me-1" />
                                 {user.role === 'trainer' ? 'מאמן' : 'אדמין'}
                               </Badge>
                           )}
@@ -631,24 +631,24 @@ export default function UserSettingsManager({
                       {/* Action Buttons */}
                       <div className="flex flex-row md:flex-col gap-2 w-full md:w-auto pt-4 md:pt-0 border-t md:border-0 border-slate-200/80">
                           <Button variant="outline" size="sm" onClick={() => handleEditUser(user)}>
-                              <Edit className="w-4 h-4 ml-2" />
+                              <Edit className="w-4 h-4 ms-2" />
                               ערוך
                           </Button>
                           <Button variant="outline" size="sm" onClick={() => handleViewContract(user)}>
-                              <FileText className="w-4 h-4 ml-2" />
+                              <FileText className="w-4 h-4 ms-2" />
                               חוזה
                           </Button>
                           <Button variant="outline" size="sm" className="text-yellow-600 border-yellow-300 hover:bg-yellow-50" onClick={() => handleDangerousAction('reset', user)}>
-                              <RefreshCw className="w-4 h-4 ml-2" />
+                              <RefreshCw className="w-4 h-4 ms-2" />
                               איפוס
                           </Button>
                           {/* NEW: Finish Subscription Button */}
                           <Button variant="outline" size="sm" className="text-orange-600 border-orange-300 hover:bg-orange-50" onClick={() => handleDangerousAction('finish_subscription', user)}>
-                              <UserX className="w-4 h-4 ml-2" />
+                              <UserX className="w-4 h-4 ms-2" />
                               סיים מנוי
                           </Button>
                           <Button variant="destructive-outline" size="sm" onClick={() => handleDangerousAction('delete', user)}>
-                              <Trash2 className="w-4 h-4 ml-2" />
+                              <Trash2 className="w-4 h-4 ms-2" />
                               מחק
                           </Button>
                       </div>
@@ -902,7 +902,7 @@ export default function UserSettingsManager({
                   <div className="flex flex-col gap-2">
                     <Label>תפקיד</Label>
                     <Select
-                      value={editingUser.role === 'admin' || editingUser.role === 'coach' ? 'admin' : (editingUser.role || 'trainee')}
+                      value={editingUser.role === 'admin' ? 'admin' : (editingUser.role || 'trainee')}
                       onValueChange={(v) => {
                         setEditingUser({ ...editingUser, role: v, is_admin: v === 'admin' });
                       }}
@@ -939,7 +939,7 @@ export default function UserSettingsManager({
               ביטול
             </Button>
             <Button onClick={handleSaveUser} disabled={isSaving}>
-              {isSaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 ml-2" />}
+              {isSaving ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : <Save className="w-4 h-4 ms-2" />}
               שמור שינויים
             </Button>
           </DialogFooter>
@@ -984,7 +984,7 @@ export default function UserSettingsManager({
                   <strong className="text-orange-600">פעולה זו תסיים את מנוי המשתמש!</strong>
                   <p className="mt-2">המשתמש יוסר מכל הקבוצות, גישה לתוכנית בוסטר ולתזונה תופסק, וסטטוס המנוי שלו ישתנה ל'הסתיים'.</p>
                   <p className="mt-2 text-sm text-slate-500">
-                    <AlertTriangle className="w-4 h-4 inline-block ml-1 text-orange-500" />
+                    <AlertTriangle className="w-4 h-4 inline-block ms-1 text-orange-500" />
                     פעולה זו אינה מוחקת נתוני אימון או מעקב קודמים. לאיפוס מלא של כל הנתונים, השתמשו באפשרות 'איפוס'.
                   </p>
                 </>
@@ -1041,16 +1041,16 @@ export default function UserSettingsManager({
             >
               {isPerformingDangerousAction ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                  <Loader2 className="w-4 h-4 animate-spin ms-2" />
                   {dangerousAction?.type === 'reset' ? 'מבצע איפוס...' :
                    dangerousAction?.type === 'delete' ? 'מוחק...' :
                    'מסיים מנוי...'} {/* Updated Button text */}
                 </>
               ) : (
                 <>
-                  {dangerousAction?.type === 'reset' && <RefreshCw className="w-4 h-4 ml-2" />}
-                  {dangerousAction?.type === 'delete' && <Trash2 className="w-4 h-4 ml-2" />}
-                  {dangerousAction?.type === 'finish_subscription' && <UserX className="w-4 h-4 ml-2" />} {/* Icon for 'finish_subscription' */}
+                  {dangerousAction?.type === 'reset' && <RefreshCw className="w-4 h-4 ms-2" />}
+                  {dangerousAction?.type === 'delete' && <Trash2 className="w-4 h-4 ms-2" />}
+                  {dangerousAction?.type === 'finish_subscription' && <UserX className="w-4 h-4 ms-2" />} {/* Icon for 'finish_subscription' */}
                   {dangerousAction?.type === 'reset' ? 'בצע איפוס מלא' :
                    dangerousAction?.type === 'delete' ? 'מחק לצמיתות' :
                    'סיים מנוי'} {/* Updated Button text */}
@@ -1073,7 +1073,7 @@ export default function UserSettingsManager({
               <div className="flex flex-wrap gap-2 mt-2">
                 {viewingContract.contract_signed ? (
                   <Badge className="bg-green-100 text-green-800">
-                    <Calendar className="w-3 h-3 mr-1" />
+                    <Calendar className="w-3 h-3 me-1" />
                     נחתם ב-{viewingContract.contract_signed_date ? format(new Date(viewingContract.contract_signed_date), 'dd/MM/yyyy HH:mm', { locale: he }) : 'תאריך לא ידוע'}
                   </Badge>
                 ) : (

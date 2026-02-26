@@ -192,7 +192,7 @@ export default function CoachWorkouts({ user }) {
         <CardContent className="p-4 text-center">
           <p className="text-slate-600 mb-4">{loadError}</p>
           <Button onClick={handleRetryLoad} variant="outline">
-            <RefreshCw className="w-4 h-4 ml-2" />
+            <RefreshCw className="w-4 h-4 ms-2" />
             נסה שוב
           </Button>
         </CardContent>
@@ -247,7 +247,7 @@ export default function CoachWorkouts({ user }) {
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-60">
-          <div className="space-y-3 pr-2">
+          <div className="space-y-3 pe-2">
             <AnimatePresence>
                 {coachWorkouts.map(workout => (
                     <motion.div
@@ -290,9 +290,9 @@ export default function CoachWorkouts({ user }) {
                                   disabled={startingWorkoutId === workout.id}
                                 >
                                   {startingWorkoutId === workout.id ? (
-                                    <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                                    <Loader2 className="w-4 h-4 ms-2 animate-spin" />
                                   ) : (
-                                    <Play className="w-4 h-4 ml-2" />
+                                    <Play className="w-4 h-4 ms-2" />
                                   )}
                                   {startingWorkoutId === workout.id ? 'מתחיל אימון...' : 'הפעל אימון'}
                                 </Button>

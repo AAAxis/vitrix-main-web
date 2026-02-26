@@ -120,12 +120,12 @@ export default function DataMigration() {
                 >
                     {isRunning ? (
                         <>
-                            <Play className="w-4 h-4 mr-2 animate-spin" />
+                            <Play className="w-4 h-4 me-2 animate-spin" />
                             מבצע מיגרציה...
                         </>
                     ) : (
                         <>
-                            <Play className="w-4 h-4 mr-2" />
+                            <Play className="w-4 h-4 me-2" />
                             הרץ מיגרציית נתונים
                         </>
                     )}

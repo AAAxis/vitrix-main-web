@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { User, UserGroup, GroupWorkoutPlan, GroupReminder, GroupMessage, GroupEvent } from '@/api/entities';
 import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Users,
   Plus,
@@ -22,12 +23,14 @@ import {
   MessageSquare,
   Bell,
   Dumbbell,
-  Settings,
   Eye,
-  UserCheck,
   Shield,
   Filter,
-  TrendingUp // Added TrendingUp import
+  TrendingUp,
+  UserPlus,
+  Loader2,
+  ChevronRight,
+  Save
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GroupCalendar from './GroupCalendar';
@@ -52,6 +55,8 @@ export default function GroupManagement() {
         color_tag: '#3b82f6',
         status: 'Active'
     });
+    const [assignToGroupSearchTerm, setAssignToGroupSearchTerm] = useState('');
+    const [isAssigningToGroup, setIsAssigningToGroup] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -80,11 +85,12 @@ export default function GroupManagement() {
                 color_tag: group.color_tag || '#3b82f6',
                 status: group.status || 'Active'
             });
+            setAssignToGroupSearchTerm('');
         } else {
             setEditingGroup(null);
             setFormData({ name: '', description: '', assigned_coach: '', color_tag: '#3b82f6', status: 'Active' });
+            setIsDialogOpen(true);
         }
-        setIsDialogOpen(true);
     };
 
     const handleSaveGroup = async (e) => {
@@ -98,13 +104,14 @@ export default function GroupManagement() {
                 await UserGroup.create(formData);
             }
             setIsDialogOpen(false);
+            setEditingGroup(null);
             loadData();
         } catch (error) {
             console.error("Error saving group:", error);
         }
     };
 
-    const handleDeleteGroup = async (groupId, groupName) => {
+    const handleDeleteGroup = async (groupId, groupName, onSuccess) => {
         const usersInGroup = users.filter(u => u.group_names?.includes(groupName));
 
         if (usersInGroup.length > 0) {
@@ -124,6 +131,7 @@ export default function GroupManagement() {
 
                 await UserGroup.delete(groupId);
                 loadData();
+                if (onSuccess) onSuccess();
             } catch (error) {
                 console.error("Error deleting group:", error);
             }
@@ -155,9 +163,45 @@ export default function GroupManagement() {
         });
     };
 
+    const assignableToGroupUsers = useMemo(() => {
+        if (!editingGroup?.name) return [];
+        const notInGroup = users.filter(u => {
+            if (!u) return false;
+            const names = Array.isArray(u.group_names) ? u.group_names : [];
+            return !names.includes(editingGroup.name);
+        });
+        if (!assignToGroupSearchTerm.trim()) return notInGroup;
+        const term = assignToGroupSearchTerm.toLowerCase().trim();
+        return notInGroup.filter(u => {
+            const name = (u.name || u.full_name || '').toLowerCase();
+            const email = (u.email || '').toLowerCase();
+            return name.includes(term) || email.includes(term);
+        });
+    }, [users, editingGroup?.name, assignToGroupSearchTerm]);
+
+    const handleAssignUserToGroup = async (user) => {
+        const uid = user.id || user.uid;
+        if (!uid || !editingGroup?.name) return;
+        setIsAssigningToGroup(true);
+        try {
+            const current = Array.isArray(user.group_names) ? user.group_names : [];
+            const next = current.includes(editingGroup.name) ? current : [...current, editingGroup.name];
+            await User.update(uid, { group_names: next });
+            loadData();
+        } catch (err) {
+            console.error('Error assigning user to group:', err);
+        } finally {
+            setIsAssigningToGroup(false);
+        }
+    };
+
     const filteredGroups = groups.filter(group => {
         const searchMatch = group.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           group.assigned_coach?.toLowerCase().includes(searchTerm.toLowerCase());
+                           group.assigned_coach?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           getUsersInGroup(group.name).some(u =>
+                               (u.name?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                               (u.email?.toLowerCase().includes(searchTerm.toLowerCase()))
+                           );
         const statusMatch = statusFilter === 'all' || group.status === statusFilter;
         return searchMatch && statusMatch;
     });
@@ -167,6 +211,96 @@ export default function GroupManagement() {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
         </div>
     );
+
+    // ── Edit group: separate screen (reuse same pattern as trainer group edit) ──
+    if (editingGroup) {
+        const membersInGroup = users.filter(u => Array.isArray(u.group_names) && u.group_names.includes(editingGroup.name));
+        return (
+            <div className="space-y-6" dir="rtl">
+                <Button variant="ghost" onClick={() => setEditingGroup(null)} className="flex items-center gap-2 text-slate-600 hover:text-slate-800 mb-2">
+                    <ChevronRight className="w-4 h-4" />
+                    חזרה לרשימת קבוצות
+                </Button>
+                <Card>
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-xl">עריכת קבוצה: {editingGroup.name}</CardTitle>
+                        <CardDescription>{membersInGroup.length} משתמשים בקבוצה</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={handleSaveGroup} className="space-y-4">
+                            <div>
+                                <Label htmlFor="name">שם הקבוצה *</Label>
+                                <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} required placeholder="הזן שם קבוצה..." disabled />
+                                <p className="text-xs text-slate-500 mt-1">שינוי שם קבוצה לא זמין (משפיע על שיוך משתמשים).</p>
+                            </div>
+                            <div>
+                                <Label htmlFor="description">תיאור</Label>
+                                <Textarea id="description" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} placeholder="תיאור קצר של הקבוצה..." rows={3} />
+                            </div>
+                            <div>
+                                <Label htmlFor="assigned_coach">מאמן מוקצה (אימייל)</Label>
+                                <Input id="assigned_coach" type="email" value={formData.assigned_coach} onChange={(e) => setFormData({ ...formData, assigned_coach: e.target.value })} placeholder="coach@example.com" />
+                            </div>
+                            <div className="flex items-center gap-4">
+                                <div>
+                                    <Label htmlFor="color_tag">תג צבע</Label>
+                                    <Input id="color_tag" type="color" value={formData.color_tag} onChange={(e) => setFormData({ ...formData, color_tag: e.target.value })} className="p-1 h-10 w-20" />
+                                </div>
+                                <div className="flex-1">
+                                    <Label htmlFor="status">סטטוס</Label>
+                                    <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v })}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Active">פעיל</SelectItem>
+                                            <SelectItem value="Inactive">לא פעיל</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                            <div className="flex gap-2 pt-2">
+                                <Button type="button" variant="outline" onClick={() => setEditingGroup(null)}>ביטול</Button>
+                                <Button type="submit"><Save className="w-4 h-4 ms-2" />שמור שינויים</Button>
+                                <Button type="button" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => handleDeleteGroup(editingGroup.id, editingGroup.name, () => setEditingGroup(null))}><Trash2 className="w-4 h-4 ms-2" />מחק קבוצה</Button>
+                            </div>
+                        </form>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="pb-3">
+                        <CardTitle className="text-base flex items-center gap-2"><UserPlus className="w-4 h-4" />שייך מתאמנים לקבוצה</CardTitle>
+                        <CardDescription>משתמשים שעדיין לא בקבוצה זו. חפש ולחץ שייך.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <div className="relative">
+                            <Search className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                            <Input placeholder="חפש לפי שם או אימייל..." value={assignToGroupSearchTerm} onChange={(e) => setAssignToGroupSearchTerm(e.target.value)} className="pe-10" />
+                        </div>
+                        <ScrollArea className="h-[280px] rounded-md border p-2">
+                            <div className="space-y-2">
+                                {assignableToGroupUsers.length === 0 && (
+                                    <div className="text-center py-6 text-slate-500 text-sm">
+                                        {assignToGroupSearchTerm.trim() ? 'לא נמצאו משתמשים.' : 'כל המשתמשים כבר בקבוצה זו.'}
+                                    </div>
+                                )}
+                                {assignableToGroupUsers.map((u) => (
+                                    <div key={u.id || u.uid} className="flex items-center justify-between gap-2 py-2 px-2 rounded hover:bg-slate-50">
+                                        <div className="min-w-0">
+                                            <p className="font-medium text-sm truncate">{u.name || u.full_name || 'חסר שם'}</p>
+                                            <p className="text-xs text-slate-500 truncate">{u.email}</p>
+                                        </div>
+                                        <Button type="button" size="sm" variant="secondary" className="shrink-0" onClick={() => handleAssignUserToGroup(u)} disabled={isAssigningToGroup}>
+                                            {isAssigningToGroup ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5 ms-1" />}
+                                            שייך
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6" dir="rtl">
@@ -188,33 +322,29 @@ export default function GroupManagement() {
                             onClick={() => handleOpenDialog()}
                             className="bg-white/20 hover:bg-white/30 border border-white/30"
                         >
-                            <Plus className="w-4 h-4 mr-2" /> צור קבוצה חדשה
+                            <Plus className="w-4 h-4 me-2" /> צור קבוצה חדשה
                         </Button>
                     </div>
                 </CardHeader>
 
                 <CardContent className="p-6">
                     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 mb-6"> {/* Updated grid-cols-4 to grid-cols-5 */}
+                        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6">
                             <TabsTrigger value="overview" className="text-xs sm:text-sm">
-                                <Eye className="w-4 h-4 mr-1 sm:mr-2" />
+                                <Eye className="w-4 h-4 me-1 sm:me-2" />
                                 סקירה
                             </TabsTrigger>
                             <TabsTrigger value="weight-focus" className="text-xs sm:text-sm">
-                                <TrendingUp className="w-4 h-4 mr-1 sm:mr-2" />
+                                <TrendingUp className="w-4 h-4 me-1 sm:me-2" />
                                 מעקב משקל קבוצתי
                             </TabsTrigger>
                             <TabsTrigger value="calendar" className="text-xs sm:text-sm">
-                                <Calendar className="w-4 h-4 mr-1 sm:mr-2" />
+                                <Calendar className="w-4 h-4 me-1 sm:me-2" />
                                 לוח שנה
                             </TabsTrigger>
                             <TabsTrigger value="messaging" className="text-xs sm:text-sm">
-                                <MessageSquare className="w-4 h-4 mr-1 sm:mr-2" />
+                                <MessageSquare className="w-4 h-4 me-1 sm:me-2" />
                                 הודעות
-                            </TabsTrigger>
-                            <TabsTrigger value="settings" className="text-xs sm:text-sm">
-                                <Settings className="w-4 h-4 mr-1 sm:mr-2" />
-                                הגדרות
                             </TabsTrigger>
                         </TabsList>
 
@@ -222,12 +352,12 @@ export default function GroupManagement() {
                             {/* Filters */}
                             <div className="flex flex-col sm:flex-row gap-4 p-4 bg-slate-50 rounded-xl">
                                 <div className="relative flex-1">
-                                    <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                                    <Search className="absolute end-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                                     <Input
-                                        placeholder="חיפוש לפי שם קבוצה או מאמן..."
+                                        placeholder="חיפוש לפי שם קבוצה, מאמן או משתמש..."
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
-                                        className="pr-10 bg-white"
+                                        className="pe-10 bg-white"
                                     />
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -251,7 +381,6 @@ export default function GroupManagement() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                                         {filteredGroups.map((group, index) => {
                                             const userCount = countUsersInGroup(group.name);
-                                            const groupUsers = getUsersInGroup(group.name);
 
                                             return (
                                                 <motion.div
@@ -261,7 +390,7 @@ export default function GroupManagement() {
                                                     exit={{ opacity: 0, y: -20 }}
                                                     transition={{ delay: index * 0.1 }}
                                                 >
-                                                    <Card className="h-full hover:shadow-lg transition-all duration-300 border-l-4 group cursor-pointer"
+                                                    <Card className="h-full hover:shadow-lg transition-all duration-300 border-s-4 group cursor-pointer"
                                                           style={{ borderLeftColor: group.color_tag }}>
                                                         <CardHeader className="pb-3">
                                                             <div className="flex items-start justify-between">
@@ -333,45 +462,8 @@ export default function GroupManagement() {
                                                                 </div>
                                                             )}
 
-                                                            {/* Members Preview */}
-                                                            {userCount > 0 && (
-                                                                <div className="bg-slate-50 rounded-lg p-3">
-                                                                    <div className="flex items-center justify-between mb-2">
-                                                                        <span className="text-sm font-medium text-slate-700 flex items-center gap-1">
-                                                                            <UserCheck className="w-4 h-4" />
-                                                                            חברי הקבוצה
-                                                                        </span>
-                                                                        {userCount > 3 && (
-                                                                            <span className="text-xs text-slate-500">
-                                                                                +{userCount - 3} נוספים
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    <div className="space-y-1">
-                                                                        {groupUsers.slice(0, 3).map((user, idx) => (
-                                                                            <div key={idx} className="text-xs text-slate-600 truncate">
-                                                                                • {user.name}
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                </div>
-                                                            )}
-
                                                             {/* Action Buttons */}
                                                             <div className="flex gap-2 pt-2">
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    className="flex-1 text-xs"
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        setSelectedGroup(group);
-                                                                        setActiveTab('settings');
-                                                                    }}
-                                                                >
-                                                                    <Settings className="w-3 h-3 mr-1" />
-                                                                    הגדרות
-                                                                </Button>
                                                                 <Button
                                                                     variant="outline"
                                                                     size="sm"
@@ -381,7 +473,7 @@ export default function GroupManagement() {
                                                                         handleOpenDialog(group);
                                                                     }}
                                                                 >
-                                                                    <Edit className="w-3 h-3 mr-1" />
+                                                                    <Edit className="w-3 h-3 me-1" />
                                                                     ערוך
                                                                 </Button>
                                                                 <Button
@@ -415,7 +507,7 @@ export default function GroupManagement() {
                                         </p>
                                         {!searchTerm && statusFilter === 'all' && (
                                             <Button onClick={() => handleOpenDialog()}>
-                                                <Plus className="w-4 h-4 mr-2" />
+                                                <Plus className="w-4 h-4 me-2" />
                                                 צור קבוצה חדשה
                                             </Button>
                                         )}
@@ -435,19 +527,13 @@ export default function GroupManagement() {
                         <TabsContent value="messaging">
                             <GroupMessaging groups={groups} />
                         </TabsContent>
-
-                        <TabsContent value="settings">
-                            {selectedGroup && (
-                                <GroupSettings group={selectedGroup} onUpdate={loadData} />
-                            )}
-                        </TabsContent>
                     </Tabs>
                 </CardContent>
             </Card>
 
             {/* Create/Edit Group Dialog */}
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                <DialogContent className="sm:max-w-md" dir="rtl">
+                <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto" dir="rtl">
                     <DialogHeader>
                         <DialogTitle>
                             {editingGroup ? 'עריכת קבוצה' : 'יצירת קבוצה חדשה'}
@@ -511,6 +597,54 @@ export default function GroupManagement() {
                                 </Select>
                             </div>
                         </div>
+                        {editingGroup && (
+                            <>
+                                <div className="border-t pt-4 mt-4">
+                                    <Label className="text-sm font-medium flex items-center gap-2 mb-2">
+                                        <UserPlus className="w-4 h-4" />
+                                        שייך מתאמנים לקבוצה
+                                    </Label>
+                                    <p className="text-xs text-slate-500 mb-2">משתמשים שעדיין לא בקבוצה זו. חפש ולחץ שייך.</p>
+                                    <div className="relative mb-3">
+                                        <Search className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <Input
+                                            placeholder="חפש לפי שם או אימייל..."
+                                            value={assignToGroupSearchTerm}
+                                            onChange={(e) => setAssignToGroupSearchTerm(e.target.value)}
+                                            className="pe-10"
+                                        />
+                                    </div>
+                                    <ScrollArea className="h-[200px] rounded-md border p-2">
+                                        <div className="space-y-2">
+                                            {assignableToGroupUsers.length === 0 && (
+                                                <div className="text-center py-6 text-slate-500 text-sm">
+                                                    {assignToGroupSearchTerm.trim() ? 'לא נמצאו משתמשים.' : 'כל המשתמשים כבר בקבוצה זו.'}
+                                                </div>
+                                            )}
+                                            {assignableToGroupUsers.map((u) => (
+                                                <div key={u.id || u.uid} className="flex items-center justify-between gap-2 py-2 px-2 rounded hover:bg-slate-50">
+                                                    <div className="min-w-0">
+                                                        <p className="font-medium text-sm truncate">{u.name || u.full_name || 'חסר שם'}</p>
+                                                        <p className="text-xs text-slate-500 truncate">{u.email}</p>
+                                                    </div>
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="secondary"
+                                                        className="shrink-0"
+                                                        onClick={() => handleAssignUserToGroup(u)}
+                                                        disabled={isAssigningToGroup}
+                                                    >
+                                                        {isAssigningToGroup ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5 ms-1" />}
+                                                        שייך
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </ScrollArea>
+                                </div>
+                            </>
+                        )}
                         <div className="flex justify-end gap-2 pt-4">
                             <Button
                                 type="button"
@@ -614,11 +748,11 @@ const GroupSettings = ({ group, onUpdate }) => {
             <Tabs defaultValue="workout-plans" className="w-full">
                 <TabsList>
                     <TabsTrigger value="workout-plans">
-                        <Dumbbell className="w-4 h-4 mr-2" />
+                        <Dumbbell className="w-4 h-4 me-2" />
                         תוכניות אימון
                     </TabsTrigger>
                     <TabsTrigger value="reminders">
-                        <Bell className="w-4 h-4 mr-2" />
+                        <Bell className="w-4 h-4 me-2" />
                         תזכורות
                     </TabsTrigger>
                 </TabsList>
@@ -627,7 +761,7 @@ const GroupSettings = ({ group, onUpdate }) => {
                     <div className="flex justify-between items-center">
                         <h4 className="font-medium">תוכניות אימון קבוצתיות</h4>
                         <Button size="sm" onClick={() => handleOpenPlanDialog()}>
-                            <Plus className="w-4 h-4 mr-2" />
+                            <Plus className="w-4 h-4 me-2" />
                             הוסף תוכנית
                         </Button>
                     </div>
@@ -637,7 +771,7 @@ const GroupSettings = ({ group, onUpdate }) => {
                                 <div key={plan.id} className="p-3 border rounded-lg flex justify-between items-center">
                                     <div>
                                         <span className="font-medium">{plan.plan_name}</span>
-                                        <Badge className="mr-2" variant={plan.is_active ? 'default' : 'secondary'}>
+                                        <Badge className="me-2" variant={plan.is_active ? 'default' : 'secondary'}>
                                             {plan.is_active ? 'פעיל' : 'לא פעיל'}
                                         </Badge>
                                     </div>
@@ -657,7 +791,7 @@ const GroupSettings = ({ group, onUpdate }) => {
                     <div className="flex justify-between items-center">
                         <h4 className="font-medium">תזכורות קבוצתיות</h4>
                         <Button size="sm">
-                            <Plus className="w-4 h-4 mr-2" />
+                            <Plus className="w-4 h-4 me-2" />
                             הוסף תזכורת
                         </Button>
                     </div>

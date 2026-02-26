@@ -46,6 +46,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useNavigate } from 'react-router-dom';
+import InviteLinkCard from '@/components/admin/InviteLinkCard';
 
 const StatCard = ({ title, value, icon: Icon, description }) => (
     <Card>
@@ -118,7 +119,7 @@ export default function ControlCenter({ onNavigateToTab }) {
         { id: 'birthday', title: 'יום הולדת שמח', content: 'מזל טוב ליום הולדתך, {userName}! מאחלים לך שנה של בריאות, כושר והגשמת מטרות!' }
     ];
 
-    const traineeUsers = useMemo(() => allUsers.filter(u => u.role !== 'admin' && u.role !== 'coach'), [allUsers]);
+    const traineeUsers = useMemo(() => allUsers.filter(u => u.role !== 'admin'), [allUsers]);
 
     // Filter groups that have at least one user with booster program
     const groupsWithBoosterUsers = useMemo(() => {
@@ -299,7 +300,7 @@ export default function ControlCenter({ onNavigateToTab }) {
 
                 const filteredGroups = groupsData.filter(group => group.name !== 'מנהלה');
                 const usersForStatsAndProgress = (usersData || []).filter(user =>
-                    user.role !== 'admin' && user.role !== 'coach' && user.role !== 'trainer' && (!user.group_names?.includes('מנהלה'))
+                    user.role !== 'admin' && user.role !== 'trainer' && (!user.group_names?.includes('מנהלה'))
                 );
                 setFilteredUsers(usersForStatsAndProgress);
 
@@ -461,7 +462,7 @@ export default function ControlCenter({ onNavigateToTab }) {
         setIsDialogOpen(false);
         setStatusDialogOpen(false); // Close status dialog if it's open
         if (onNavigateToTab) {
-            onNavigateToTab('programs', 'user-settings', { userEmail: userEmail, startInEditMode: true });
+            onNavigateToTab('user-management', 'user-list', { userEmail: userEmail, startInEditMode: true });
         }
     };
 
@@ -499,7 +500,7 @@ export default function ControlCenter({ onNavigateToTab }) {
             icon: UserCog,
             color: "border-orange-200 hover:border-orange-300 hover:bg-orange-50 text-orange-700",
             description: "הגדרות וטיפול במשתמשים",
-            onClick: () => onNavigateToTab && onNavigateToTab('programs', 'user-settings')
+            onClick: () => onNavigateToTab && onNavigateToTab('user-management', 'user-list')
         }
     ];
 
@@ -523,7 +524,7 @@ export default function ControlCenter({ onNavigateToTab }) {
         try {
             // Use already-loaded scoped users and filter by group
             const users = (allUsers || []).filter(u => Array.isArray(u.group_names) && u.group_names.includes(groupName));
-            const traineeUsersInGroup = users.filter(u => u.role !== 'admin' && u.role !== 'coach' && u.role !== 'trainer');
+            const traineeUsersInGroup = users.filter(u => u.role !== 'admin' && u.role !== 'trainer');
             setGroupUsers(traineeUsersInGroup); // Store all users for potential future use or display
 
             const now = new Date();
@@ -694,9 +695,7 @@ export default function ControlCenter({ onNavigateToTab }) {
     };
 
     const getProgramBadge = (programType) => {
-        if (programType === 'booster_plus') {
-            return <Badge variant="outline" className="bg-purple-100 text-purple-800 border-purple-300">🅿️ בוסטר פלוס</Badge>;
-        } else if (programType === 'booster') {
+        if (programType === 'booster_plus' || programType === 'booster') {
             return <Badge variant="outline" className="bg-blue-100 text-blue-800 border-blue-300">🔵 בוסטר</Badge>;
         }
         return null;
@@ -765,7 +764,7 @@ export default function ControlCenter({ onNavigateToTab }) {
                         {/* Loading State */}
                         {isLoadingTasks && (
                             <div className="flex items-center justify-center py-8">
-                                <Loader2 className="w-6 h-6 animate-spin text-blue-600 ml-2" />
+                                <Loader2 className="w-6 h-6 animate-spin text-blue-600 ms-2" />
                                 <span className="text-slate-600">טוען נתוני משימות...</span>
                             </div>
                         )}
@@ -995,7 +994,7 @@ export default function ControlCenter({ onNavigateToTab }) {
                             <div className="text-center py-8 text-slate-500">
                                 <CheckSquare className="w-12 h-12 mx-auto mb-4 text-slate-300" />
                                 <p className="text-lg font-medium">אין משתמשים עם תוכנית בוסטר פעילה בקבוצה זו</p>
-                                <p className="text-sm mt-2">הפעל תוכנית בוסטר או בוסטר פלוס למשתמשים בקבוצה</p>
+                                <p className="text-sm mt-2">הפעל תוכנית בוסטר למשתמשים בקבוצה</p>
                             </div>
                         )}
 
@@ -1164,6 +1163,8 @@ export default function ControlCenter({ onNavigateToTab }) {
                     </CardContent>
                 </Card>
 
+                <InviteLinkCard />
+
                 <Card>
                     <div
                         className="cursor-pointer hover:bg-slate-50/50 transition-colors rounded-t-lg"
@@ -1281,9 +1282,9 @@ export default function ControlCenter({ onNavigateToTab }) {
                                             disabled={isSending || !messageContent.trim() || (messageTarget === 'group' && !selectedGroup) || (messageTarget === 'user' && !selectedUser)}
                                         >
                                             {isSending ? (
-                                                <><Loader2 className="w-4 h-4 ml-2 animate-spin" />שולח...</>
+                                                <><Loader2 className="w-4 h-4 ms-2 animate-spin" />שולח...</>
                                             ) : (
-                                                <><Send className="w-4 h-4 ml-2" />שלח הודעה</>
+                                                <><Send className="w-4 h-4 ms-2" />שלח הודעה</>
                                             )}
                                         </Button>
                                         {sendSuccess && <p className="text-sm text-green-600">{sendSuccess}</p>}

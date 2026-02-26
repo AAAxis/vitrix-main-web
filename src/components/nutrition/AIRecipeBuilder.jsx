@@ -243,12 +243,12 @@ export default function AIRecipeBuilder() {
                             >
                                 {isLoading ? (
                                     <>
-                                        <Loader2 className="animate-spin mr-2 h-6 w-6" />
+                                        <Loader2 className="animate-spin me-2 h-6 w-6" />
                                         מכין מתכון חכם...
                                     </>
                                 ) : (
                                     <>
-                                        <Sparkles className="mr-2 h-6 w-6" />
+                                        <Sparkles className="me-2 h-6 w-6" />
                                         צור מתכון חכם
                                     </>
                                 )}
@@ -363,12 +363,12 @@ export default function AIRecipeBuilder() {
                                     >
                                         {isSaving ? (
                                             <>
-                                                <Loader2 className="animate-spin mr-2 h-5 w-5" />
+                                                <Loader2 className="animate-spin me-2 h-5 w-5" />
                                                 שומר...
                                             </>
                                         ) : (
                                             <>
-                                                <Save className="mr-2 h-5 w-5" />
+                                                <Save className="me-2 h-5 w-5" />
                                                 💾 שמור בספר המתכונים שלי
                                             </>
                                         )}

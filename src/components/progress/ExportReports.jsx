@@ -586,7 +586,7 @@ export default function ExportReports({ user, onBoosterReportGenerated }) {
                 </CardHeader>
                 <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                      <Button onClick={handleGenerateMonthlyReport} disabled={isLoading} variant="outline">
-                        {isLoading ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <PieChart className="w-4 h-4 ml-2" />}
+                        {isLoading ? <Loader2 className="w-4 h-4 ms-2 animate-spin" /> : <PieChart className="w-4 h-4 ms-2" />}
                         הפק דוח חודשי
                     </Button>
                     <TooltipProvider>
@@ -599,7 +599,7 @@ export default function ExportReports({ user, onBoosterReportGenerated }) {
                                         variant="outline"
                                         className="w-full"
                                     >
-                                        {isLoading ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <TrendingUp className="w-4 h-4 ml-2" />}
+                                        {isLoading ? <Loader2 className="w-4 h-4 ms-2 animate-spin" /> : <TrendingUp className="w-4 h-4 ms-2" />}
                                         הפק דוח סיום בוסטר
                                     </Button>
                                 </div>
@@ -638,7 +638,7 @@ export default function ExportReports({ user, onBoosterReportGenerated }) {
                                         </p>
                                     </div>
                                     <Button variant="ghost" size="sm" onClick={() => handleViewReport(report)}>
-                                        <Eye className="w-4 h-4 ml-2" />
+                                        <Eye className="w-4 h-4 ms-2" />
                                         צפייה
                                     </Button>
                                 </li>

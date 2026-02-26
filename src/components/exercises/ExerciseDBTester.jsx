@@ -226,7 +226,7 @@ export default function ExerciseDBTester() {
                               {exercise.instructions && (
                                 <div>
                                   <strong>Instructions:</strong>
-                                  <ul className="list-disc list-inside mr-4">
+                                  <ul className="list-disc list-inside me-4">
                                     {exercise.instructions.slice(0, 3).map((inst, idx) => (
                                       <li key={idx}>{inst}</li>
                                     ))}

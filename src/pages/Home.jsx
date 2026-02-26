@@ -78,7 +78,7 @@ const DetailItem = React.memo(({ icon: Icon, label, value, additionalInfo }) => 
         <div className="text-right">
             <span className="font-semibold text-slate-800">{value || 'לא מוגדר'}</span>
             {additionalInfo && (
-                <span className="text-blue-600 text-sm ml-2">({additionalInfo})</span>
+                <span className="text-blue-600 text-sm ms-2">({additionalInfo})</span>
             )}
         </div>
     </div>
@@ -423,7 +423,7 @@ export default function HomePage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsProfileModalOpen(true)}
-                className="fixed top-4 left-4 z-50 w-12 h-12 rounded-full bg-white shadow-lg border-2 border-green-200 flex items-center justify-center hover:shadow-xl transition-all duration-300"
+                className="fixed top-4 start-4 z-50 w-12 h-12 rounded-full bg-white shadow-lg border-2 border-green-200 flex items-center justify-center hover:shadow-xl transition-all duration-300"
             >
                 {user?.profile_image_url ?
                     <img src={user.profile_image_url} alt="Profile" className="w-full h-full rounded-full object-cover" /> :
@@ -488,9 +488,9 @@ export default function HomePage() {
                         <div className="flex items-center justify-between">
                             <DrawerTitle className="flex items-center gap-2"><UserIcon className="w-5 h-5" />פרופיל אישי</DrawerTitle>
                             {!isEditingProfile ? (
-                                <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)} disabled={isSavingProfile || isUploadingImage}><Edit className="w-4 h-4 ml-2" />ערוך</Button>
+                                <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(true)} disabled={isSavingProfile || isUploadingImage}><Edit className="w-4 h-4 ms-2" />ערוך</Button>
                             ) : (
-                                <Button variant="ghost" size="sm" onClick={() => { setIsEditingProfile(false); initializeEditForm(user); setProfileError(''); setProfileSuccess(''); setProfileImageFile(null); }} disabled={isSavingProfile || isUploadingImage}><X className="w-4 h-4 ml-2" />בטל</Button>
+                                <Button variant="ghost" size="sm" onClick={() => { setIsEditingProfile(false); initializeEditForm(user); setProfileError(''); setProfileSuccess(''); setProfileImageFile(null); }} disabled={isSavingProfile || isUploadingImage}><X className="w-4 h-4 ms-2" />בטל</Button>
                             )}
                         </div>
                     </DrawerHeader>
@@ -503,7 +503,7 @@ export default function HomePage() {
                                         alt="Profile"
                                         className="w-full h-full rounded-full object-cover border-4 border-white shadow-lg"
                                     />
-                                    <label htmlFor="profile-upload" className="absolute -bottom-1 -right-1 w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-emerald-600 transition-colors shadow-md">
+                                    <label htmlFor="profile-upload" className="absolute -bottom-1 -end-1 w-10 h-10 bg-emerald-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-emerald-600 transition-colors shadow-md">
                                         {isUploadingImage ? <Loader2 className="w-5 h-5 text-white animate-spin" /> : <Camera className="w-5 h-5 text-white" />}
                                         <input id="profile-upload" type="file" className="hidden" accept="image/*" onChange={handleImageUpload} disabled={isUploadingImage || isSavingProfile} />
                                     </label>
@@ -529,7 +529,7 @@ export default function HomePage() {
                         </div>
                         {isEditingProfile && (
                             <Button onClick={handleSaveProfile} disabled={isSavingProfile || isUploadingImage || !editForm.gender || !editForm.name.trim()} className="w-full">
-                                {isSavingProfile ? <><Loader2 className="w-4 h-4 ml-2 animate-spin" />שומר...</> : <><Save className="w-4 h-4 ml-2" />שמור שינויים</>}
+                                {isSavingProfile ? <><Loader2 className="w-4 h-4 ms-2 animate-spin" />שומר...</> : <><Save className="w-4 h-4 ms-2" />שמור שינויים</>}
                             </Button>
                         )}
                         <Separator />
@@ -570,7 +570,7 @@ export default function HomePage() {
                                 variant="outline"
                                 className="w-full border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
                             >
-                                <LogOut className="w-4 h-4 ml-2" />
+                                <LogOut className="w-4 h-4 ms-2" />
                                 התנתק מהמערכת
                             </Button>
                         </div>

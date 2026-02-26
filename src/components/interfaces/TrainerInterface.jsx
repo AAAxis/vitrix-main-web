@@ -1,31 +1,93 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerFooter, DrawerClose } from "@/components/ui/drawer";
-import { User as UserIcon, LogOut, Menu, Users, BarChart, Dumbbell, ChevronLeft, Settings, LayoutDashboard, Image, Camera, Loader2 } from 'lucide-react';
+import { User as UserIcon, LogOut, Menu, Users, BarChart, Dumbbell, ChevronLeft, Settings, LayoutDashboard, Image, Camera, Loader2, X, ShieldCheck, Key } from 'lucide-react';
 import AdminDashboard from '../../pages/AdminDashboard';
+import AdminUserDetail from '../../pages/AdminUserDetail';
 import { User } from '@/api/entities';
 import { UploadFile } from '@/api/integrations';
-import TerminationFeedbackViewer from '../admin/TerminationFeedbackViewer'; // Added import
+
+const TAB_PATHS = {
+  'control-center': '/control-center',
+  'user-management': '/user-management/user-list',
+  'admin-management': '/admin-management',
+  'trainer-management': '/trainer-management',
+  'progress-media': '/progress-media/notification-status',
+  'workout-creator': '/workout-creator/send-workout',
+  'programs': '/programs',
+};
 
 export default function TrainerInterface({ user }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const pathname = location.pathname;
+  const basePath = pathname.startsWith('/trainer') ? '/trainer' : '/admin';
+
+  const isSystemAdmin = user && (
+    (user.role || '').toLowerCase() === 'admin' ||
+    user.is_admin === true ||
+    user.isAdmin === true ||
+    user.admin === true ||
+    (user.type || '').toLowerCase() === 'admin' ||
+    (Array.isArray(user.permissions) && user.permissions.some(p => String(p || '').toLowerCase() === 'admin'))
+  );
+
+  const adminMenuItems = useMemo(() => {
+    const all = [
+      { id: 'control-center', label: 'מרכז שליטה', icon: LayoutDashboard },
+      { id: 'user-management', label: 'ניהול משתמשים', icon: Users },
+      { id: 'admin-management', label: 'מנהלים', icon: Key },
+      { id: 'trainer-management', label: 'ניהול מאמנים', icon: ShieldCheck },
+      { id: 'progress-media', label: 'שיתוף ומדיה', icon: Image },
+      { id: 'workout-creator', label: 'יוצר אימונים', icon: Dumbbell },
+      { id: 'programs', label: 'תוכניות והגדרות', icon: Settings },
+    ];
+    if (isSystemAdmin) return all;
+    return all.filter(item => item.id !== 'admin-management' && item.id !== 'trainer-management');
+  }, [isSystemAdmin]);
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState(false);
-  const [activeAdminTab, setActiveAdminTab] = useState('user-management');
   const [navigateToTab, setNavigateToTab] = useState(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [localUser, setLocalUser] = useState(user);
   const fileInputRef = React.useRef(null);
 
-  const adminMenuItems = [
-    { id: 'control-center', label: 'מרכז שליטה', icon: LayoutDashboard },
-    { id: 'user-management', label: 'ניהול משתמשים', icon: Users },
-    { id: 'progress-media', label: 'שיתוף ומדיה', icon: Image }, // Updated label and icon
-    { id: 'workout-creator', label: 'יוצר אימונים', icon: Dumbbell },
-    { id: 'programs', label: 'תוכניות והגדרות', icon: Settings },
-  ];
+  const activeAdminTab = useMemo(() => {
+    if (!pathname.startsWith('/admin') && !pathname.startsWith('/trainer')) return 'control-center';
+    const pathAfterBase = pathname.slice(basePath.length) || '/';
+    const segment = pathAfterBase.split('/').filter(Boolean)[0] || '';
+    if (segment === 'control-center') return 'control-center';
+    if (segment === 'user-management') return 'user-management';
+    if (segment === 'admin-management') return 'admin-management';
+    if (segment === 'trainer-management') return 'trainer-management';
+    if (segment === 'progress-media') return 'progress-media';
+    if (segment === 'workout-creator') return 'workout-creator';
+    if (segment === 'programs') return 'programs';
+    if (segment === 'profile') return 'profile';
+    return 'control-center';
+  }, [pathname, basePath]);
+
+  const isUserDetailPath = useMemo(() => {
+    const parts = pathname.split('/').filter(Boolean);
+    if (basePath === '/admin' && parts.length >= 4) {
+      return parts[0] === 'admin' && parts[1] === 'user-management' && parts[2] === 'user-list';
+    }
+    if (basePath === '/trainer' && parts.length >= 4) {
+      return parts[0] === 'trainer' && parts[1] === 'user-management' && parts[2] === 'user-list';
+    }
+    return false;
+  }, [pathname, basePath]);
+
+  const userDetailEmail = useMemo(() => {
+    if (!isUserDetailPath) return null;
+    const parts = pathname.split('/').filter(Boolean);
+    return parts[3] ? decodeURIComponent(parts[3]) : null;
+  }, [isUserDetailPath, pathname]);
 
   const handleLogout = async () => {
     try {
@@ -37,7 +99,10 @@ export default function TrainerInterface({ user }) {
   };
 
   const handleMenuItemClick = (tabId) => {
-    setActiveAdminTab(tabId);
+    const path = TAB_PATHS[tabId];
+    if (path) {
+      navigate(`${basePath}${path}`, { replace: true });
+    }
     setIsMenuOpen(false);
   };
 
@@ -72,35 +137,17 @@ export default function TrainerInterface({ user }) {
     }
   };
 
-  const handleOpenSettings = () => {
-    setIsSettingsDrawerOpen(false);
-    // Navigate to programs tab with user-settings sub-tab
-    if (navigateToTab) {
-      navigateToTab('programs', 'user-settings');
-    } else {
-      setActiveAdminTab('programs');
-    }
-  };
-
   // --- Sidebar Component for reuse ---
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-gradient-to-b from-emerald-500 to-teal-500 text-white" dir="rtl">
       <div className="p-6 border-b border-emerald-400">
         <div className="flex items-center gap-4 cursor-pointer hover:opacity-80 transition-opacity" onClick={handleLogoClick}>
-          {localUser?.profile_image_url ? (
-            <img
-              src={localUser.profile_image_url}
-              alt={localUser?.name || 'מאמן'}
-              className="w-12 h-12 rounded-full object-cover border-2 border-white/30"
-            />
-          ) : (
-            <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center border-2 border-white/30">
-              <UserIcon className="w-6 h-6" />
-            </div>
-          )}
+          <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center border-2 border-white/30 flex-shrink-0">
+            <UserIcon className="w-6 h-6" />
+          </div>
           <div>
-            <h1 className="text-xl font-bold drop-shadow-sm">{localUser?.name || 'מאמן'}</h1>
-            <p className="text-emerald-100 text-sm">ממשק ניהול מאמנים</p>
+            <h1 className="text-xl font-bold drop-shadow-sm">ממשק ניהול</h1>
+            <p className="text-emerald-100 text-sm">מאמנים ומתאמנים</p>
           </div>
         </div>
       </div>
@@ -128,17 +175,6 @@ export default function TrainerInterface({ user }) {
           );
         })}
       </nav>
-
-      <div className="p-6 border-t border-emerald-400">
-        <Button
-          onClick={handleLogout}
-          variant="ghost"
-          className="w-full text-white hover:bg-white/20 border border-white/30"
-        >
-          <LogOut className="w-4 h-4 ml-2" />
-          התנתק
-        </Button>
-      </div>
     </div>
   );
 
@@ -171,19 +207,32 @@ export default function TrainerInterface({ user }) {
 
         {/* Content */}
         <main className="flex-1 p-4 sm:p-6">
-          <AdminDashboard
-            activeTab={activeAdminTab}
-            setActiveTab={setActiveAdminTab}
-            hideNavigation={true}
-            onNavigateToTab={setNavigateToTab}
-          />
+          {isUserDetailPath ? (
+            <AdminUserDetail userEmailFromPath={userDetailEmail} />
+          ) : (
+            <AdminDashboard
+              activeTab={activeAdminTab}
+              hideNavigation={true}
+              onNavigateToTab={setNavigateToTab}
+            />
+          )}
         </main>
       </div>
 
       {/* Settings Drawer */}
       <Drawer open={isSettingsDrawerOpen} onOpenChange={setIsSettingsDrawerOpen}>
         <DrawerContent dir="rtl">
-          <DrawerHeader className="text-right">
+          <DrawerClose asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 end-4 z-10 rounded-full h-9 w-9 text-slate-600 hover:bg-slate-100"
+              aria-label="סגור"
+            >
+              <X className="w-5 h-5" />
+            </Button>
+          </DrawerClose>
+          <DrawerHeader className="text-right pt-14">
             <div className="flex items-center gap-4 mb-4">
               <div className="relative group cursor-pointer" onClick={triggerFileUpload}>
                 {localUser?.profile_image_url ? (
@@ -226,25 +275,17 @@ export default function TrainerInterface({ user }) {
             <Button
               variant="outline"
               className="w-full justify-start text-right"
-              onClick={handleOpenSettings}
-            >
-              <Settings className="w-5 h-5 ml-3" />
-              הגדרות משתמש
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full justify-start text-right"
               onClick={() => {
                 setIsSettingsDrawerOpen(false);
                 if (navigateToTab) {
-                  navigateToTab('control-center');
+                  navigateToTab('profile');
                 } else {
-                  setActiveAdminTab('control-center');
+                  navigate(`${basePath}/profile`, { replace: true });
                 }
               }}
             >
-              <LayoutDashboard className="w-5 h-5 ml-3" />
-              מרכז שליטה
+              <UserIcon className="w-5 h-5 ms-3" />
+              הפרופיל שלי
             </Button>
           </div>
 
@@ -254,14 +295,9 @@ export default function TrainerInterface({ user }) {
               className="w-full justify-start text-right text-red-600 hover:text-red-700 hover:bg-red-50"
               onClick={handleLogout}
             >
-              <LogOut className="w-5 h-5 ml-3" />
+              <LogOut className="w-5 h-5 ms-3" />
               התנתק
             </Button>
-            <DrawerClose asChild>
-              <Button variant="ghost" className="w-full">
-                סגור
-              </Button>
-            </DrawerClose>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>

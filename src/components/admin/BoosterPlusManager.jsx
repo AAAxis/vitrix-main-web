@@ -37,8 +37,8 @@ export default function BoosterPlusManager() {
             try {
                 // Load all users (not just active ones) to include trainers/admins
                 const allUsers = await User.listForStaff(currentUser);
-                // Filter out admins/coaches/trainers from the list (only show trainees)
-                const trainees = allUsers.filter(u => u.role !== 'admin' && u.role !== 'coach' && u.role !== 'trainer');
+                // Filter out admins and trainers from the list (only show trainees)
+                const trainees = allUsers.filter(u => u.role !== 'admin' && u.role !== 'trainer');
                 setUsers(trainees);
             } catch (error) {
                 console.error("Error loading users:", error);
@@ -282,13 +282,13 @@ export default function BoosterPlusManager() {
                 <div className="space-y-2">
                     <Label htmlFor="user-search">חיפוש מתאמן</Label>
                     <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                        <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                         <Input
                             id="user-search"
                             placeholder="חפש לפי שם או אימייל..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="pl-10"
+                            className="ps-10"
                         />
                     </div>
                 </div>
@@ -317,11 +317,11 @@ export default function BoosterPlusManager() {
                 </div>
                 <div className="flex flex-wrap gap-2">
                     <Button onClick={handleActivateBoosterPlus} disabled={isActivating || isDeactivating || !selectedUser || isDeletingTasks}>
-                        {isActivating ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Rocket className="w-4 h-4 ml-2" />}
+                        {isActivating ? <Loader2 className="w-4 h-4 ms-2 animate-spin" /> : <Rocket className="w-4 h-4 ms-2" />}
                         הפעל בוסטר פלוס
                     </Button>
                     <Button onClick={handleDeactivateBoosterPlus} disabled={isActivating || isDeactivating || !selectedUser || isDeletingTasks} variant="destructive">
-                        {isDeactivating ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <XCircle className="w-4 h-4 ml-2" />}
+                        {isDeactivating ? <Loader2 className="w-4 h-4 ms-2 animate-spin" /> : <XCircle className="w-4 h-4 ms-2" />}
                         סיום התוכנית
                     </Button>
                 </div>
@@ -362,12 +362,12 @@ export default function BoosterPlusManager() {
                                 >
                                     {selectedWeeks.length === availableWeeks.length ? (
                                         <>
-                                            <Square className="w-4 h-4 ml-1" />
+                                            <Square className="w-4 h-4 ms-1" />
                                             בטל בחירת הכל
                                         </>
                                     ) : (
                                         <>
-                                            <CheckSquare className="w-4 h-4 ml-1" />
+                                            <CheckSquare className="w-4 h-4 ms-1" />
                                             בחר הכל
                                         </>
                                     )}
@@ -438,11 +438,11 @@ export default function BoosterPlusManager() {
                         onClick={handleAssignTasks} 
                         disabled={isAssigningTasks || !selectedUser || isDeletingTasks || selectedWeeks.length === 0}
                     >
-                        {isAssigningTasks ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Send className="w-4 h-4 ml-2" />}
+                        {isAssigningTasks ? <Loader2 className="w-4 h-4 ms-2 animate-spin" /> : <Send className="w-4 h-4 ms-2" />}
                         הקצה {selectedWeeks.length} משימות
                     </Button>
                     <Button onClick={() => setIsDeleteDialogOpen(true)} disabled={isDeletingTasks || !selectedUser || isAssigningTasks} variant="destructive">
-                        {isDeletingTasks ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Trash2 className="w-4 h-4 ml-2" />}
+                        {isDeletingTasks ? <Loader2 className="w-4 h-4 ms-2 animate-spin" /> : <Trash2 className="w-4 h-4 ms-2" />}
                         מחק משימות
                     </Button>
                 </div>

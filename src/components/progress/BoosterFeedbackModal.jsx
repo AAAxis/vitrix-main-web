@@ -285,13 +285,13 @@ export default function BoosterFeedbackModal({ user, isOpen, onFinish, reportId,
                     </div>
                     <div className="flex justify-between items-center mt-4">
                         <Button onClick={prevQuestion} variant="outline" disabled={currentQuestionIndex === 0}>
-                            <ArrowRight className="w-4 h-4 ml-2" />
+                            <ArrowRight className="w-4 h-4 ms-2" />
                             הקודם
                         </Button>
                         <span className="text-sm font-medium text-slate-500">{currentQuestionIndex + 1} / {weeklyQuestions.length}</span>
                         <Button onClick={nextQuestion} variant="outline" disabled={currentQuestionIndex === weeklyQuestions.length - 1}>
                             הבא
-                            <ArrowLeft className="w-4 h-4 mr-2" />
+                            <ArrowLeft className="w-4 h-4 me-2" />
                         </Button>
                     </div>
                 </div>
@@ -302,7 +302,7 @@ export default function BoosterFeedbackModal({ user, isOpen, onFinish, reportId,
             title: "🔹 חלק 2 – חוות דעת על התהליך",
             content: (
                 <ScrollArea className="h-full">
-                    <div className="space-y-6 pr-4">
+                    <div className="space-y-6 pe-4">
                         <div className="p-6 rounded-xl bg-slate-50 border space-y-3">
                             <Label className="font-bold text-lg text-slate-800">{processText('1. עד כמה [MALE]אתה[FEMALE]את[/MALE] מרוצה מהתהליך?‎', gender)}</Label>
                             <StarRating rating={feedback.processSatisfaction} setRating={(r) => setFeedback(p => ({ ...p, processSatisfaction: r }))} />
@@ -336,7 +336,7 @@ export default function BoosterFeedbackModal({ user, isOpen, onFinish, reportId,
             title: "🔹 חלק 3 – חוות דעת על המאמן/ת",
             content: (
                  <ScrollArea className="h-full">
-                    <div className="space-y-6 pr-4">
+                    <div className="space-y-6 pe-4">
                         <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl"><p className="text-center font-semibold text-blue-800">{processText('[MALE]מאמן מלווה[FEMALE]מאמנת מלווה[/MALE]', gender)}: <strong>{user?.coach_name || 'לא שויך'}</strong></p></div>
                         <div className="p-6 rounded-xl bg-slate-50 border space-y-3">
                             <Label className="font-bold text-lg text-slate-800">{processText('1. עד כמה [MALE]הרגשת[FEMALE]הרגשת[/MALE] תמיכה וליווי אישי?‎', gender)}</Label>
@@ -371,7 +371,7 @@ export default function BoosterFeedbackModal({ user, isOpen, onFinish, reportId,
             title: "🔹 חלק 4 – סיכום והמלצה אישית",
             content: (
                 <ScrollArea className="h-full">
-                    <div className="space-y-6 pr-4">
+                    <div className="space-y-6 pe-4">
                         <div className="p-6 rounded-xl bg-slate-50 border space-y-3">
                              <Label className="font-bold text-lg text-slate-800">{processText('🗣️ משפט סיכום אישי: “[MALE]ב־12 השבועות של הבוסטר למדתי[FEMALE]ב־12 השבועות של הבוסטר למדתי[/MALE] ש…”', gender)}</Label>
                             <Textarea
@@ -387,7 +387,7 @@ export default function BoosterFeedbackModal({ user, isOpen, onFinish, reportId,
                                 <div className="flex-grow">
                                     <Input id="image-upload" type="file" accept="image/*" onChange={handleImageUpload} className="hidden" disabled={isSubmitting} />
                                     <Label htmlFor="image-upload" className="cursor-pointer inline-flex items-center justify-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50">
-                                        <Upload className="w-4 h-4 ml-2" />
+                                        <Upload className="w-4 h-4 ms-2" />
                                         {processText('[MALE]בחר[FEMALE]בחרי[/MALE] תמונה', gender)}
                                     </Label>
                                 </div>
@@ -431,7 +431,7 @@ export default function BoosterFeedbackModal({ user, isOpen, onFinish, reportId,
                         <div className="bg-blue-600 h-2.5 rounded-full" style={{ width: `${(currentPart / parts.length) * 100}%` }}></div>
                     </div>
                     <DialogClose asChild>
-                        <button className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+                        <button className="absolute end-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
                             <X className="h-5 w-5" />
                             <span className="sr-only">Close</span>
                         </button>
@@ -457,13 +457,13 @@ export default function BoosterFeedbackModal({ user, isOpen, onFinish, reportId,
                      {error && <p className="text-sm text-red-500 text-center sm:text-right w-full mb-2 sm:mb-0">{error}</p>}
                     <div className="flex gap-2 w-full justify-between">
                          <Button onClick={handlePrevPart} variant="outline" disabled={isSubmitting || currentPart === 1}>
-                             <ArrowRight className="w-4 h-4 ml-2" />
+                             <ArrowRight className="w-4 h-4 ms-2" />
                             הקודם
                         </Button>
                         <Button onClick={handleNextPart} disabled={isSubmitting} className="muscle-primary-gradient text-white flex-grow">
-                            {isSubmitting && currentPart === parts.length ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : null}
+                            {isSubmitting && currentPart === parts.length ? <Loader2 className="w-4 h-4 animate-spin ms-2" /> : null}
                             {currentPart === parts.length ? 'שליחת משוב וסיום' : 'הבא'}
-                            {currentPart < parts.length && <ArrowLeft className="w-4 h-4 mr-2" />}
+                            {currentPart < parts.length && <ArrowLeft className="w-4 h-4 me-2" />}
                         </Button>
                     </div>
                 </DialogFooter>

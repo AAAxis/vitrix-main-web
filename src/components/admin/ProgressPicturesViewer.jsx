@@ -126,7 +126,7 @@ export default function ProgressPicturesViewer() {
     return (
       <div className="flex justify-center items-center py-12">
         <Loader2 className="w-8 h-8 animate-spin text-slate-500" />
-        <p className="mr-4 text-slate-600">טוען תמונות התקדמות...</p>
+        <p className="me-4 text-slate-600">טוען תמונות התקדמות...</p>
       </div>
     );
   }
@@ -150,7 +150,7 @@ export default function ProgressPicturesViewer() {
               animate={{ opacity: 1, y: 0 }}
             >
               <Card
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 bg-white border-l-4 border-l-purple-500"
+                className="cursor-pointer hover:shadow-lg transition-all duration-300 bg-white border-s-4 border-l-purple-500"
               >
                 <CardHeader className="p-4 sm:p-6 pb-3">
                   <div className="flex items-center gap-3">
@@ -188,7 +188,7 @@ export default function ProgressPicturesViewer() {
                     className="w-full text-sm"
                     variant="outline"
                   >
-                    <Eye className="w-4 h-4 mr-2" />
+                    <Eye className="w-4 h-4 me-2" />
                     צפה בכל התמונות
                   </Button>
                 </CardContent>
@@ -236,7 +236,7 @@ export default function ProgressPicturesViewer() {
                         />
 
                         {/* Delete button overlay */}
-                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute top-2 end-2 opacity-0 group-hover:opacity-100 transition-opacity">
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
                               <Button

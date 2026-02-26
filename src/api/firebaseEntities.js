@@ -152,10 +152,46 @@ class FirebaseEntity {
     try {
       let q = query(this.collectionRef);
 
-      // Apply filters
-      Object.keys(filters).forEach(key => {
-        q = query(q, where(key, '==', filters[key]));
-      });
+      // Apply filters (skip undefined values; Firestore does not support undefined)
+      const IN_MAX = 10; // Firestore 'in' query limit
+      for (const key of Object.keys(filters)) {
+        const value = filters[key];
+        if (value === undefined) continue;
+        if (value && typeof value === 'object' && !Array.isArray(value) && Object.prototype.hasOwnProperty.call(value, '$in')) {
+          const arr = Array.isArray(value.$in) ? value.$in.filter(v => v !== undefined && v !== null) : [];
+          if (arr.length === 0) continue;
+          if (arr.length <= IN_MAX) {
+            q = query(q, where(key, 'in', arr));
+          } else {
+            // Chunk into multiple queries and merge (run in parallel)
+            const chunks = [];
+            for (let i = 0; i < arr.length; i += IN_MAX) {
+              chunks.push(arr.slice(i, i + IN_MAX));
+            }
+            const results = await Promise.all(chunks.map(chunk => {
+              const subQ = query(this.collectionRef, where(key, 'in', chunk));
+              return getDocs(subQ);
+            }));
+            const docs = results.flatMap(snap => snap.docs.map(d => convertFirestoreData(d)));
+            if (orderByField) {
+              const direction = orderByField.startsWith('-') ? 'desc' : 'asc';
+              const field = orderByField.startsWith('-') ? orderByField.slice(1) : orderByField;
+              docs.sort((a, b) => {
+                const va = a[field]; const vb = b[field];
+                if (va == null && vb == null) return 0;
+                if (va == null) return direction === 'asc' ? 1 : -1;
+                if (vb == null) return direction === 'asc' ? -1 : 1;
+                const cmp = va < vb ? -1 : va > vb ? 1 : 0;
+                return direction === 'desc' ? -cmp : cmp;
+              });
+            }
+            const limited = limitCount ? docs.slice(0, limitCount) : docs;
+            return limited;
+          }
+        } else {
+          q = query(q, where(key, '==', value));
+        }
+      }
 
       // Apply ordering
       if (orderByField) {

@@ -245,7 +245,7 @@ export default function ExerciseProgress() {
                   const isExpanded = expandedWorkoutId === workout.id;
                   
                   return (
-                    <Card key={workout.id} className="border-l-4 border-green-500">
+                    <Card key={workout.id} className="border-s-4 border-green-500">
                       <CardHeader 
                         className="cursor-pointer hover:bg-slate-50 transition-colors"
                         onClick={() => setExpandedWorkoutId(isExpanded ? null : workout.id)}
@@ -380,7 +380,7 @@ export default function ExerciseProgress() {
                     </div>
                     <div>
                       <h4 className="font-semibold mb-3 text-slate-700">📋 היסטוריית סטים</h4>
-                      <div className="max-h-72 overflow-y-auto pr-2 space-y-2">
+                      <div className="max-h-72 overflow-y-auto pe-2 space-y-2">
                         {[...selectedExerciseLogs].reverse().map((log) => (
                           <div key={log.id} className="p-3 bg-slate-50 rounded-lg border">
                             <div className="flex justify-between items-center mb-1">

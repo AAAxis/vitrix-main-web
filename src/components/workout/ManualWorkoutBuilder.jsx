@@ -445,13 +445,13 @@ export default function ManualWorkoutBuilder({ user }) {
             <div className="space-y-4">
               <Label className="text-lg font-semibold">הוספת תרגילים</Label>
               <div className="relative">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input
                   type="text"
                   placeholder="חיפוש תרגיל להוספה..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pr-10"
+                  className="pe-10"
                 />
               </div>
               
@@ -523,9 +523,9 @@ export default function ManualWorkoutBuilder({ user }) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="flex-grow">
-                  <FolderOpen className="w-4 h-4 mr-2" />
+                  <FolderOpen className="w-4 h-4 me-2" />
                   טען תבנית
-                  <ChevronDown className="w-4 h-4 ml-auto" />
+                  <ChevronDown className="w-4 h-4 ms-auto" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-[300px]" dir="rtl">
@@ -660,12 +660,12 @@ export default function ManualWorkoutBuilder({ user }) {
                       <Input placeholder="שם תבנית..." value={templateName} onChange={(e) => setTemplateName(e.target.value)} />
                       <Button onClick={handleSaveOrUpdateTemplate} disabled={isSaving || !templateName}>
                           {isSaving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}
-                          <span className="mr-2">{editingTemplate ? 'עדכן' : 'שמור'}</span>
+                          <span className="me-2">{editingTemplate ? 'עדכן' : 'שמור'}</span>
                       </Button>
                   </div>
               </div>
               <Button onClick={handleStartWorkout} disabled={isSaving || workoutExercises.length === 0} className="w-full muscle-primary-gradient text-white">
-                  <Play className="w-4 h-4 ml-2" />
+                  <Play className="w-4 h-4 ms-2" />
                   התחל אימון
               </Button>
           </CardContent>
@@ -702,7 +702,7 @@ export default function ManualWorkoutBuilder({ user }) {
                         }}
                         className="w-full bg-blue-600 hover:bg-blue-700"
                     >
-                        <Video className="w-4 h-4 ml-2" />
+                        <Video className="w-4 h-4 ms-2" />
                         צפה בהדגמת וידאו
                     </Button>
                 )}

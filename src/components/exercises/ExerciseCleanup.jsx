@@ -135,12 +135,12 @@ export default function ExerciseCleanup() {
                 >
                     {isAnalyzing ? (
                         <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            <Loader2 className="me-2 h-4 w-4 animate-spin" />
                             מנתח...
                         </>
                     ) : (
                         <>
-                            <AlertCircle className="mr-2 h-4 w-4" />
+                            <AlertCircle className="me-2 h-4 w-4" />
                             חפש כפילויות
                         </>
                     )}
@@ -218,9 +218,9 @@ export default function ExerciseCleanup() {
                             className="w-full sm:w-auto mt-2 sm:mt-6"
                         >
                             {isRemoving ? (
-                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> מסיר...</>
+                                <><Loader2 className="me-2 h-4 w-4 animate-spin" /> מסיר...</>
                             ) : (
-                                <><Trash2 className="mr-2 h-4 w-4" /> אשר ומחק</>
+                                <><Trash2 className="me-2 h-4 w-4" /> אשר ומחק</>
                             )}
                         </Button>
                     </div>

@@ -177,7 +177,7 @@ export default function PinchZoomImage({ src, alt, isOpen, onClose, title }) {
                     style={{ height: 'calc(95vh - 80px)' }}
                 >
                     {/* Instructions overlay */}
-                    <div className="absolute top-4 left-4 bg-black/80 text-white px-3 py-2 rounded-lg text-sm z-10 shadow-lg">
+                    <div className="absolute top-4 start-4 bg-black/80 text-white px-3 py-2 rounded-lg text-sm z-10 shadow-lg">
                         <div className="text-center">
                             <p className="font-medium mb-1">💡 כיצד להשתמש:</p>
                             <p>🖱️ גלגל עכבר לזום | 👆 הקש פעמיים לזום מהיר</p>

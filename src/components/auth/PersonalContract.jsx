@@ -156,7 +156,7 @@ export default function PersonalContract({ user, onContractSigned }) {
           {isLoadingContract || !contractData ? (
              <CardContent className="flex justify-center items-center h-96">
                 <Loader2 className="w-8 h-8 animate-spin text-gray-500" />
-                <p className="mr-2 text-gray-700">טוען חוזה...</p>
+                <p className="me-2 text-gray-700">טוען חוזה...</p>
              </CardContent>
           ) : (
           <>
@@ -247,7 +247,7 @@ export default function PersonalContract({ user, onContractSigned }) {
                     </div>
                   ) : (
                     <Button type="button" variant="outline" onClick={handleOpenSignatureDialog} disabled={isUpdating}>
-                      <FileSignature className="w-4 h-4 ml-2" />
+                      <FileSignature className="w-4 h-4 ms-2" />
                       פתח חלון חתימה
                     </Button>
                   )}
@@ -265,12 +265,12 @@ export default function PersonalContract({ user, onContractSigned }) {
               >
                 {isUpdating ? (
                   <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    <Loader2 className="w-5 h-5 me-2 animate-spin" />
                     חותם...
                   </>
                 ) : (
                   <>
-                    <FileSignature className="w-5 h-5 mr-2" />
+                    <FileSignature className="w-5 h-5 me-2" />
                     אני {agreeAndSignText}
                   </>
                 )}

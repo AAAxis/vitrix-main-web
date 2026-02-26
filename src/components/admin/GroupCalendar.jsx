@@ -344,7 +344,7 @@ export default function GroupCalendar() {
                 <CardContent className="text-center">
                     <p className="text-slate-700 mb-4">{error}</p>
                     <Button onClick={loadData} variant="outline">
-                        <RefreshCw className="w-4 h-4 ml-2" />
+                        <RefreshCw className="w-4 h-4 ms-2" />
                         נסה שוב
                     </Button>
                 </CardContent>
@@ -375,11 +375,11 @@ export default function GroupCalendar() {
                             </SelectContent>
                         </Select>
                         <Button onClick={() => handleOpenDialog()}>
-                            <PlusCircle className="w-4 h-4 ml-2" />
+                            <PlusCircle className="w-4 h-4 ms-2" />
                             אירוע חדש
                         </Button>
                         <Button variant="outline" onClick={loadData} disabled={isLoading}>
-                            <RefreshCw className={`w-4 h-4 ml-2 ${isLoading ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`w-4 h-4 ms-2 ${isLoading ? 'animate-spin' : ''}`} />
                             רענן
                         </Button>
                     </div>
@@ -408,7 +408,7 @@ export default function GroupCalendar() {
                                                 })()}
                                             </span>
                                             {dayEvents.length > 0 && (
-                                                <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full"></div>
+                                                <div className="absolute -top-1 -end-1 w-2 h-2 bg-blue-500 rounded-full"></div>
                                             )}
                                         </div>
                                     );
@@ -489,11 +489,11 @@ export default function GroupCalendar() {
                                                     <div className="flex flex-wrap gap-2 text-xs">
                                                         <Badge variant="outline">{eventTypeLabel}</Badge>
                                                         <Badge variant="outline">
-                                                            <Clock className="w-3 h-3 ml-1" />
+                                                            <Clock className="w-3 h-3 ms-1" />
                                                             {timeDisplay}
                                                         </Badge>
                                                         <Badge variant="outline">
-                                                            <Users className="w-3 h-3 ml-1" />
+                                                            <Users className="w-3 h-3 ms-1" />
                                                             {participationCount} משתתפים
                                                         </Badge>
                                                         {event.location && (
@@ -555,7 +555,7 @@ export default function GroupCalendar() {
                                         </div>
                                         <div className="flex items-center gap-2 mt-2 sm:mt-0">
                                             <Badge variant="outline">
-                                                <Users className="w-3 h-3 ml-1" />
+                                                <Users className="w-3 h-3 ms-1" />
                                                 {participationCount}
                                             </Badge>
                                             <div className="flex gap-1">
@@ -652,7 +652,7 @@ export default function GroupCalendar() {
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isSubmitting}>ביטול</Button>
                         <Button onClick={handleSaveEvent} disabled={isSubmitting}>
-                            {isSubmitting ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : null}
+                            {isSubmitting ? <Loader2 className="w-4 h-4 ms-2 animate-spin" /> : null}
                             {isSubmitting ? 'שומר...' : 'שמור אירוע'}
                         </Button>
                     </DialogFooter>
@@ -680,7 +680,7 @@ export default function GroupCalendar() {
                         >
                             {deletingEventId ? (
                                 <>
-                                    <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                                    <Loader2 className="w-4 h-4 ms-2 animate-spin" />
                                     מוחק...
                                 </>
                             ) : (

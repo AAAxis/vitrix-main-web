@@ -12,8 +12,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import WeeklyTaskTemplateManager from './WeeklyTaskTemplateManager';
 
-const BOOSTER_RESET_CODE = "1010";
-
 export default function BoosterProgramManager() {
     const { toast } = useToast();
     const [users, setUsers] = useState([]);
@@ -21,7 +19,6 @@ export default function BoosterProgramManager() {
     const [targetType, setTargetType] = useState('user'); // 'user' or 'group'
     const [selectedUser, setSelectedUser] = useState(''); // For the old activation/reset
     const [selectedGroup, setSelectedGroup] = useState(''); // For the old activation/reset
-    const [resetCode, setResetCode] = useState(''); // For the old activation/reset
     const [feedback, setFeedback] = useState({ type: '', message: '' });
     const [isLoadingUsers, setIsLoadingUsers] = useState(true);
 
@@ -193,64 +190,6 @@ export default function BoosterProgramManager() {
         }
     };
     
-    const handleResetBoosterData = async () => {
-        if (resetCode !== BOOSTER_RESET_CODE) {
-            showFeedback('error', 'קוד איפוס שגוי.');
-            return;
-        }
-
-        const targetUsers = getTargetUsers();
-        if (targetUsers.length === 0) {
-            showFeedback('error', 'יש לבחור מתאמן או קבוצה.');
-            return;
-        }
-        
-        if (!window.confirm(`האם אתה בטוח שברצונך לאפס את כל נתוני הבוסטר עבור ${targetUsers.length} מתאמנים? פעולה זו תמחק את כל הנתונים הקשורים לתוכנית הבוסטר ואינה הפיכה.`)) {
-            return;
-        }
-        
-        try {
-            for (const user of targetUsers) {
-                // Reset all booster-related entities
-                const entitiesToDelete = [
-                    WeeklyTask, 
-                    MonthlyGoal, 
-                    ProgressPicture, 
-                    CalorieTracking, 
-                    WaterTracking
-                ];
-                
-                for (const entity of entitiesToDelete) {
-                    const records = await entity.filter({ user_email: user.email });
-                    for (const record of records) {
-                        await entity.delete(record.id);
-                    }
-                }
-
-                // Also clear lecture views related to booster content
-                const lectureViews = await LectureView.filter({ user_email: user.email });
-                for (const view of lectureViews) {
-                    await LectureView.delete(view.id);
-                }
-
-                // Reset booster-related user fields
-                await User.update(user.id, {
-                    booster_status: 'not_started',
-                    booster_start_date: null,
-                    booster_unlocked: false // Changed booster_enabled to booster_unlocked for consistency
-                });
-            }
-            showFeedback('success', 'כל נתוני הבוסטר אופסו בהצלחה.');
-            setResetCode('');
-            // Reload users to update UI after changes
-            const allUsers = await User.filter({});
-            setUsers(allUsers);
-        } catch (error) {
-            showFeedback('error', 'שגיאה באיפוס נתוני הבוסטר.');
-            console.error(error);
-        }
-    };
-
     const handleRemoveTrainee = async () => {
         const targetUsers = getTargetUsers();
         if (targetUsers.length === 0) {
@@ -442,28 +381,6 @@ export default function BoosterProgramManager() {
                                 <Button onClick={handleAssignTasks} className="bg-blue-600 hover:bg-blue-700" disabled={targetType !== 'user' || !selectedUser}>
                                     הקצה משימות שבועיות למתאמן
                                 </Button>
-                            </div>
-
-                            <Separator />
-
-                            {/* Complete Data Reset */}
-                            <div className="space-y-4 p-4 border border-orange-300 bg-orange-50 rounded-lg">
-                                <h4 className="font-semibold flex items-center gap-2 text-orange-700"><Trash2 className="w-5 h-5"/>איפוס מלא של נתוני בוסטר</h4>
-                                <p className="text-orange-600 text-sm">
-                                    זהירות: פעולה זו תמחק את כל נתוני הבוסטר (משימות שבועיות, מטרות חודשיות, תמונות התקדמות, מעקב קלוריות, מעקב מים, צפיות בהרצאות) עבור היעד הנבחר.
-                                </p>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <Label htmlFor="reset-code">קוד איפוס מלא</Label>
-                                        <Input id="reset-code" type="password" placeholder="הכנס קוד איפוס" value={resetCode} onChange={e => setResetCode(e.target.value)} />
-                                    </div>
-                                    <div className="flex items-end">
-                                        <Button variant="destructive" onClick={handleResetBoosterData} className="flex items-center gap-2">
-                                            <Trash2 className="w-4 h-4" />
-                                            מחק את כל הנתונים
-                                        </Button>
-                                    </div>
-                                </div>
                             </div>
 
                             <Separator />

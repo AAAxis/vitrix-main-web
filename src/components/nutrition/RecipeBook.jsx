@@ -62,7 +62,7 @@ const RecipeCard = ({ recipe, isFavorite, onToggleFavorite, user, onEdit, onDele
                         <Button
                             size="icon"
                             variant="ghost"
-                            className="absolute top-2 right-2 bg-white/70 hover:bg-white rounded-full h-9 w-9 z-10"
+                            className="absolute top-2 end-2 bg-white/70 hover:bg-white rounded-full h-9 w-9 z-10"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onToggleFavorite(recipe.id);
@@ -70,10 +70,10 @@ const RecipeCard = ({ recipe, isFavorite, onToggleFavorite, user, onEdit, onDele
                         >
                             <Star className={`w-5 h-5 transition-colors ${isFavorite ? 'text-yellow-400 fill-yellow-400' : 'text-slate-500'}`} />
                         </Button>
-                        <div className="absolute bottom-2 left-2 flex items-center gap-2 flex-wrap">
+                        <div className="absolute bottom-2 start-2 flex items-center gap-2 flex-wrap">
                             <Badge className="bg-green-600 text-white">{recipe.category}</Badge>
                             {isGlutenFree && <Badge className="bg-orange-500 text-white">ללא גלוטן</Badge>}
-                            {!recipe.is_public && isCreator && <Badge variant="secondary" className="bg-purple-100 text-purple-800"><Lock className="w-3 h-3 ml-1" />פרטי</Badge>}
+                            {!recipe.is_public && isCreator && <Badge variant="secondary" className="bg-purple-100 text-purple-800"><Lock className="w-3 h-3 ms-1" />פרטי</Badge>}
                         </div>
                     </div>
                     <div className="p-4">
@@ -110,7 +110,7 @@ const RecipeCard = ({ recipe, isFavorite, onToggleFavorite, user, onEdit, onDele
                     <DialogTitle className="text-2xl font-bold flex items-center gap-2">
                         <ChefHat className="w-6 h-6 text-orange-500" />
                         {recipe.name}
-                        {isGlutenFree && <Badge className="bg-orange-500 text-white mr-2">ללא גלוטן</Badge>}
+                        {isGlutenFree && <Badge className="bg-orange-500 text-white me-2">ללא גלוטן</Badge>}
                     </DialogTitle>
                     <DialogDescription className="text-lg">{recipe.category}</DialogDescription>
                 </DialogHeader>
@@ -127,7 +127,7 @@ const RecipeCard = ({ recipe, isFavorite, onToggleFavorite, user, onEdit, onDele
                         {recipe.video_url && (
                             <Button asChild className="w-full bg-red-600 hover:bg-red-700">
                                 <a href={recipe.video_url} target="_blank" rel="noopener noreferrer">
-                                    <Video className="w-4 h-4 ml-2" />
+                                    <Video className="w-4 h-4 ms-2" />
                                     צפה בסרטון הדרכה
                                 </a>
                             </Button>
@@ -220,11 +220,11 @@ const RecipeCard = ({ recipe, isFavorite, onToggleFavorite, user, onEdit, onDele
                         </div>
                         <div className="flex gap-2">
                              <Button variant="outline" onClick={() => onEdit(recipe)}>
-                                <Edit className="w-4 h-4 ml-2" />
+                                <Edit className="w-4 h-4 ms-2" />
                                 ערוך מתכון
                             </Button>
                             <Button variant="destructive" onClick={() => onDelete(recipe)}>
-                                {recipe.is_public ? <Archive className="w-4 h-4 ml-2" /> : <Trash2 className="w-4 h-4 ml-2" />}
+                                {recipe.is_public ? <Archive className="w-4 h-4 ms-2" /> : <Trash2 className="w-4 h-4 ms-2" />}
                                 {recipe.is_public ? 'הפוך לפרטי' : 'מחק לצמיתות'}
                             </Button>
                         </div>
@@ -387,7 +387,7 @@ export default function RecipeBook() {
         return (
             <div className="flex justify-center items-center h-64">
                 <Loader2 className="animate-spin w-8 h-8 text-orange-500" />
-                <p className="mr-2 text-slate-600">טוען מתכונים...</p>
+                <p className="me-2 text-slate-600">טוען מתכונים...</p>
             </div>
         );
     }
@@ -398,13 +398,13 @@ export default function RecipeBook() {
             <Card className="muscle-glass border-0 shadow-lg">
                 <CardContent className="p-4">
                     <div className="relative">
-                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                        <Search className="absolute end-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
                         <Input
                             type="text"
                             placeholder="חפש מתכון לפי שם או מרכיב..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pr-10 text-lg h-12"
+                            className="pe-10 text-lg h-12"
                         />
                     </div>
                 </CardContent>
@@ -421,7 +421,7 @@ export default function RecipeBook() {
                               onClick={() => setSelectedFilter(key)}
                               className={`transition-all duration-200 ${selectedFilter === key ? 'bg-orange-500 hover:bg-orange-600 text-white' : ''}`}
                           >
-                              <Icon className="w-4 h-4 ml-2" />
+                              <Icon className="w-4 h-4 ms-2" />
                               {label}
                           </Button>
                         ))}

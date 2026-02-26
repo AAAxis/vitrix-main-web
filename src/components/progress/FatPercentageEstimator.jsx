@@ -111,7 +111,7 @@ export default function FatPercentageEstimator() {
         <Button onClick={handleAnalysis} disabled={isLoading || !selectedFile} className="w-full muscle-primary-gradient text-white">
           {isLoading ? (
             <div className="flex items-center">
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-4 h-4 me-2 animate-spin" />
               <span>{statusText || 'מעבד...'}</span>
             </div>
           ) : (

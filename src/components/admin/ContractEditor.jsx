@@ -123,7 +123,7 @@ export default function ContractEditor() {
                     <Textarea id="partnership_paragraph" value={contract.partnership_paragraph || ''} onChange={handleInputChange} />
                 </div>
                 <Button onClick={handleSave} disabled={isSaving} className="w-full">
-                    {isSaving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> שומר...</> : <><Save className="w-4 h-4 mr-2" /> שמור שינויים</>}
+                    {isSaving ? <><Loader2 className="w-4 h-4 me-2 animate-spin" /> שומר...</> : <><Save className="w-4 h-4 me-2" /> שמור שינויים</>}
                 </Button>
             </div>
         </ScrollArea>

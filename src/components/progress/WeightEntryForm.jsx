@@ -51,7 +51,7 @@ export default function WeightEntryForm({
           onClick={onCancel}
           disabled={isSaving}
         >
-          <X className="w-4 h-4 mr-2" />
+          <X className="w-4 h-4 me-2" />
           בטל
         </Button>
         <Button
@@ -64,7 +64,7 @@ export default function WeightEntryForm({
             <>שומר...</>
           ) : (
             <>
-              <Save className="w-4 h-4 mr-2" />
+              <Save className="w-4 h-4 me-2" />
               שמור מדידה
             </>
           )}

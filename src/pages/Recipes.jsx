@@ -141,8 +141,8 @@ export default function Recipes() {
                                 </div>
                                 
                                 {/* Decorative elements */}
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
-                                <div className="absolute bottom-0 left-0 w-20 h-20 bg-white/5 rounded-full translate-y-10 -translate-x-10"></div>
+                                <div className="absolute top-0 end-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
+                                <div className="absolute bottom-0 start-0 w-20 h-20 bg-white/5 rounded-full translate-y-10 -translate-x-10"></div>
                             </motion.div>
                         ))}
                     </div>

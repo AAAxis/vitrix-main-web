@@ -260,9 +260,9 @@ export default function InterfaceRouter({ children, currentPageName }) {
       return null;
     }
 
-    // Treat 'coach', 'admin' as system admin; 'trainer' as staff (dashboard access, scoped data)
-    const isAdmin = user.role === 'admin' || user.role === 'coach';
-    const isTrainer = user.role === 'trainer';
+  // Treat 'admin' or legacy is_admin/isAdmin as system admin; 'trainer' as staff
+    const isAdmin = (user.role || '').toLowerCase() === 'admin' || user.is_admin === true || user.isAdmin === true;
+    const isTrainer = (user.role || '').toLowerCase() === 'trainer';
     const isStaff = isAdmin || isTrainer;
 
     if (!isStaff) {
@@ -291,6 +291,18 @@ export default function InterfaceRouter({ children, currentPageName }) {
       navigate(memoizedUserChecks, { replace: true });
     }
   }, [memoizedUserChecks, navigate]);
+
+  // Staff (admin/trainer) should be on /admin or /trainer; redirect if they landed elsewhere
+  useEffect(() => {
+    if (!user || isLoading) return;
+    const isAdmin = (user.role || '').toLowerCase() === 'admin' || user.is_admin === true || user.isAdmin === true;
+    const isTrainer = (user.role || '').toLowerCase() === 'trainer';
+    if (!isAdmin && !isTrainer) return;
+    const pathname = location.pathname;
+    if (!pathname.startsWith('/admin') && !pathname.startsWith('/trainer')) {
+      navigate(isTrainer ? '/trainer' : '/admin', { replace: true });
+    }
+  }, [user, isLoading, location.pathname, navigate]);
 
 
   const handleRetry = () => {
@@ -329,9 +341,9 @@ export default function InterfaceRouter({ children, currentPageName }) {
   }
 
   // Route to appropriate interface based on user role
-  // System admin (admin/coach) see everything; trainer sees only their invited users
-  const isAdmin = user?.role === 'admin' || user?.role === 'coach';
-  const isTrainer = user?.role === 'trainer';
+  // System admin (admin or legacy is_admin/isAdmin) see everything; trainer sees only their invited users
+  const isAdmin = (user?.role || '').toLowerCase() === 'admin' || user?.is_admin === true || user?.isAdmin === true;
+  const isTrainer = (user?.role || '').toLowerCase() === 'trainer';
   const isStaff = isAdmin || isTrainer;
   if (isStaff) {
     return <TrainerInterface user={user} />;

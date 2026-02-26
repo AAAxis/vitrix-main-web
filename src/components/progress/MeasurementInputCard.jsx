@@ -48,7 +48,7 @@ const StatusBadge = ({ status }) => {
   
   return (
     <Badge className={`font-medium ${colors[status.level] || 'bg-gray-100 text-gray-700'}`}>
-        {status.level === 'סיכון גבוה' && <AlertTriangle className="w-3 h-3 ml-1 inline-block" />}
+        {status.level === 'סיכון גבוה' && <AlertTriangle className="w-3 h-3 ms-1 inline-block" />}
         {status.text}
     </Badge>
   );
@@ -85,7 +85,7 @@ export default function MeasurementInputCard({
           <div className="mt-1">{children}</div>
         ) : (
           <div className="relative flex items-center">
-            <span className="absolute right-3 text-slate-500 text-sm">{unit}</span>
+            <span className="absolute end-3 text-slate-500 text-sm">{unit}</span>
             <Input
               type="number"
               step="any"
@@ -95,7 +95,7 @@ export default function MeasurementInputCard({
               onChange={onChange}
               readOnly={isReadOnly}
               placeholder={placeholder}
-              className="bg-white/80 border-slate-300 h-11 text-lg text-center font-semibold pr-8"
+              className="bg-white/80 border-slate-300 h-11 text-lg text-center font-semibold pe-8"
               autoComplete="off"
             />
           </div>

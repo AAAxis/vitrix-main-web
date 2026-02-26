@@ -89,7 +89,7 @@ export default function RemindersManager() {
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
                 <Button onClick={() => handleOpenDialog()}>
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4 me-2" />
                     הוסף תזכורת
                 </Button>
             </DialogTrigger>
@@ -113,7 +113,7 @@ export default function RemindersManager() {
           </Dialog>
         </CardHeader>
         <CardContent>
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4" role="alert">
+            <div className="bg-yellow-50 border-s-4 border-yellow-400 p-4 mb-4" role="alert">
                 <p className="font-bold">הערה חשובה</p>
                 <p>שליחת התראות Push/Email דורשת הגדרת Backend Functions בפרויקט. כרגע ניתן רק לנהל את רשימת התזכורות.</p>
             </div>

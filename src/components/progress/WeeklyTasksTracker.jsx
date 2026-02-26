@@ -108,7 +108,7 @@ const TaskCard = ({ task, onStatusUpdate, onAddNote, genderedTexts }) => {
                             </div>
                             <div>
                                 <CardTitle className="text-xl font-bold text-slate-800">
-                                    {isBoosterPlus ? '🅿️' : '🔵'} שבוע {task.week} – {task.title}
+🔵 שבוע {task.week} – {task.title}
                                 </CardTitle>
                                 <Badge className={`${task.statusConfig.badgeColor} mt-2`}>
                                     {task.status}
@@ -185,7 +185,7 @@ const TaskCard = ({ task, onStatusUpdate, onAddNote, genderedTexts }) => {
                                 size="sm"
                                 className="bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
                             >
-                                <Clock className="w-4 h-4 ml-2" />
+                                <Clock className="w-4 h-4 ms-2" />
                                 {genderedTexts.startWork}
                             </Button>
                         )}
@@ -196,7 +196,7 @@ const TaskCard = ({ task, onStatusUpdate, onAddNote, genderedTexts }) => {
                                 size="sm"
                                 className="bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
                             >
-                                <MessageSquare className="w-4 h-4 ml-2" />
+                                <MessageSquare className="w-4 h-4 ms-2" />
                                 {genderedTexts.addNote}
                             </Button>
                         )}
@@ -206,14 +206,14 @@ const TaskCard = ({ task, onStatusUpdate, onAddNote, genderedTexts }) => {
                                 size="sm"
                                 className="bg-green-600 hover:bg-green-700 text-white"
                             >
-                                <CheckCircle className="w-4 h-4 ml-2" />
+                                <CheckCircle className="w-4 h-4 ms-2" />
                                 {genderedTexts.markAsCompleted}
                             </Button>
                         )}
                         
                         {task.completion_date && (
                             <div className="flex items-center text-sm text-green-600 mt-2">
-                                <CheckCircle className="w-4 h-4 ml-1" />
+                                <CheckCircle className="w-4 h-4 ms-1" />
                                 <span>הושלם ב-{format(parseISO(task.completion_date), 'dd/MM/yyyy', { locale: he })}</span>
                             </div>
                         )}
@@ -466,7 +466,7 @@ export default function WeeklyTasksTracker({ user: initialUser, onFinalTaskCompl
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-        <p className="mr-4 text-slate-600">טוען משימות שבועיות...</p>
+        <p className="me-4 text-slate-600">טוען משימות שבועיות...</p>
       </div>
     );
   }
@@ -486,12 +486,12 @@ export default function WeeklyTasksTracker({ user: initialUser, onFinalTaskCompl
 
   return (
     <div className="space-y-8">
-      {user?.booster_plus_enabled && boosterPlusTasks.length > 0 && <StatsCard title="סיכום משימות בוסטר פלוס" stats={boosterPlusStats} />}
-      {!user?.booster_plus_enabled && weeklyTasks.length > 0 && <StatsCard title="סיכום משימות בוסטר" stats={weeklyStats} />}
+      {(user?.booster_plus_enabled && boosterPlusTasks.length > 0) && <StatsCard title="סיכום משימות בוסטר" stats={boosterPlusStats} />}
+      {(!user?.booster_plus_enabled && weeklyTasks.length > 0) && <StatsCard title="סיכום משימות בוסטר" stats={weeklyStats} />}
       
       {user?.booster_plus_enabled && boosterPlusTasks.length > 0 && (
         <TasksSection 
-            title="משימות בוסטר פלוס"
+            title="משימות בוסטר"
             displayedTasks={displayedBoosterPlus}
             onStatusUpdate={updateTaskStatus}
             onAddNote={(task) => { setSelectedTask(task); setIsModalOpen(true); }}

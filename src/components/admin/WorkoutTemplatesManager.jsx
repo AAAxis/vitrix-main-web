@@ -51,7 +51,7 @@ export default function WorkoutTemplatesManager() {
         UserGroup.list()
       ]);
       setTemplates(templatesData);
-      setUsers(usersData.filter(u => u.role !== 'admin' && u.role !== 'coach'));
+      setUsers(usersData.filter(u => u.role !== 'admin' && u.role !== 'trainer'));
       setGroups(groupsData.filter(g => g.status === 'Active'));
     } catch (error) {
       console.error('Error loading templates:', error);
@@ -186,7 +186,7 @@ export default function WorkoutTemplatesManager() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600 ml-2" />
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600 ms-2" />
         <span className="text-slate-600">טוען תבניות...</span>
       </div>
     );
@@ -213,7 +213,7 @@ export default function WorkoutTemplatesManager() {
             </div>
           ) : (
             <ScrollArea className="h-[600px]">
-              <div className="space-y-4 pr-4">
+              <div className="space-y-4 pe-4">
                 {templates.map((template) => {
                   const isExpanded = expandedTemplateId === template.id;
                   const totalExercises = getTotalExercises(template);
@@ -242,7 +242,7 @@ export default function WorkoutTemplatesManager() {
                             variant="ghost"
                             size="icon"
                             onClick={() => toggleTemplateExpansion(template.id)}
-                            className="ml-2"
+                            className="ms-2"
                           >
                             {isExpanded ? (
                               <ChevronUp className="w-5 h-5" />
@@ -293,14 +293,14 @@ export default function WorkoutTemplatesManager() {
                                 variant="outline"
                                 className="flex-1"
                               >
-                                <Eye className="w-4 h-4 ml-2" />
+                                <Eye className="w-4 h-4 ms-2" />
                                 תצוגה מקדימה
                               </Button>
                               <Button
                                 onClick={() => handleOpenSendDialog(template)}
                                 className="flex-1 bg-blue-600 hover:bg-blue-700"
                               >
-                                <Send className="w-4 h-4 ml-2" />
+                                <Send className="w-4 h-4 ms-2" />
                                 שלח למשתמש/קבוצה
                               </Button>
                               <Button
@@ -354,7 +354,7 @@ export default function WorkoutTemplatesManager() {
                               onClick={() => handlePlayVideo(ex.video_url, ex.name)}
                               className="text-blue-600 hover:text-blue-700"
                             >
-                              <Video className="w-4 h-4 ml-1" />
+                              <Video className="w-4 h-4 ms-1" />
                               הדגמה
                             </Button>
                           )}
@@ -387,7 +387,7 @@ export default function WorkoutTemplatesManager() {
                               onClick={() => handlePlayVideo(ex.video_url, ex.name)}
                               className="text-green-600 hover:text-green-700"
                             >
-                              <Video className="w-4 h-4 ml-1" />
+                              <Video className="w-4 h-4 ms-1" />
                               הדגמה
                             </Button>
                           )}
@@ -420,7 +420,7 @@ export default function WorkoutTemplatesManager() {
                               onClick={() => handlePlayVideo(ex.video_url, ex.name)}
                               className="text-purple-600 hover:text-purple-700"
                             >
-                              <Video className="w-4 h-4 ml-1" />
+                              <Video className="w-4 h-4 ms-1" />
                               הדגמה
                             </Button>
                           )}
@@ -530,7 +530,7 @@ export default function WorkoutTemplatesManager() {
                   {sendForm.targetGroupName && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2">
                       <p className="text-sm text-blue-800">
-                        <Users className="w-4 h-4 inline ml-1" />
+                        <Users className="w-4 h-4 inline ms-1" />
                         האימון יישלח ל-<strong>{getTargetUsers().length}</strong> משתמשים בקבוצה זו
                       </p>
                     </div>
@@ -565,12 +565,12 @@ export default function WorkoutTemplatesManager() {
             >
               {isSending ? (
                 <>
-                  <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 ms-2 animate-spin" />
                   שולח...
                 </>
               ) : (
                 <>
-                  <Send className="w-4 h-4 ml-2" />
+                  <Send className="w-4 h-4 ms-2" />
                   {sendForm.sendType === 'group' 
                     ? `שלח ל-${getTargetUsers().length} משתמשים`
                     : 'שלח אימון'

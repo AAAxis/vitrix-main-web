@@ -241,7 +241,7 @@ export default function GroupWeightFocus() {
                                 <p className="text-sm text-slate-600 mb-1">סכום נוכחי</p>
                                 <p className="text-2xl font-bold text-green-600">{groupSummary.totalCurrentWeight} ק"ג</p>
                             </div>
-                            <div className="border-r border-slate-200 h-16 mx-2 hidden md:block"></div>
+                            <div className="border-e border-slate-200 h-16 mx-2 hidden md:block"></div>
                             <div>
                                 <p className="text-sm text-slate-600 mb-1">שינוי כולל</p>
                                 <div className={`text-2xl font-bold flex items-center gap-2 justify-center ${

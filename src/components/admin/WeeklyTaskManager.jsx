@@ -652,7 +652,7 @@ export default function WeeklyTaskManager() {
             let tasksToCreate = [];
 
             for (const user of allUsers) {
-                if (user.role === 'admin' || user.role === 'coach') continue;
+                if (user.role === 'admin') continue;
 
                 const userGender = user.gender === 'female' ? 'female' : 'male';
                 const predefinedTasks = userGender === 'female' ? predefinedTasksFemale : predefinedTasksMale;
@@ -985,7 +985,7 @@ export default function WeeklyTaskManager() {
                                                         <SelectItem key={u.id} value={u.email}>
                                                             <div className="flex items-center justify-between w-full">
                                                                 <span>{u.name} ({u.email})</span>
-                                                                <Badge variant="outline" className="ml-2">
+                                                                <Badge variant="outline" className="ms-2">
                                                                     {getUserTasksStatus(u.email).percentage}%
                                                                 </Badge>
                                                             </div>
@@ -1039,7 +1039,7 @@ export default function WeeklyTaskManager() {
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <Button variant="outline" className="w-full justify-start">
-                                                    <Calendar1 className="mr-2 h-4 w-4" />
+                                                    <Calendar1 className="me-2 h-4 w-4" />
                                                     {format(newStartDate, 'dd/MM/yyyy')}
                                                 </Button>
                                             </PopoverTrigger>
@@ -1061,12 +1061,12 @@ export default function WeeklyTaskManager() {
                                         >
                                             {isProcessing ? (
                                                 <>
-                                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                    <Loader2 className="w-4 h-4 me-2 animate-spin" />
                                                     מעדכן...
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Clock className="w-4 h-4 mr-2" />
+                                                    <Clock className="w-4 h-4 me-2" />
                                                     קבע תאריך התחלה
                                                 </>
                                             )}
@@ -1152,12 +1152,12 @@ export default function WeeklyTaskManager() {
                                         >
                                             {weeksToAssign.length === weekOptions.length ? (
                                                 <>
-                                                    <Square className="w-4 h-4 ml-1" />
+                                                    <Square className="w-4 h-4 ms-1" />
                                                     בטל בחירת הכל
                                                 </>
                                             ) : (
                                                 <>
-                                                    <CheckSquare className="w-4 h-4 ml-1" />
+                                                    <CheckSquare className="w-4 h-4 ms-1" />
                                                     בחר הכל
                                                 </>
                                             )}
@@ -1239,12 +1239,12 @@ export default function WeeklyTaskManager() {
                                 >
                                     {isProcessing ? (
                                         <>
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            <Loader2 className="w-4 h-4 me-2 animate-spin" />
                                             מקצה...
                                         </>
                                     ) : (
                                         <>
-                                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                                            <CheckCircle2 className="w-4 h-4 me-2" />
                                             הקצה שבועות למתאמן
                                         </>
                                     )}
@@ -1259,7 +1259,7 @@ export default function WeeklyTaskManager() {
                             >
                                 {isProcessing ? (
                                     <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        <Loader2 className="w-4 h-4 me-2 animate-spin" />
                                         {bulkAssignStatus || 'מקצה לכולם...'}
                                     </>
                                 ) : (
@@ -1358,7 +1358,7 @@ export default function WeeklyTaskManager() {
                                                         </div>
                                                         {taskStatus.frozen > 0 && (
                                                             <Badge variant="secondary" className="bg-blue-100 text-blue-700">
-                                                                <Shield className="w-3 h-3 ml-1" />
+                                                                <Shield className="w-3 h-3 ms-1" />
                                                                 {taskStatus.frozen} משימות מוקפאות
                                                             </Badge>
                                                         )}
@@ -1407,7 +1407,7 @@ export default function WeeklyTaskManager() {
                                                     {selectedUserObjectForUnfreeze
                                                         ? selectedUserObjectForUnfreeze.name
                                                         : "בחר משתמש..."}
-                                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                    <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                                                 </Button>
                                             </PopoverTrigger>
                                             <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
@@ -1426,7 +1426,7 @@ export default function WeeklyTaskManager() {
                                                                     }}
                                                                 >
                                                                     <Check
-                                                                        className={`mr-2 h-4 w-4 ${selectedUserObjectForUnfreeze?.email === user.email ? "opacity-100" : "opacity-0"}`}
+                                                                        className={`me-2 h-4 w-4 ${selectedUserObjectForUnfreeze?.email === user.email ? "opacity-100" : "opacity-0"}`}
                                                                     />
                                                                     {user.name} ({user.email})
                                                                 </CommandItem>
@@ -1455,12 +1455,12 @@ export default function WeeklyTaskManager() {
                                 >
                                     {isUnfreezingOperation ? (
                                         <>
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            <Loader2 className="w-4 h-4 me-2 animate-spin" />
                                             מפשיר...
                                         </>
                                     ) : (
                                         <>
-                                            <Play className="w-4 h-4 mr-2" />
+                                            <Play className="w-4 h-4 me-2" />
                                             הפשר משימות
                                         </>
                                     )}
@@ -1490,7 +1490,7 @@ export default function WeeklyTaskManager() {
                                                 {selectedUserObjectForFreeze
                                                     ? selectedUserObjectForFreeze.name
                                                     : "בחר משתמש..."}
-                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </PopoverTrigger>
                                         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
@@ -1509,7 +1509,7 @@ export default function WeeklyTaskManager() {
                                                                 }}
                                                             >
                                                                 <Check
-                                                                    className={`mr-2 h-4 w-4 ${selectedUserObjectForFreeze?.email === user.email ? "opacity-100" : "opacity-0"}`}
+                                                                    className={`me-2 h-4 w-4 ${selectedUserObjectForFreeze?.email === user.email ? "opacity-100" : "opacity-0"}`}
                                                                 />
                                                                 {user.name} ({user.email})
                                                             </CommandItem>
@@ -1529,12 +1529,12 @@ export default function WeeklyTaskManager() {
                                         >
                                             {isFreezingOperation ? (
                                                 <>
-                                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                    <Loader2 className="w-4 h-4 me-2 animate-spin" />
                                                     מקפיא...
                                                 </>
                                             ) : (
                                                 <>
-                                                    <Pause className="w-4 h-4 mr-2" />
+                                                    <Pause className="w-4 h-4 me-2" />
                                                     הקפא משימות
                                                 </>
                                             )}
@@ -1603,7 +1603,7 @@ export default function WeeklyTaskManager() {
                                 getUsersWithTaskStats.map(user => (
                                     <Card 
                                         key={user.email} 
-                                        className="cursor-pointer hover:shadow-lg transition-all duration-200 muscle-glass border-l-4"
+                                        className="cursor-pointer hover:shadow-lg transition-all duration-200 muscle-glass border-s-4"
                                         style={{
                                             borderLeftColor: user.taskStats.completionPercentage >= 75 ? '#22c55e' :
                                                            user.taskStats.completionPercentage >= 50 ? '#f59e0b' :
@@ -1708,7 +1708,7 @@ export default function WeeklyTaskManager() {
                         </DialogTitle>
                     </DialogHeader>
                     
-                    <ScrollArea className="max-h-[70vh] pr-4">
+                    <ScrollArea className="max-h-[70vh] pe-4">
                         <div className="space-y-4">
                             {selectedUserTasks.length > 0 ? (
                                 selectedUserTasks.map(task => (
@@ -1717,7 +1717,7 @@ export default function WeeklyTaskManager() {
                                             <div className="flex items-center justify-between">
                                                 <CardTitle className="text-lg">
                                                     <span className="text-blue-600">🔵</span> שבוע {task.week} – {task.title}
-                                                    {task.is_frozen && <Badge className="mr-2 bg-blue-400 text-white">מוקפא</Badge>}
+                                                    {task.is_frozen && <Badge className="me-2 bg-blue-400 text-white">מוקפא</Badge>}
                                                 </CardTitle>
                                                 {!task.is_frozen && ( // Only allow status change if not frozen
                                                     <div className="flex items-center gap-2">
@@ -1744,15 +1744,15 @@ export default function WeeklyTaskManager() {
                                                                     : 'text-green-600 hover:text-green-700'
                                                             }
                                                         >
-                                                            {isProcessing && <Loader2 className="w-4 h-4 ml-1 animate-spin" />}
+                                                            {isProcessing && <Loader2 className="w-4 h-4 ms-1 animate-spin" />}
                                                             {task.status === 'הושלם' ? (
                                                                 <>
-                                                                    <XCircle className="w-4 h-4 ml-1" />
+                                                                    <XCircle className="w-4 h-4 ms-1" />
                                                                     ביטול השלמה
                                                                 </>
                                                             ) : (
                                                                 <>
-                                                                    <CheckCircle className="w-4 h-4 ml-1" />
+                                                                    <CheckCircle className="w-4 h-4 ms-1" />
                                                                     סמן כהושלם
                                                                 </>
                                                             )}

@@ -3,9 +3,10 @@ import {
   signOut, 
   onAuthStateChanged,
   updateProfile,
-  getAdditionalUserInfo
+  getAdditionalUserInfo,
+  deleteUser
 } from 'firebase/auth';
-import { doc, getDoc, setDoc, updateDoc, getDocs, query, where, collection, orderBy, limit } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, deleteDoc, getDocs, query, where, collection, orderBy, limit } from 'firebase/firestore';
 import { auth, googleProvider, db } from './firebaseConfig';
 
 // User entity class that mimics Base44 User API
@@ -129,11 +130,19 @@ class FirebaseUser {
         }
       }
       
+      const data = userDoc.data();
+      const role = (data.role || '').toLowerCase();
+      const isAdminByRole = role === 'admin';
+      const isAdminByFlag = data.is_admin === true || data.isAdmin === true || data.admin === true;
+      const isAdminByType = (data.type || '').toLowerCase() === 'admin';
+      const isAdminByPerms = Array.isArray(data.permissions) && data.permissions.some(p => (String(p || '').toLowerCase()) === 'admin');
+      const isAdmin = isAdminByRole || isAdminByFlag || isAdminByType || isAdminByPerms;
       return {
         id: userDoc.id,
         uid: currentUser.uid,
         email: currentUser.email,
-        ...userDoc.data()
+        ...data,
+        is_admin: isAdmin || data.is_admin || data.isAdmin
       };
     } catch (error) {
       console.error('Error getting current user:', error);
@@ -166,18 +175,19 @@ class FirebaseUser {
   }
 
   /**
-   * List users scoped by role: system admin/coach see all; trainer sees only users they invited (coach_email match).
-   * @param {Object} currentUser - { role, email }
+   * List users scoped by role: system admin (or legacy is_admin) sees all; trainer sees only users they invited (coach_email match).
+   * @param {Object} currentUser - { role, email, is_admin }
    * @param {string} [orderByField] - e.g. '-created_date'
    * @returns {Promise<Array>} users
    */
   async listForStaff(currentUser, orderByField = null) {
     if (!currentUser?.email) return [];
-    const isSystemAdmin = currentUser.role === 'admin' || currentUser.role === 'coach';
+    const roleLower = (currentUser.role || '').toLowerCase();
+    const isSystemAdmin = roleLower === 'admin' || currentUser.is_admin === true || currentUser.isAdmin === true;
     if (isSystemAdmin) {
       return orderByField ? this.filter({}, orderByField) : this.list();
     }
-    if (currentUser.role === 'trainer') {
+    if (roleLower === 'trainer') {
       return this.filter({ coach_email: currentUser.email }, orderByField);
     }
     return [];
@@ -280,6 +290,42 @@ class FirebaseUser {
       return { id: currentUser.uid, ...data };
     } catch (error) {
       console.error('Error updating user data:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a user document from Firestore (used by admins when deleting another user).
+   * Does not remove the Firebase Auth account (requires Admin SDK for that).
+   */
+  async delete(userId) {
+    try {
+      const userDocRef = doc(db, 'users', userId);
+      await deleteDoc(userDocRef);
+      return { id: userId };
+    } catch (error) {
+      console.error('Error deleting user document:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete current user's account: Firestore document and Firebase Auth user.
+   * User will be signed out after this.
+   */
+  async deleteCurrentUser() {
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        throw new Error('No user logged in');
+      }
+      const uid = currentUser.uid;
+      const userDocRef = doc(db, 'users', uid);
+      await deleteDoc(userDocRef);
+      await deleteUser(currentUser);
+      return { id: uid };
+    } catch (error) {
+      console.error('Error deleting current user:', error);
       throw error;
     }
   }

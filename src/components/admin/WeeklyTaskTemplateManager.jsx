@@ -52,7 +52,7 @@ const TemplateForm = ({ template, onSave, onCancel, isSaving }) => {
             <DialogFooter>
                 <Button type="button" variant="ghost" onClick={onCancel} disabled={isSaving}>ביטול</Button>
                 <Button type="submit" disabled={isSaving}>
-                    {isSaving ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Save className="w-4 h-4 ml-2" />}
+                    {isSaving ? <Loader2 className="w-4 h-4 ms-2 animate-spin" /> : <Save className="w-4 h-4 ms-2" />}
                     שמור תבנית
                 </Button>
             </DialogFooter>
@@ -211,11 +211,11 @@ export default function WeeklyTaskTemplateManager() {
                 {isLoading ? (
                     <div className="flex items-center justify-center p-4">
                         <Loader2 className="w-6 h-6 animate-spin" />
-                        <span className="mr-2">טוען תבניות...</span>
+                        <span className="me-2">טוען תבניות...</span>
                     </div>
                 ) : (
                     <ScrollArea className="h-72">
-                        <div className="space-y-2 pr-2">
+                        <div className="space-y-2 pe-2">
                             {templates.map(template => (
                                 <div key={template.id} className="flex items-center justify-between p-2 rounded-md bg-slate-50">
                                     <p className="font-medium text-slate-800">שבוע {template.week}: {template.title}</p>
@@ -237,7 +237,7 @@ export default function WeeklyTaskTemplateManager() {
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                         <Button onClick={() => setEditingTemplate(null)}>
-                            <PlusCircle className="w-4 h-4 ml-2" />
+                            <PlusCircle className="w-4 h-4 ms-2" />
                             הוסף תבנית חדשה
                         </Button>
                     </DialogTrigger>
@@ -263,15 +263,15 @@ export default function WeeklyTaskTemplateManager() {
                         accept=".csv"
                     />
                     <Button variant="outline" onClick={triggerFileSelect} disabled={isImporting}>
-                        {isImporting ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <FileUp className="w-4 h-4 ml-2" />}
+                        {isImporting ? <Loader2 className="w-4 h-4 ms-2 animate-spin" /> : <FileUp className="w-4 h-4 ms-2" />}
                         ייבוא מ-Excel
                     </Button>
                     <Button variant="outline" onClick={handleExport} disabled={isExporting}>
-                        {isExporting ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <FileDown className="w-4 h-4 ml-2" />}
+                        {isExporting ? <Loader2 className="w-4 h-4 ms-2 animate-spin" /> : <FileDown className="w-4 h-4 ms-2" />}
                         ייצוא ל-Excel
                     </Button>
                      <Button variant="destructive" onClick={() => setIsDeleteAllAlertOpen(true)}>
-                        <Trash2 className="w-4 h-4 ml-2" />
+                        <Trash2 className="w-4 h-4 ms-2" />
                         מחק הכל
                     </Button>
                 </div>

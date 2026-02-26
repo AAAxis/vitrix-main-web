@@ -132,7 +132,7 @@ export default function ProfileCamera({ user, onProfileImageUpdate }) {
                 onClick={handleCancel}
                 disabled={isUploading}
               >
-                <X className="w-4 h-4 mr-2" />
+                <X className="w-4 h-4 me-2" />
                 ביטול
               </Button>
               <Button 
@@ -142,14 +142,14 @@ export default function ProfileCamera({ user, onProfileImageUpdate }) {
               >
                 {isUploading ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 me-2 animate-spin" />
                     מעלה...
                   </>
                 ) : uploadSuccess ? (
                   'הושלם!'
                 ) : (
                   <>
-                    <Upload className="w-4 h-4 mr-2" />
+                    <Upload className="w-4 h-4 me-2" />
                     שמור כתמונת פרופיל
                   </>
                 )}
@@ -241,7 +241,7 @@ export default function ProfileCamera({ user, onProfileImageUpdate }) {
               onClick={handleCancel}
               disabled={isUploading}
             >
-              <X className="w-4 h-4 mr-2" />
+              <X className="w-4 h-4 me-2" />
               ביטול
             </Button>
             <Button 
@@ -251,14 +251,14 @@ export default function ProfileCamera({ user, onProfileImageUpdate }) {
             >
               {isUploading ? (
                 <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 me-2 animate-spin" />
                   מעלה...
                 </>
               ) : uploadSuccess ? (
                 'הושלם!'
               ) : (
                 <>
-                  <Upload className="w-4 h-4 mr-2" />
+                  <Upload className="w-4 h-4 me-2" />
                   שמור כתמונת פרופיל
                 </>
               )}

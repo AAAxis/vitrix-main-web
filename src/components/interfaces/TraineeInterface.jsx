@@ -67,7 +67,7 @@ export default function TraineeInterface({ children, currentPageName }) {
                 </main>
             </div>
              {/* Desktop Sidebar */}
-            <aside className="hidden border-r bg-gradient-to-b from-emerald-50 to-teal-50 border-emerald-200 md:block">
+            <aside className="hidden border-e bg-gradient-to-b from-emerald-50 to-teal-50 border-emerald-200 md:block">
                 <div className="flex h-full max-h-screen flex-col gap-2 sticky top-0">
                     <div className="flex h-16 items-center border-b border-emerald-200 px-6 bg-white/50 backdrop-blur-sm">
                         <Link to={createPageUrl('Home')} className="flex items-center gap-2 font-semibold">

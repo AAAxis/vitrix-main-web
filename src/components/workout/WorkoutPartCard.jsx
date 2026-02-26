@@ -7,22 +7,23 @@ import { Input } from '@/components/ui/input';
 import { Check, CheckCircle, Undo2, Trash2, Plus, Image as ImageIcon } from 'lucide-react';
 
 const ExerciseCard = ({ exercise, onUpdate, workout, partKey }) => {
-  // Helper function to get image URL from exercise
-  const getImageUrl = (ex) => {
+  // Helper: prefer GIF then image
+  const getMediaUrl = (ex) => {
+    if (ex?.exercisedb_gif_url) {
+      if (ex.exercisedb_gif_url.startsWith('http')) return ex.exercisedb_gif_url;
+      return `https://v2.exercisedb.dev/gifs/${ex.exercisedb_gif_url}`;
+    }
     if (ex?.exercisedb_image_url) {
-      if (ex.exercisedb_image_url.startsWith('http')) {
-        return ex.exercisedb_image_url;
-      }
+      if (ex.exercisedb_image_url.startsWith('http')) return ex.exercisedb_image_url;
       return `https://v2.exercisedb.dev/images/${ex.exercisedb_image_url}`;
     }
-    // Also check for cdn.exercisedb.dev format
     if (ex?.exercisedb_image_url && ex.exercisedb_image_url.includes('cdn.exercisedb.dev')) {
       return ex.exercisedb_image_url;
     }
     return null;
   };
 
-  const imageUrl = getImageUrl(exercise);
+  const imageUrl = getMediaUrl(exercise);
 
   const handleExerciseUpdate = (updatedExercise) => {
     const updatedWorkout = {
@@ -138,7 +139,7 @@ const ExerciseCard = ({ exercise, onUpdate, workout, partKey }) => {
       </div>
        <div className="mt-4 flex justify-between items-center">
         <Button variant="outline" size="sm" onClick={handleAddSet}>
-            <Plus className="w-4 h-4 ml-2"/> הוסף סט
+            <Plus className="w-4 h-4 ms-2"/> הוסף סט
         </Button>
         <Button
             variant={exercise.completed ? 'outline' : 'default'}
@@ -146,7 +147,7 @@ const ExerciseCard = ({ exercise, onUpdate, workout, partKey }) => {
             onClick={toggleExerciseCompletion}
             className={`transition-all ${exercise.completed ? 'text-green-600 border-green-500 hover:bg-green-100' : 'muscle-primary-gradient'}`}
         >
-            {exercise.completed ? <Undo2 className="w-4 h-4 ml-2"/> : <Check className="w-4 h-4 ml-2"/>}
+            {exercise.completed ? <Undo2 className="w-4 h-4 ms-2"/> : <Check className="w-4 h-4 ms-2"/>}
             {exercise.completed ? 'בטל סימון' : 'סמן כהושלם'}
         </Button>
       </div>

@@ -47,7 +47,7 @@ export default function CompleteProfile() {
             setIsLoadingCoaches(true);
             try {
                 const allUsers = await User.list();
-                const adminUsers = allUsers.filter(u => (u.role === 'admin' || u.role === 'coach' || u.role === 'trainer') && u.email && u.name);
+                const adminUsers = allUsers.filter(u => (u.role === 'admin' || u.role === 'trainer') && u.email && u.name);
                 setCoaches(adminUsers);
             } catch (error) {
                 console.error('Error loading coaches:', error);
@@ -353,7 +353,7 @@ export default function CompleteProfile() {
                                                         ? "טוען מאמנים..." 
                                                         : "בחר מאמן מהרשימה"}
                                                 </span>
-                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                                <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </PopoverTrigger>
                                         <PopoverContent className="w-[--radix-popover-trigger-width] p-0" dir="rtl">
@@ -370,7 +370,7 @@ export default function CompleteProfile() {
                                                             >
                                                                 <Check
                                                                     className={cn(
-                                                                        "mr-2 h-4 w-4",
+                                                                        "me-2 h-4 w-4",
                                                                         selectedCoach?.email === coach.email ? "opacity-100" : "opacity-0"
                                                                     )}
                                                                 />
@@ -405,7 +405,7 @@ export default function CompleteProfile() {
                             >
                                 {(isSaving || isNavigating) ? (
                                     <>
-                                        <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                        <Loader2 className="w-5 h-5 me-2 animate-spin" />
                                         {isNavigating ? 'מעבר לשלב הבא...' : 'שומר פרטים...'}
                                     </>
                                 ) : (

@@ -53,7 +53,7 @@ export default function PrivacyPolicy() {
             <CardContent className="space-y-4">
               <div>
                 <h3 className="font-semibold text-slate-800 mb-2">מידע אישי:</h3>
-                <ul className="list-disc list-inside space-y-1 text-slate-700 mr-4">
+                <ul className="list-disc list-inside space-y-1 text-slate-700 me-4">
                   <li>שם מלא</li>
                   <li>כתובת אימייל</li>
                   <li>מספר טלפון</li>
@@ -65,7 +65,7 @@ export default function PrivacyPolicy() {
               </div>
               <div>
                 <h3 className="font-semibold text-slate-800 mb-2">מידע על אימונים:</h3>
-                <ul className="list-disc list-inside space-y-1 text-slate-700 mr-4">
+                <ul className="list-disc list-inside space-y-1 text-slate-700 me-4">
                   <li>תוכניות אימון</li>
                   <li>תרגילים שבוצעו</li>
                   <li>משקלים וחזרות</li>
@@ -75,7 +75,7 @@ export default function PrivacyPolicy() {
               </div>
               <div>
                 <h3 className="font-semibold text-slate-800 mb-2">מידע טכני:</h3>
-                <ul className="list-disc list-inside space-y-1 text-slate-700 mr-4">
+                <ul className="list-disc list-inside space-y-1 text-slate-700 me-4">
                   <li>כתובת IP</li>
                   <li>סוג מכשיר ומערכת הפעלה</li>
                   <li>נתוני שימוש באפליקציה</li>
@@ -93,7 +93,7 @@ export default function PrivacyPolicy() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <ul className="list-disc list-inside space-y-2 text-slate-700 mr-4">
+              <ul className="list-disc list-inside space-y-2 text-slate-700 me-4">
                 <li>לספק ולשפר את השירותים שלנו</li>
                 <li>ליצור תוכניות אימון מותאמות אישית</li>
                 <li>לעקוב אחר התקדמותך ולספק משוב</li>
@@ -117,7 +117,7 @@ export default function PrivacyPolicy() {
               <p className="text-slate-700 leading-relaxed mb-4">
                 אנו משתמשים באמצעי אבטחה טכנולוגיים וארגוניים מתקדמים כדי להגן על המידע שלך:
               </p>
-              <ul className="list-disc list-inside space-y-2 text-slate-700 mr-4">
+              <ul className="list-disc list-inside space-y-2 text-slate-700 me-4">
                 <li>הצפנת נתונים בתעבורה ובמנוחה</li>
                 <li>גישה מוגבלת למידע רק לעובדים הזקוקים לו</li>
                 <li>גיבויים קבועים של הנתונים</li>
@@ -138,7 +138,7 @@ export default function PrivacyPolicy() {
               <p className="text-slate-700 leading-relaxed mb-4">
                 אנו לא מוכרים את המידע האישי שלך. אנו עשויים לשתף מידע רק במקרים הבאים:
               </p>
-              <ul className="list-disc list-inside space-y-2 text-slate-700 mr-4">
+              <ul className="list-disc list-inside space-y-2 text-slate-700 me-4">
                 <li>עם ספקי שירותים המסייעים לנו להפעיל את האפליקציה (תחת הסכמי סודיות)</li>
                 <li>כאשר נדרש על פי חוק או צו בית משפט</li>
                 <li>כדי להגן על זכויותינו או על בטיחות המשתמשים</li>
@@ -159,7 +159,7 @@ export default function PrivacyPolicy() {
               <p className="text-slate-700 leading-relaxed mb-4">
                 יש לך זכויות הבאות ביחס למידע האישי שלך:
               </p>
-              <ul className="list-disc list-inside space-y-2 text-slate-700 mr-4">
+              <ul className="list-disc list-inside space-y-2 text-slate-700 me-4">
                 <li>זכות גישה למידע האישי שלך</li>
                 <li>זכות לעדכן או לתקן מידע לא מדויק</li>
                 <li>זכות למחוק את החשבון והמידע שלך</li>

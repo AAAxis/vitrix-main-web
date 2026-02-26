@@ -19,6 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label"; // Added Label import
+import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
 
 // Helper function to introduce a delay
 const delay = ms => new Promise(res => setTimeout(res, ms));
@@ -42,6 +43,9 @@ const withRetry = async (apiCall, retries = 3, baseDelay = 1000) => {
 };
 
 export default function UnifiedNotificationsViewer() {
+  const { user: staffUser, isSystemAdmin } = useAdminDashboard();
+  const isTrainer = staffUser && !isSystemAdmin && (staffUser.role || '').toLowerCase() === 'trainer';
+
   const [users, setUsers] = useState([]); // This state holds trainees (role: 'user')
   const [allUsersData, setAllUsersData] = useState([]); // This state holds all users for group filtering
   const [userGroups, setUserGroups] = useState([]);
@@ -90,28 +94,44 @@ export default function UnifiedNotificationsViewer() {
   // Specific loading functions for each data type
   const loadUsers = useCallback(async () => {
     try {
-      const usersData = await withRetry(() => User.filter({ role: 'user' }));
-      setUsers(usersData || []);
+      if (isTrainer && staffUser) {
+        const staffUsers = await withRetry(() => User.listForStaff(staffUser));
+        setUsers((staffUsers || []).filter(u => (u.role || '').toLowerCase() === 'user'));
+      } else {
+        const usersData = await withRetry(() => User.filter({ role: 'user' }));
+        setUsers(usersData || []);
+      }
     } catch (error) {
       console.error('Error loading trainee users:', error);
       setUsers([]);
     }
-  }, []);
+  }, [isTrainer, staffUser]);
 
   const loadAllUsersAndGroups = useCallback(async () => {
     try {
-      const [allUsers, allGroups] = await Promise.all([
-        withRetry(() => User.list(), 2, 1500), // Get ALL users for group filtering
-        withRetry(() => UserGroup.list(), 2, 1500)
-      ]);
-      setAllUsersData(allUsers || []);
-      setUserGroups(allGroups || []);
+      if (isTrainer && staffUser) {
+        const [staffUsers, allGroups] = await Promise.all([
+          withRetry(() => User.listForStaff(staffUser), 2, 1500),
+          withRetry(() => UserGroup.list(), 2, 1500)
+        ]);
+        const coachEmail = (staffUser.email || '').toLowerCase();
+        const myGroups = (allGroups || []).filter(g => (g.assigned_coach || '').toLowerCase() === coachEmail);
+        setAllUsersData(staffUsers || []);
+        setUserGroups(myGroups);
+      } else {
+        const [allUsers, allGroups] = await Promise.all([
+          withRetry(() => User.list(), 2, 1500), // Get ALL users for group filtering
+          withRetry(() => UserGroup.list(), 2, 1500)
+        ]);
+        setAllUsersData(allUsers || []);
+        setUserGroups(allGroups || []);
+      }
     } catch (error) {
       console.error('Error loading all users and groups:', error);
       setAllUsersData([]);
       setUserGroups([]);
     }
-  }, []);
+  }, [isTrainer, staffUser]);
 
   // Load group events to get event names and dates
   const loadGroupEvents = useCallback(async () => {
@@ -362,9 +382,13 @@ export default function UnifiedNotificationsViewer() {
         const groupTrainees = users.filter(user => user.group_names?.includes(selectedGroup));
         return new Set(groupTrainees.map(user => user.email));
     }
-    // If neither a specific user nor a group is selected, no email filter applied
+    // Trainer with "all" selected: show only their trainees' data (users state is already scoped to trainer)
+    if (isTrainer && users.length > 0) {
+        return new Set(users.map(u => u.email));
+    }
+    // Admin with "all" selected: no email filter applied (show everything)
     return null;
-  }, [selectedGroup, selectedUserEmailFilter, users]);
+  }, [selectedGroup, selectedUserEmailFilter, users, isTrainer]);
 
   // Apply group filter to general notification statuses
   const filteredNotificationStatuses = useMemo(() => {
@@ -571,7 +595,7 @@ export default function UnifiedNotificationsViewer() {
     
     return (
       <Badge className={config.className}>
-        <span className="ml-1">{config.icon}</span>
+        <span className="ms-1">{config.icon}</span>
         {config.label}
       </Badge>
     );
@@ -589,7 +613,7 @@ export default function UnifiedNotificationsViewer() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir="rtl">
       <div className="text-center mb-6">
         <h2 className="text-2xl font-bold text-slate-800 mb-2">📊 סטטוס והתראות</h2>
         <p className="text-slate-600">מעקב אחר פעילות המתאמנים והתגובות שלהם</p>
@@ -641,7 +665,7 @@ export default function UnifiedNotificationsViewer() {
                         ? "כל המתאמנים"
                         : users.find(u => u.email === selectedUserEmailFilter)?.name || selectedUserEmailFilter}
                     </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <ChevronsUpDown className="me-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -657,7 +681,7 @@ export default function UnifiedNotificationsViewer() {
                             setIsUserPickerOpen(false);
                           }}
                         >
-                          <Check className={cn("mr-2 h-4 w-4", selectedUserEmailFilter === 'all' ? "opacity-100" : "opacity-0")} />
+                          <Check className={cn("me-2 h-4 w-4", selectedUserEmailFilter === 'all' ? "opacity-100" : "opacity-0")} />
                           כל המתאמנים
                         </CommandItem>
                         {usersForDropdown.map((user) => (
@@ -669,7 +693,7 @@ export default function UnifiedNotificationsViewer() {
                               setIsUserPickerOpen(false);
                             }}
                           >
-                            <Check className={cn("mr-2 h-4 w-4", selectedUserEmailFilter === user.email ? "opacity-100" : "opacity-0")} />
+                            <Check className={cn("me-2 h-4 w-4", selectedUserEmailFilter === user.email ? "opacity-100" : "opacity-0")} />
                             {user.name}
                           </CommandItem>
                         ))}
@@ -686,41 +710,41 @@ export default function UnifiedNotificationsViewer() {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto">
           <TabsTrigger value="booster" className="text-xs sm:text-sm py-2">
-            <Bell className="w-4 h-4 mr-1 text-orange-600" />
+            <Bell className="w-4 h-4 me-1 text-orange-600" />
             בקשות בוסטר
             {boosterRequests.length > 0 && (
-              <Badge className="ml-1 bg-orange-500 text-white">{boosterRequests.length}</Badge>
+              <Badge className="ms-1 bg-orange-500 text-white">{boosterRequests.length}</Badge>
             )}
             {isCacheValid('boosterRequests') && (
-              <div className="w-2 h-2 bg-green-500 rounded-full ml-1" title="נתונים עדכניים" />
+              <div className="w-2 h-2 bg-green-500 rounded-full ms-1" title="נתונים עדכניים" />
             )}
           </TabsTrigger>
           <TabsTrigger value="events" className="text-xs sm:text-sm py-2">
-            <Calendar className="w-4 h-4 mr-1 text-red-600" />
+            <Calendar className="w-4 h-4 me-1 text-red-600" />
             אירועים
             {isCacheValid('events') && (
-              <div className="w-2 h-2 bg-green-500 rounded-full ml-1" title="נתונים עדכניים" />
+              <div className="w-2 h-2 bg-green-500 rounded-full ms-1" title="נתונים עדכניים" />
             )}
           </TabsTrigger>
           <TabsTrigger value="checkins" className="text-xs sm:text-sm py-2">
-            <MessageCircle className="w-4 h-4 mr-1" />
+            <MessageCircle className="w-4 h-4 me-1" />
             צ'ק-אינים
             {isCacheValid('checkins') && (
-              <div className="w-2 h-2 bg-green-500 rounded-full ml-1" title="נתונים עדכניים" />
+              <div className="w-2 h-2 bg-green-500 rounded-full ms-1" title="נתונים עדכניים" />
             )}
           </TabsTrigger>
           <TabsTrigger value="responses" className="text-xs sm:text-sm py-2">
-            <UsersIcon className="w-4 h-4 mr-1" />
+            <UsersIcon className="w-4 h-4 me-1" />
             תגובות
             {isCacheValid('responses') && (
-              <div className="w-2 h-2 bg-green-500 rounded-full ml-1" title="נתונים עדכניים" />
+              <div className="w-2 h-2 bg-green-500 rounded-full ms-1" title="נתונים עדכניים" />
             )}
           </TabsTrigger>
           <TabsTrigger value="notifications" className="text-xs sm:text-sm py-2">
-            <ClipboardCheck className="w-4 h-4 mr-1" />
+            <ClipboardCheck className="w-4 h-4 me-1" />
             התראות
             {isCacheValid('notifications') && (
-              <div className="w-2 h-2 bg-green-500 rounded-full ml-1" title="נתונים עדכניים" />
+              <div className="w-2 h-2 bg-green-500 rounded-full ms-1" title="נתונים עדכניים" />
             )}
           </TabsTrigger>
         </TabsList>
@@ -738,7 +762,7 @@ export default function UnifiedNotificationsViewer() {
             <CardContent>
               {isLoadingNotifications ? (
                   <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-6 h-6 animate-spin text-blue-600 ml-2" />
+                      <Loader2 className="w-6 h-6 animate-spin text-blue-600 ms-2" />
                       <span className="text-slate-600">טוען דוחות...</span>
                   </div>
               ) : filteredNotificationStatuses.length === 0 ? (
@@ -781,7 +805,7 @@ export default function UnifiedNotificationsViewer() {
             <CardContent>
               {isLoadingCheckins ? (
                   <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-6 h-6 animate-spin text-blue-600 ml-2" />
+                      <Loader2 className="w-6 h-6 animate-spin text-blue-600 ms-2" />
                       <span className="text-slate-600">טוען צ'ק-אינים...</span>
                   </div>
               ) : weeklyCheckinsSummary.length === 0 ? (
@@ -809,7 +833,7 @@ export default function UnifiedNotificationsViewer() {
                               <p className="text-sm mt-1">
                                 <strong>תשובה:</strong> {checkin.answer_text}
                               </p>
-                              <p className="text-xs text-slate-400 mt-2 text-left">{formatDateTime(checkin.submitted_at)}</p>
+                              <p className="text-xs text-slate-400 mt-2 text-right">{formatDateTime(checkin.submitted_at)}</p>
                             </div>
                           ))}
                         </div>
@@ -838,7 +862,7 @@ export default function UnifiedNotificationsViewer() {
               {/* Search and Filter Controls are intentionally removed from here as per outline's implied change */}
               {isLoadingResponses ? (
                   <div className="flex items-center justify-center py-8">
-                      <Loader2 className="w-6 h-6 animate-spin text-blue-600 ml-2" />
+                      <Loader2 className="w-6 h-6 animate-spin text-blue-600 ms-2" />
                       <span className="text-slate-600">טוען תגובות...</span>
                   </div>
               ) : filteredTraineeResponses.length === 0 ? (
@@ -915,7 +939,7 @@ export default function UnifiedNotificationsViewer() {
             <CardContent>
               {isLoadingBoosterRequests ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-orange-600 ml-2" />
+                  <Loader2 className="w-6 h-6 animate-spin text-orange-600 ms-2" />
                   <span className="text-slate-600">טוען בקשות בוסטר...</span>
                 </div>
               ) : boosterRequests.length === 0 ? (
@@ -927,7 +951,7 @@ export default function UnifiedNotificationsViewer() {
                 <ScrollArea className="h-[400px]">
                   <div className="space-y-3">
                     {boosterRequests.map((request) => (
-                      <Card key={request.id} className="border-l-4 border-l-orange-500">
+                      <Card key={request.id} className="border-s-4 border-l-orange-500">
                         <CardContent className="p-4">
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
@@ -999,7 +1023,7 @@ export default function UnifiedNotificationsViewer() {
             <CardContent>
               {isLoadingEvents ? (
                 <div className="flex justify-center py-8">
-                  <Loader2 className="w-6 h-6 animate-spin text-blue-600 ml-2" />
+                  <Loader2 className="w-6 h-6 animate-spin text-blue-600 ms-2" />
                   <span className="text-slate-600">טוען תגובות לאירועים...</span>
                 </div>
               ) : eventResponsesSummary.length === 0 ? (
@@ -1012,8 +1036,8 @@ export default function UnifiedNotificationsViewer() {
                   {eventResponsesSummary.map((eventSummary) => (
                     <AccordionItem key={eventSummary.event_id} value={eventSummary.event_id} className="border rounded-lg">
                       <AccordionTrigger className="p-4 hover:no-underline">
-                        <div className="flex justify-between w-full items-center">
-                          <div className="flex-1 text-right">
+                        <div className="flex flex-1 justify-between items-center gap-4 min-w-0">
+                          <div className="flex-1 min-w-0 text-right">
                             <p className="font-semibold text-slate-800">{eventSummary.event_title}</p>
                             {eventSummary.event_date && (
                                 <p className="text-sm text-slate-600 mt-1">
@@ -1021,7 +1045,7 @@ export default function UnifiedNotificationsViewer() {
                                 </p>
                             )}
                           </div>
-                          <div className="flex gap-2 mr-4">
+                          <div className="flex gap-2 shrink-0">
                             <Badge variant="outline" className="bg-green-100 text-green-800">
                               מגיעים: {eventSummary.participating}
                             </Badge>
@@ -1215,7 +1239,7 @@ export default function UnifiedNotificationsViewer() {
                                   <Badge variant="outline">{report.report_type}</Badge>
                                   {report.viewed_by_coach ? (
                                     <Badge className="bg-green-100 text-green-800">
-                                      <Eye className="w-3 h-3 ml-1" />
+                                      <Eye className="w-3 h-3 ms-1" />
                                       נצפה
                                     </Badge>
                                   ) : (

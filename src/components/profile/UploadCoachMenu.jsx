@@ -116,12 +116,12 @@ export default function UploadCoachMenu() {
       <Button onClick={handleUpload} disabled={isUploading || !file || !selectedUserEmail} className="w-full muscle-primary-gradient text-white">
         {isUploading ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="me-2 h-4 w-4 animate-spin" />
             מעלה...
           </>
         ) : (
           <>
-            <UploadCloud className="mr-2 h-4 w-4" />
+            <UploadCloud className="me-2 h-4 w-4" />
             העלה וקשר למתאמן
           </>
         )}

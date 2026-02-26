@@ -35,7 +35,7 @@ const TemplateForm = ({ template, onSave, onCancel, isSaving }) => {
             <DialogFooter>
                 <Button type="button" variant="ghost" onClick={onCancel} disabled={isSaving}>ביטול</Button>
                 <Button type="submit" disabled={isSaving}>
-                    {isSaving ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Save className="w-4 h-4 ml-2" />} שמור
+                    {isSaving ? <Loader2 className="w-4 h-4 ms-2 animate-spin" /> : <Save className="w-4 h-4 ms-2" />} שמור
                 </Button>
             </DialogFooter>
         </form>
@@ -169,10 +169,10 @@ export default function BoosterPlusTemplateManager() {
                     <div className="flex gap-2">
                         <input type="file" ref={fileInputRef} onChange={handleImport} className="hidden" accept=".csv"/>
                         <Button variant="outline" onClick={() => fileInputRef.current.click()} disabled={isImporting}>
-                            {isImporting ? <Loader2 className="w-4 h-4 ml-2 animate-spin" /> : <Upload className="w-4 h-4 ml-2" />} ייבוא מ-Excel
+                            {isImporting ? <Loader2 className="w-4 h-4 ms-2 animate-spin" /> : <Upload className="w-4 h-4 ms-2" />} ייבוא מ-Excel
                         </Button>
-                        <Button variant="outline" onClick={handleExport}><Download className="w-4 h-4 ml-2" />ייצוא ל-Excel</Button>
-                        <Button onClick={() => { setEditingTemplate(null); setIsDialogOpen(true); }}><PlusCircle className="w-4 h-4 ml-2" />הוסף</Button>
+                        <Button variant="outline" onClick={handleExport}><Download className="w-4 h-4 ms-2" />ייצוא ל-Excel</Button>
+                        <Button onClick={() => { setEditingTemplate(null); setIsDialogOpen(true); }}><PlusCircle className="w-4 h-4 ms-2" />הוסף</Button>
                     </div>
                 </div>
             </CardHeader>
@@ -193,7 +193,7 @@ export default function BoosterPlusTemplateManager() {
             </CardContent>
              <CardFooter className="flex justify-end">
                 <Button variant="destructive" onClick={() => setIsDeleteAllDialogOpen(true)} disabled={templates.length === 0}>
-                    <Trash2 className="w-4 h-4 ml-2" /> מחק הכל
+                    <Trash2 className="w-4 h-4 ms-2" /> מחק הכל
                 </Button>
             </CardFooter>
 

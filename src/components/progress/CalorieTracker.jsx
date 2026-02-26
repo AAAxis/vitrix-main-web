@@ -902,12 +902,12 @@ export default function CalorieTracker({ user: initialUser, calorieEntries: init
                                             >
                                                 {isAnalyzing ? (
                                                     <>
-                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin flex-shrink-0" />
+                                                        <Loader2 className="me-2 h-4 w-4 animate-spin flex-shrink-0" />
                                                         <span className="truncate">מנתח...</span>
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Zap className="mr-2 h-4 w-4 flex-shrink-0" />
+                                                        <Zap className="me-2 h-4 w-4 flex-shrink-0" />
                                                         <span className="truncate">
                                                             {mealImageFile || newMeal.meal_image 
                                                                 ? 'נתח ארוחה עם AI (מבוסס על תמונה)' 
@@ -1096,12 +1096,12 @@ export default function CalorieTracker({ user: initialUser, calorieEntries: init
                                             >
                                                 {isSaving ? (
                                                     <>
-                                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
                                                         שומר...
                                                     </>
                                                 ) : (
                                                     <>
-                                                        <Utensils className="mr-2 h-4 w-4" />
+                                                        <Utensils className="me-2 h-4 w-4" />
                                                         שמור ארוחה
                                                     </>
                                                 )}
@@ -1141,7 +1141,7 @@ export default function CalorieTracker({ user: initialUser, calorieEntries: init
                                                 </div>
                                                 <div className="flex gap-2 mt-4 justify-end">
                                                     <Button size="sm" onClick={() => handleUseTemplate(template)} className="flex-1 sm:flex-none">
-                                                        <PlusCircle className="w-4 h-4 ml-1" /> השתמש
+                                                        <PlusCircle className="w-4 h-4 ms-1" /> השתמש
                                                     </Button>
                                                     <Button size="sm" variant="ghost" onClick={() => handleDeleteTemplate(template.id)} className="flex-1 sm:flex-none text-red-500 hover:bg-red-50">
                                                         <Trash2 className="w-4 h-4" /> מחק
@@ -1164,7 +1164,7 @@ export default function CalorieTracker({ user: initialUser, calorieEntries: init
                                     <p>עדיין לא נרשמו ארוחות</p>
                                     <p className="text-sm">התחל לתעד את הארוחות שלך כדי לעקוב אחר התזונה שלך!</p>
                                     <Button onClick={handleAddFirstMeal} className="mt-4">
-                                        <PlusCircle className="w-4 h-4 mr-2" />
+                                        <PlusCircle className="w-4 h-4 me-2" />
                                         הוסף ארוחה ראשונה
                                     </Button>
                                 </div>
@@ -1218,11 +1218,11 @@ export default function CalorieTracker({ user: initialUser, calorieEntries: init
                                                                                     </DropdownMenuTrigger>
                                                                                     <DropdownMenuContent align="end">
                                                                                         <DropdownMenuItem onClick={() => handleEdit(entry)}>
-                                                                                            <Pencil className="mr-2 h-4 w-4" />
+                                                                                            <Pencil className="me-2 h-4 w-4" />
                                                                                             ערוך
                                                                                         </DropdownMenuItem>
                                                                                         <DropdownMenuItem onClick={() => handleDeleteEntry(entry.id)}>
-                                                                                            <Trash2 className="mr-2 h-4 w-4" />
+                                                                                            <Trash2 className="me-2 h-4 w-4" />
                                                                                             מחק
                                                                                         </DropdownMenuItem>
                                                                                     </DropdownMenuContent>

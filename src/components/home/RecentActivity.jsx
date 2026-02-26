@@ -87,7 +87,7 @@ export default function RecentActivity({ user }) {
                         <div className="text-center py-8">
                             <p className="text-slate-600 mb-4">לא ניתן היה לטעון פעילות אחרונה.</p>
                             <Button onClick={loadRecentActivity}>
-                                <RefreshCw className="w-4 h-4 ml-2" />
+                                <RefreshCw className="w-4 h-4 ms-2" />
                                 נסה שוב
                             </Button>
                         </div>

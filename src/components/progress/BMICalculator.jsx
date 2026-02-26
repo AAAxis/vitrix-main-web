@@ -59,7 +59,7 @@ export default function BMICalculator() {
                     </div>
                 </div>
                 <Button onClick={calculate} className="w-full">
-                    <TrendingUp className="w-4 h-4 mr-2"/>
+                    <TrendingUp className="w-4 h-4 me-2"/>
                     חשב
                 </Button>
                 

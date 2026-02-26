@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import { useNavigate, useParams, useLocation, Navigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,11 +10,10 @@ import LockedScreen from '@/components/auth/LockedScreen';
 import { AdminDashboardContext } from '@/contexts/AdminDashboardContext';
 
 // Lucide Icons for navigation
-import { Users, BarChart, Dumbbell, MessageSquare, ClipboardCheck, Mail, TrendingUp, Scale, Settings, Key, LayoutDashboard, FileText, Activity, Lock, Bell } from 'lucide-react'; // Added Activity, Lock, and Bell
+import { Users, BarChart, Dumbbell, MessageSquare, ClipboardCheck, Mail, TrendingUp, Scale, Settings, Key, LayoutDashboard, FileText, Activity, Lock, Bell, ShieldCheck, List } from 'lucide-react';
 
 // Import all management components
 import UserManagement from '@/components/admin/UserManagement';
-import UserInvitation from '@/components/admin/UserInvitation';
 import BoosterProgramManager from '@/components/admin/BoosterProgramManager';
 import GroupManagement from '@/components/admin/GroupManagement';
 import RecipeAccessManager from '@/components/admin/RecipeAccessManager';
@@ -24,7 +23,6 @@ import WorkoutTemplatesManager from '@/components/admin/WorkoutTemplatesManager'
 import TraineeReportsViewer from '@/components/admin/TraineeReportsViewer';
 import SharedMealsViewer from '@/components/admin/SharedMealsViewer';
 import ProgressPicturesViewer from '@/components/admin/ProgressPicturesViewer';
-import TerminationFeedbackViewer from '@/components/admin/TerminationFeedbackViewer';
 import WeightUpdateManager from '@/components/admin/WeightUpdateManager';
 import UserSettingsManager from '@/components/admin/UserSettingsManager';
 import MenuManagement from '@/components/admin/MenuManagement';
@@ -33,10 +31,12 @@ import ExerciseLibraryManager from '@/components/admin/ExerciseLibraryManager';
 import GroupWeightFocus from '@/components/admin/GroupWeightFocus';
 import UnifiedNotificationsViewer from '@/components/admin/UnifiedNotificationsViewer';
 import ControlCenter from '@/components/admin/ControlCenter';
+import AdminProfileScreen from '@/components/admin/AdminProfileScreen';
 import ContractEditor from '@/components/admin/ContractEditor';
-import UserTracker from '@/components/admin/BoosterPlusManager'; // Changed BoosterPlusManager import to UserTracker
 import GroupNotifications from '@/components/admin/GroupNotifications';
 import FoodDatabase from '@/components/admin/FoodDatabase';
+import TrainerManagement from '@/components/admin/TrainerManagement';
+import AdminList from '@/components/admin/AdminList';
 
 // UI components for ContractEditor dialog (Dialog, DialogContent, etc. are no longer used for ContractEditor)
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -48,6 +48,9 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
   const navigate = useNavigate();
   const params = useParams();
   const location = useLocation();
+  const pathname = location.pathname;
+  // Base path: /admin for system admin, /trainer for trainer (from URL; redirect by role applied when user loads)
+  const basePath = pathname.startsWith('/trainer') ? '/trainer' : '/admin';
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -78,17 +81,31 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
   const [userManagementProps, setUserManagementProps] = useState({});
   const [userSettingsProps, setUserSettingsProps] = useState({}); // New state for UserSettingsManager props
 
+  // Derive role flags early so redirect useEffect can use them (user may still be null while loading)
+  const isSystemAdmin = user && (
+    (user.role || '').toLowerCase() === 'admin' ||
+    user.is_admin === true ||
+    user.isAdmin === true ||
+    user.admin === true ||
+    (user.type || '').toLowerCase() === 'admin' ||
+    (Array.isArray(user.permissions) && user.permissions.some(p => String(p || '').toLowerCase() === 'admin'))
+  );
+  const isTrainer = (user?.role || '').toLowerCase() === 'trainer';
+
   // Redirect to control-center if no tab in URL (initial load) or if URL contains null
   useEffect(() => {
     if (location.pathname.includes('/null')) {
-      // If URL contains /null, redirect to control-center
-      navigate('/admindashboard/control-center', { replace: true });
+      navigate(`${basePath}/control-center`, { replace: true });
       return;
     }
-    if (!urlTab && (location.pathname === '/admindashboard' || location.pathname === '/AdminDashboard')) {
-      navigate('/admindashboard/control-center', { replace: true });
+    if (!urlTab && (pathname === basePath || pathname === '/admindashboard' || pathname === '/AdminDashboard')) {
+      navigate(`${basePath}/control-center`, { replace: true });
     }
-  }, [urlTab, location.pathname, navigate]);
+    // Redirect trainers away from admin-only tabs
+    if (urlTab && !isSystemAdmin && (urlTab === 'admin-management' || urlTab === 'trainer-management')) {
+      navigate(`${basePath}/control-center`, { replace: true });
+    }
+  }, [urlTab, pathname, basePath, navigate, isSystemAdmin]);
 
   // Initialize tab from URL on mount or when URL changes
   useEffect(() => {
@@ -96,7 +113,7 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
       // Guard against null/undefined tab values from URL
       if (urlTab === 'null' || urlTab === 'undefined') {
         console.warn('AdminDashboard: Invalid tab in URL, redirecting to control-center');
-        navigate('/admindashboard/control-center', { replace: true });
+        navigate(`${basePath}/control-center`, { replace: true });
         return;
       }
 
@@ -106,6 +123,11 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
 
       // Update sub-tabs based on URL - ignore null/undefined subTab values
       if (urlSubTab && urlSubTab !== 'null' && urlSubTab !== 'undefined') {
+        // Legacy: invitation tab was removed; redirect to control-center (invite via link only)
+        if (urlTab === 'user-management' && urlSubTab === 'invitation') {
+          navigate(`${basePath}/control-center`, { replace: true });
+          return;
+        }
         switch (urlTab) {
           case 'user-management':
             if (userManagementTab !== urlSubTab) {
@@ -129,8 +151,7 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
             break;
         }
       } else if (urlSubTab === 'null' || urlSubTab === 'undefined') {
-        // If subTab is explicitly "null" or "undefined" in URL, redirect to tab without subTab
-        navigate(`/admindashboard/${urlTab}`, { replace: true });
+        navigate(`${basePath}/${urlTab}`, { replace: true });
         return;
       } else {
         // If no sub-tab in URL, set defaults and update URL
@@ -138,25 +159,25 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
           case 'user-management':
             if (userManagementTab !== 'user-list') {
               setUserManagementTab('user-list');
-              navigate(`/admindashboard/user-management/user-list`, { replace: true });
+              navigate(`${basePath}/user-management/user-list`, { replace: true });
             }
             break;
           case 'progress-media':
             if (progressMediaTab !== 'notification-status') {
               setProgressMediaTab('notification-status');
-              navigate(`/admindashboard/progress-media/notification-status`, { replace: true });
+              navigate(`${basePath}/progress-media/notification-status`, { replace: true });
             }
             break;
           case 'workout-creator':
             if (workoutCreatorTab !== 'send-workout') {
               setWorkoutCreatorTab('send-workout');
-              navigate(`/admindashboard/workout-creator/send-workout`, { replace: true });
+              navigate(`${basePath}/workout-creator/send-workout`, { replace: true });
             }
             break;
         }
       }
     }
-  }, [urlTab, urlSubTab, internalActiveTab, navigate, userManagementTab, progressMediaTab, workoutCreatorTab, programsTab]);
+  }, [urlTab, urlSubTab, internalActiveTab, navigate, userManagementTab, progressMediaTab, workoutCreatorTab, programsTab, basePath]);
 
   // Update internal state when external activeTab changes (for backward compatibility)
   useEffect(() => {
@@ -178,9 +199,9 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
 
     // Update URL when tab changes - ensure subTab is valid and not null/undefined
     if (subTab && subTab !== 'null' && subTab !== 'undefined') {
-      navigate(`/admindashboard/${newTab}/${subTab}`, { replace: true });
+      navigate(`${basePath}/${newTab}/${subTab}`, { replace: true });
     } else {
-      navigate(`/admindashboard/${newTab}`, { replace: true });
+      navigate(`${basePath}/${newTab}`, { replace: true });
     }
 
     if (externalSetActiveTab) {
@@ -195,13 +216,7 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
     if (props.userEmail) {
       if (newTab === 'user-management') {
         newUserManagementProps = { initialUserEmail: props.userEmail, startInEditMode: props.startInEditMode || false };
-        setUserManagementTab('user-list'); // Ensure we are on the user list sub-tab if navigating to a specific user within general user management
-      } else if (newTab === 'programs' && subTab === 'user-settings') { // This is the new logic for user-settings
-        newUserSettingsProps = {
-          initialUserEmail: props.userEmail,
-          startInEditMode: props.startInEditMode || false
-        };
-        setProgramsTab('user-settings'); // Explicitly set the programs sub-tab to user-settings
+        setUserManagementTab('user-list');
       }
     }
 
@@ -245,7 +260,7 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
 
         // Update URL with default sub-tab if applicable
         if (defaultSubTab) {
-          navigate(`/admindashboard/${newTab}/${defaultSubTab}`, { replace: true });
+          navigate(`${basePath}/${newTab}/${defaultSubTab}`, { replace: true });
         }
       }
     }
@@ -258,27 +273,27 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
     }
   }, [externalNavigateToTab]);
 
-  useEffect(() => {
-    const loadUser = async () => {
-      try {
-        const currentUser = await User.me();
-        console.log('AdminDashboard: User loaded:', currentUser);
-        setUser(currentUser);
-      } catch (error) {
-        console.error('AdminDashboard: Error loading user:', error);
-        // If it's a session error, don't set user to null - let InterfaceRouter handle it
-        if (error.message?.includes("Session expired") ||
-          error.message?.includes("400") ||
-          error.code === 'auth/invalid-user-token') {
-          console.warn('AdminDashboard: Session expired, will be handled by InterfaceRouter');
-        }
-        setUser(null);
-      } finally {
-        setIsLoading(false);
+  const loadUser = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const currentUser = await User.me();
+      setUser(currentUser);
+    } catch (error) {
+      console.error('AdminDashboard: Error loading user:', error);
+      if (error.message?.includes("Session expired") ||
+        error.message?.includes("400") ||
+        error.code === 'auth/invalid-user-token') {
+        console.warn('AdminDashboard: Session expired, will be handled by InterfaceRouter');
       }
-    };
-    loadUser();
+      setUser(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadUser();
+  }, [loadUser]);
 
   // Function to handle loading a template into the WorkoutCreator
   const handleLoadTemplate = (template) => {
@@ -305,9 +320,9 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
 
   const memoizedGroupManagement = useMemo(() => <GroupManagement />, []);
 
-  // Updated userManagementSubTabs - removed user-tracking
+  // Updated userManagementSubTabs (invitation screen removed — invite via link only in Control Center)
   const userManagementSubTabs = useMemo(() => [
-    { id: 'user-list', label: 'רשימת משתמשים', icon: Users },
+    { id: 'user-list', label: 'רשימת משתמשים', icon: List },
     { id: 'groups', label: 'ניהול קבוצות', icon: Users },
     { id: 'weight-update', label: 'עדכון משקל', icon: Scale },
     { id: 'recipes', label: 'מתכונים', icon: Lock }
@@ -329,10 +344,10 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
     );
   }
 
-  // Treat 'coach' and 'admin' as system admin; 'trainer' as staff (same dashboard, scoped to their users)
-  const isSystemAdmin = user?.role === 'admin' || user?.role === 'coach';
-  const isTrainer = user?.role === 'trainer';
+  // Staff flags (isSystemAdmin, isTrainer already defined above)
   const isStaff = isSystemAdmin || isTrainer;
+  // Always show "מנהלים" tab so admins (including legacy) always see it; content still gated by isSystemAdmin
+  const showAdminTab = true;
   if (!user) {
     console.warn('AdminDashboard: No user found');
     return (
@@ -344,20 +359,21 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
     );
   }
   if (!isStaff) {
-    console.warn('AdminDashboard: User is not admin/coach/trainer. Role:', user?.role);
+    console.warn('AdminDashboard: User is not admin/trainer. Role:', user?.role);
     return <LockedScreen message="גישה מוגבלת - נדרשות הרשאות מנהל או מאמן" />;
+  }
+  // Redirect by role: trainer must use /trainer, system admin must use /admin
+  if (pathname.startsWith('/admin') && isTrainer) {
+    const rest = pathname.slice(5) || '/control-center';
+    return <Navigate to={'/trainer' + rest} replace />;
+  }
+  if (pathname.startsWith('/trainer') && isSystemAdmin) {
+    const rest = pathname.slice(8) || '/control-center';
+    return <Navigate to={'/admin' + rest} replace />;
   }
 
   // Define programs & settings sub-categories with enhanced layout
-  // Added user-settings here
   const settingsCategories = [
-    {
-      value: "user-settings",
-      title: "הגדרות משתמשים",
-      icon: "⚙️",
-      description: "עריכת פרטי משתמשים, קבוצות והגדרות אישיות",
-      color: "from-slate-500 to-gray-600"
-    },
     {
       value: "booster",
       title: "ניהול בוסטר",
@@ -371,13 +387,6 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
       icon: "📅",
       description: "ניהול משימות שבועיות למתאמנים",
       color: "from-blue-500 to-cyan-500"
-    },
-    {
-      value: "booster-plus",
-      title: "ניהול בוסטר פלוס",
-      icon: "✨",
-      description: "ניהול תוכנית בוסטר פלוס ויצירה/ניהול תבניות משימות",
-      color: "from-pink-500 to-rose-500"
     },
     {
       value: "menu-management",
@@ -413,19 +422,19 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
     switch (mainTab) {
       case 'user-management':
         setUserManagementTab(subTab);
-        navigate(`/admindashboard/user-management/${subTab}`, { replace: true });
+        navigate(`${basePath}/user-management/${subTab}`, { replace: true });
         break;
       case 'progress-media':
         setProgressMediaTab(subTab);
-        navigate(`/admindashboard/progress-media/${subTab}`, { replace: true });
+        navigate(`${basePath}/progress-media/${subTab}`, { replace: true });
         break;
       case 'workout-creator':
         setWorkoutCreatorTab(subTab);
-        navigate(`/admindashboard/workout-creator/${subTab}`, { replace: true });
+        navigate(`${basePath}/workout-creator/${subTab}`, { replace: true });
         break;
       case 'programs':
         setProgramsTab(subTab);
-        navigate(`/admindashboard/programs/${subTab}`, { replace: true });
+        navigate(`${basePath}/programs/${subTab}`, { replace: true });
         break;
     }
   };
@@ -460,21 +469,20 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
 
   const ProgressMediaTab = () => (
     <Tabs value={progressMediaTab} onValueChange={(value) => handleSubTabChange('progress-media', value)} className="w-full">
-      {/* Adjusted grid-cols to 8 after adding 'Group Notifications' */}
-      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 h-auto">
+      {/* Adjusted grid-cols to 7 after removing termination-feedback */}
+      <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 h-auto">
         <TabsTrigger value="notification-status" className="text-xs sm:text-sm py-2 flex items-center justify-center gap-1">
-          <ClipboardCheck className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+          <ClipboardCheck className="w-3 h-3 sm:w-4 sm:h-4 me-1" />
           סטטוס והתראות
         </TabsTrigger>
         <TabsTrigger value="group-notifications" className="text-xs sm:text-sm py-2 flex items-center justify-center gap-1">
-          <Bell className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+          <Bell className="w-3 h-3 sm:w-4 sm:h-4 me-1" />
           התראות קבוצה
         </TabsTrigger>
         <TabsTrigger value="shared-meals" className="text-xs sm:text-sm py-2">ארוחות משותפות</TabsTrigger>
         <TabsTrigger value="trainee-reports" className="text-xs sm:text-sm py-2">דוחות מתאמנים</TabsTrigger>
         <TabsTrigger value="progress-pictures" className="text-xs sm:text-sm py-2">תמונות התקדמות</TabsTrigger>
         <TabsTrigger value="lectures" className="text-xs sm:text-sm py-2">ניהול הרצאות</TabsTrigger>
-        <TabsTrigger value="termination-feedback" className="text-xs sm:text-sm py-2">משוב סיום</TabsTrigger>
         {/* NEW: TabTrigger for Group Weight Focus */}
         <TabsTrigger value="group-weight-focus" className="text-xs sm:text-sm py-2">התקדמות קבוצתית</TabsTrigger>
         {/* Removed: TabTrigger for Shared Images */}
@@ -496,9 +504,6 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
       </TabsContent>
       <TabsContent value="lectures" className="mt-4 sm:mt-6">
         <LecturesManager />
-      </TabsContent>
-      <TabsContent value="termination-feedback" className="mt-4 sm:mt-6">
-        <TerminationFeedbackViewer />
       </TabsContent>
       {/* NEW: TabsContent for Group Weight Focus */}
       <TabsContent value="group-weight-focus" className="mt-4 sm:mt-6">
@@ -532,12 +537,10 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
   const ProgramsSettingsTab = () => {
     const renderSubComponent = (tab) => {
       switch (tab) {
-        case 'user-settings': return <UserSettingsManager {...userSettingsProps} />;
         case 'booster': return <BoosterProgramManager />;
         case 'weekly-tasks': return <WeeklyTaskManager />;
         case 'menu-management': return <MenuManagement />;
         case 'contract-editor': return <ContractEditor />;
-        case 'booster-plus': return <UserTracker />; // Now renders UserTracker (which is BoosterPlusManager)
         case 'food-database': return <FoodDatabase />;
         default: return null;
       }
@@ -569,18 +572,18 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
                 >
                   <motion.div
                     layout="position"
-                    className="flex items-center p-4 cursor-pointer"
+                    className="flex items-center gap-4 p-4 cursor-pointer"
                     onClick={() => {
                       const newTab = programsTab === category.value ? null : category.value;
                       setProgramsTab(newTab);
                       if (newTab) {
-                        navigate(`/admindashboard/programs/${newTab}`, { replace: true });
+                        navigate(`${basePath}/programs/${newTab}`, { replace: true });
                       } else {
-                        navigate(`/admindashboard/programs`, { replace: true });
+                        navigate(`${basePath}/programs`, { replace: true });
                       }
                     }}
                   >
-                    <div className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl mr-4 bg-gradient-to-br ${category.color}`}>
+                    <div className={`w-12 h-12 flex-shrink-0 rounded-lg flex items-center justify-center text-2xl p-2 bg-gradient-to-br ${category.color}`}>
                       {category.icon}
                     </div>
                     <div className="flex-grow">
@@ -627,7 +630,7 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
   };
 
   return (
-    <AdminDashboardContext.Provider value={{ user, isSystemAdmin }}>
+    <AdminDashboardContext.Provider value={{ user, isSystemAdmin, refreshUser: loadUser }}>
     <div className="max-w-full mx-auto p-2 sm:p-4 space-y-6" dir="rtl">
       {/* Header - Only show when navigation is not hidden */}
       {!hideNavigation && (
@@ -641,55 +644,111 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
         </div>
       )}
 
-      {/* Navigation Tabs - Only show when navigation is not hidden */}
+      {/* Navigation Tabs - buttons that call navigate() so URL always updates */}
       {!hideNavigation && (
-        <Tabs value={internalActiveTab} onValueChange={handleTabChange} className="w-full">
+        <>
           <div className="overflow-x-auto pb-2">
-            <TabsList className="grid w-full grid-cols-5 h-14 bg-white shadow-lg rounded-xl border muscle-glass min-w-[600px]">
-              {/* Added new Control Center Tab */}
-              <TabsTrigger value="control-center" className="flex items-center gap-2 text-xs md:text-sm">
+            <div
+              role="tablist"
+              className={`grid w-full h-14 bg-white shadow-lg rounded-xl border muscle-glass min-w-[700px] ${isSystemAdmin ? 'grid-cols-7' : 'grid-cols-5'}`}
+            >
+              <button
+                type="button"
+                onClick={() => navigate(`${basePath}/control-center`, { replace: true })}
+                className={
+                  'flex items-center justify-center gap-2 text-xs md:text-sm border-b-2 transition-colors rounded-t-lg px-2 py-3 ' +
+                  (pathname === `${basePath}/control-center` ? 'border-primary bg-primary/10 text-primary font-medium' : 'border-transparent hover:bg-slate-100')
+                }
+              >
                 <LayoutDashboard className="w-4 h-4" />
                 מרכז שליטה
-              </TabsTrigger>
-              <TabsTrigger value="user-management" className="flex items-center gap-2 text-xs md:text-sm">
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`${basePath}/user-management/user-list`, { replace: true })}
+                className={
+                  'flex items-center justify-center gap-2 text-xs md:text-sm border-b-2 transition-colors rounded-t-lg px-2 py-3 ' +
+                  (pathname.startsWith(`${basePath}/user-management`) ? 'border-primary bg-primary/10 text-primary font-medium' : 'border-transparent hover:bg-slate-100')
+                }
+              >
                 <Users className="w-4 h-4" />
                 ניהול משתמשים
-              </TabsTrigger>
-              <TabsTrigger value="progress-media" className="flex items-center gap-2 text-xs md:text-sm">
+              </button>
+              {isSystemAdmin && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`${basePath}/admin-management`, { replace: true })}
+                  className={
+                    'flex items-center justify-center gap-2 text-xs md:text-sm border-b-2 transition-colors rounded-t-lg px-2 py-3 ' +
+                    (pathname.startsWith(`${basePath}/admin-management`) ? 'border-primary bg-primary/10 text-primary font-medium' : 'border-transparent hover:bg-slate-100')
+                  }
+                >
+                  <Key className="w-4 h-4" />
+                  מנהלים
+                </button>
+              )}
+              {isSystemAdmin && (
+                <button
+                  type="button"
+                  onClick={() => navigate(`${basePath}/trainer-management`, { replace: true })}
+                  className={
+                    'flex items-center justify-center gap-2 text-xs md:text-sm border-b-2 transition-colors rounded-t-lg px-2 py-3 ' +
+                    (pathname === `${basePath}/trainer-management` ? 'border-primary bg-primary/10 text-primary font-medium' : 'border-transparent hover:bg-slate-100')
+                  }
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  ניהול מאמנים
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => navigate(`${basePath}/progress-media/notification-status`, { replace: true })}
+                className={
+                  'flex items-center justify-center gap-2 text-xs md:text-sm border-b-2 transition-colors rounded-t-lg px-2 py-3 ' +
+                  (pathname.startsWith(`${basePath}/progress-media`) ? 'border-primary bg-primary/10 text-primary font-medium' : 'border-transparent hover:bg-slate-100')
+                }
+              >
                 <BarChart className="w-4 h-4" />
                 התקדמות ומדיה
-              </TabsTrigger>
-              <TabsTrigger value="workout-creator" className="flex items-center gap-2 text-xs md:text-sm">
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`${basePath}/workout-creator/send-workout`, { replace: true })}
+                className={
+                  'flex items-center justify-center gap-2 text-xs md:text-sm border-b-2 transition-colors rounded-t-lg px-2 py-3 ' +
+                  (pathname.startsWith(`${basePath}/workout-creator`) ? 'border-primary bg-primary/10 text-primary font-medium' : 'border-transparent hover:bg-slate-100')
+                }
+              >
                 <Dumbbell className="w-4 h-4" />
                 יוצר אימונים
-              </TabsTrigger>
-              <TabsTrigger value="programs" className="flex items-center gap-2 text-xs md:text-sm">
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(`${basePath}/programs`, { replace: true })}
+                className={
+                  'flex items-center justify-center gap-2 text-xs md:text-sm border-b-2 transition-colors rounded-t-lg px-2 py-3 ' +
+                  (pathname.startsWith(`${basePath}/programs`) ? 'border-primary bg-primary/10 text-primary font-medium' : 'border-transparent hover:bg-slate-100')
+                }
+              >
                 <Settings className="w-4 h-4" />
                 תוכניות והגדרות
-              </TabsTrigger>
-            </TabsList>
+              </button>
+            </div>
           </div>
           <div className="mt-6">
-            {/* Tab Contents */}
-            {/* Added new Control Center Content */}
-            <TabsContent value="control-center">
-              {/* Pass handleTabChange to ControlCenter to enable direct navigation */}
+            {(urlTab || internalActiveTab) === 'control-center' && (
               <ControlCenter onNavigateToTab={handleTabChange} />
-            </TabsContent>
-            <TabsContent value="user-management">
-              <UserManagementTab />
-            </TabsContent>
-            <TabsContent value="progress-media">
-              <ProgressMediaTab />
-            </TabsContent>
-            <TabsContent value="workout-creator">
-              <WorkoutCreatorMainTab />
-            </TabsContent>
-            <TabsContent value="programs">
-              <ProgramsSettingsTab />
-            </TabsContent>
+            )}
+            {(urlTab || internalActiveTab) === 'user-management' && <UserManagementTab />}
+            {(urlTab || internalActiveTab) === 'admin-management' && isSystemAdmin && <AdminList canAccess={isSystemAdmin} />}
+            {(urlTab || internalActiveTab) === 'trainer-management' && isSystemAdmin && (
+              <TrainerManagement onNavigateToTab={handleTabChange} />
+            )}
+            {(urlTab || internalActiveTab) === 'progress-media' && <ProgressMediaTab />}
+            {(urlTab || internalActiveTab) === 'workout-creator' && <WorkoutCreatorMainTab />}
+            {(urlTab || internalActiveTab) === 'programs' && <ProgramsSettingsTab />}
           </div>
-        </Tabs>
+        </>
       )}
 
       {/* Content without navigation wrapper when hideNavigation is true */}
@@ -697,9 +756,12 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
         <div>
           {internalActiveTab === 'control-center' && <ControlCenter onNavigateToTab={handleTabChange} />}
           {internalActiveTab === 'user-management' && <UserManagementTab />}
+          {internalActiveTab === 'admin-management' && isSystemAdmin && <AdminList canAccess={isSystemAdmin} />}
+          {internalActiveTab === 'trainer-management' && isSystemAdmin && <TrainerManagement onNavigateToTab={handleTabChange} />}
           {internalActiveTab === 'progress-media' && <ProgressMediaTab />}
           {internalActiveTab === 'workout-creator' && <WorkoutCreatorMainTab />}
           {internalActiveTab === 'programs' && <ProgramsSettingsTab />}
+          {internalActiveTab === 'profile' && <AdminProfileScreen />}
         </div>
       )}
     </div>

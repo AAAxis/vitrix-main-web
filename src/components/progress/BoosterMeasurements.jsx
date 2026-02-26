@@ -730,8 +730,8 @@ export default function BoosterMeasurements({ user }) {
                                 {selectedMeasurement.category && (
                                     <div className="text-center">
                                         <Badge className={`text-sm px-4 py-2 ${selectedMeasurement.category.color}`}>
-                                            {selectedMeasurement.category.level === 'סיכון גבוה' && <AlertTriangle className="w-4 h-4 ml-1" />}
-                                            {selectedMeasurement.category.level === 'תקין' && <CheckCircle className="w-4 h-4 ml-1" />}
+                                            {selectedMeasurement.category.level === 'סיכון גבוה' && <AlertTriangle className="w-4 h-4 ms-1" />}
+                                            {selectedMeasurement.category.level === 'תקין' && <CheckCircle className="w-4 h-4 ms-1" />}
                                             סטטוס: {selectedMeasurement.category.text}
                                         </Badge>
                                     </div>

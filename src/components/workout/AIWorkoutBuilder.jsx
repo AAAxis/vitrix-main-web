@@ -438,7 +438,7 @@ ${userContext}
             variant="ghost"
             size="sm"
             onClick={() => setErrorMessage('')}
-            className="mr-2 h-auto p-1 text-red-700 hover:text-red-900"
+            className="me-2 h-auto p-1 text-red-700 hover:text-red-900"
           >
             ✕
           </Button>
@@ -499,21 +499,21 @@ ${userContext}
                     
                     <div className="flex flex-wrap gap-2 mb-4">
                       <Badge className="bg-blue-100 text-blue-800">
-                        <Clock className="w-3 h-3 ml-1" />
+                        <Clock className="w-3 h-3 ms-1" />
                         {generatedWorkout.estimated_duration} דקות
                       </Badge>
                       <Badge className="bg-purple-100 text-purple-800">
-                        <Target className="w-3 h-3 ml-1" />
+                        <Target className="w-3 h-3 ms-1" />
                         {generatedWorkout.difficulty_level}
                       </Badge>
                       <Badge className="bg-green-100 text-green-800">
-                        <Dumbbell className="w-3 h-3 ml-1" />
+                        <Dumbbell className="w-3 h-3 ms-1" />
                         {generatedWorkout.exercises?.length || 0} תרגילים
                       </Badge>
                     </div>
 
                     {generatedWorkout.why_this_workout && (
-                      <div className="bg-amber-50 border-r-4 border-amber-400 p-3 rounded-lg mb-4">
+                      <div className="bg-amber-50 border-e-4 border-amber-400 p-3 rounded-lg mb-4">
                         <div className="flex items-start gap-2">
                           <Lightbulb className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                           <div>
@@ -572,12 +572,12 @@ ${userContext}
                   >
                     {isStarting ? (
                       <>
-                        <Loader2 className="animate-spin mr-2 h-5 w-5" />
+                        <Loader2 className="animate-spin me-2 h-5 w-5" />
                         מתחיל אימון...
                       </>
                     ) : (
                       <>
-                        <Play className="mr-2 h-5 w-5" />
+                        <Play className="me-2 h-5 w-5" />
                         התחל אימון!
                       </>
                     )}
@@ -588,7 +588,7 @@ ${userContext}
                     variant="outline"
                     className="px-6 h-12"
                   >
-                    <Save className="mr-2 h-4 w-4" />
+                    <Save className="me-2 h-4 w-4" />
                     שמור כתבנית
                   </Button>
                   
@@ -602,7 +602,7 @@ ${userContext}
                     variant="outline"
                     className="px-6 h-12"
                   >
-                    <RefreshCw className="mr-2 h-4 w-4" />
+                    <RefreshCw className="me-2 h-4 w-4" />
                     נסה שוב
                   </Button>
                 </div>
@@ -678,12 +678,12 @@ ${userContext}
           >
             {isGenerating ? (
               <>
-                <Loader2 className="animate-spin mr-2 h-5 w-5" />
+                <Loader2 className="animate-spin me-2 h-5 w-5" />
                 הבינה המלאכותית יוצרת אימון מותאם...
               </>
             ) : (
               <>
-                <Sparkles className="mr-2 h-5 w-5" />
+                <Sparkles className="me-2 h-5 w-5" />
                 צור אימון מותאם עם AI
               </>
             )}
@@ -719,7 +719,7 @@ ${userContext}
             <Button onClick={saveGeneratedWorkoutAsTemplate} disabled={isSavingTemplate || !templateName}>
               {isSavingTemplate ? (
                 <>
-                  <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                  <Loader2 className="animate-spin me-2 h-4 w-4" />
                   שומר...
                 </>
               ) : (

@@ -193,9 +193,9 @@ export default function WeightUpdateManager() {
     const loadData = useCallback(async () => {
         setIsLoading(true);
         try {
-            // Fetch users scoped by role (admin/coach: all; trainer: only their invitees), then only trainee/user role
+            // Fetch users scoped by role (admin: all; trainer: only their invitees), then only trainee/user role
             const allUsersRaw = await User.listForStaff(currentUser, '-created_date');
-            const allUsers = allUsersRaw.filter(u => u.role !== 'admin' && u.role !== 'coach' && u.role !== 'trainer');
+            const allUsers = allUsersRaw.filter(u => u.role !== 'admin' && u.role !== 'trainer');
             
             const allWeightEntries = await WeightEntry.list('-date');
             
@@ -460,7 +460,7 @@ export default function WeightUpdateManager() {
             <Card className="muscle-glass border-0 shadow-lg">
                 <CardContent className="flex items-center justify-center py-12">
                     <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
-                    <span className="mr-2">טוען נתוני משקל...</span>
+                    <span className="me-2">טוען נתוני משקל...</span>
                 </CardContent>
             </Card>
         );
@@ -485,7 +485,7 @@ export default function WeightUpdateManager() {
                             className="text-sm"
                         />
                         <Button onClick={loadData} disabled={isLoading} size="sm" variant="outline" className="whitespace-nowrap">
-                            <RefreshCw className={`w-4 h-4 ml-1 ${isLoading ? 'animate-spin' : ''}`} />
+                            <RefreshCw className={`w-4 h-4 ms-1 ${isLoading ? 'animate-spin' : ''}`} />
                             רענן
                         </Button>
                     </div>
@@ -506,7 +506,7 @@ export default function WeightUpdateManager() {
                                         <TableHead className="text-right hidden md:table-cell">עדכון אחרון</TableHead>
                                         <TableHead className="text-right hidden lg:table-cell">
                                             <Button variant="ghost" onClick={() => handleSort('daysSinceLastUpdate')} className="h-auto p-0 font-semibold">
-                                                ימים <ArrowUpDown className="mr-2 h-4 w-4" />
+                                                ימים <ArrowUpDown className="me-2 h-4 w-4" />
                                             </Button>
                                         </TableHead>
                                         <TableHead className="text-right w-1/3">פעולות</TableHead>
@@ -567,7 +567,7 @@ export default function WeightUpdateManager() {
                                                             onClick={() => handleOpenUpdateDialog(user)}
                                                             className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-8"
                                                         >
-                                                            <Edit className="w-3 h-3 ml-1" />
+                                                            <Edit className="w-3 h-3 ms-1" />
                                                             עדכן
                                                         </Button>
                                                         <Button
@@ -579,17 +579,17 @@ export default function WeightUpdateManager() {
                                                         >
                                                             {isSending ? (
                                                                 <>
-                                                                    <Loader2 className="w-3 h-3 ml-1 animate-spin" />
+                                                                    <Loader2 className="w-3 h-3 ms-1 animate-spin" />
                                                                     שולח
                                                                 </>
                                                             ) : isReminderSent ? (
                                                                 <>
-                                                                    <Clock className="w-3 h-3 ml-1" />
+                                                                    <Clock className="w-3 h-3 ms-1" />
                                                                     נשלח
                                                                 </>
                                                             ) : (
                                                                 <>
-                                                                    <Send className="w-3 h-3 ml-1" />
+                                                                    <Send className="w-3 h-3 ms-1" />
                                                                     תזכורת
                                                                 </>
                                                             )}
@@ -1022,7 +1022,7 @@ export default function WeightUpdateManager() {
                             onClick={() => setShowMeasurementDialog(false)}
                             disabled={isSavingMeasurement}
                         >
-                            <X className="w-4 h-4 ml-1" />
+                            <X className="w-4 h-4 ms-1" />
                             ביטול
                         </Button>
                         <Button
@@ -1032,12 +1032,12 @@ export default function WeightUpdateManager() {
                         >
                             {isSavingMeasurement ? (
                                 <>
-                                    <Loader2 className="w-4 h-4 ml-1 animate-spin" />
+                                    <Loader2 className="w-4 h-4 ms-1 animate-spin" />
                                     שומר...
                                 </>
                             ) : (
                                 <>
-                                    <Save className="w-4 h-4 ml-1" />
+                                    <Save className="w-4 h-4 ms-1" />
                                     שמור מדידות
                                 </>
                             )}

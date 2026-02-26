@@ -38,7 +38,7 @@ const EventCard = ({ event, participation, onParticipationChange, isUpdating, ge
   const canRespond = hoursUntilEvent <= 48 && !isPastEvent;
 
   return (
-    <Card className="border-r-4 border-r-purple-500 hover:shadow-lg transition-shadow">
+    <Card className="border-e-4 border-r-purple-500 hover:shadow-lg transition-shadow">
       <CardContent className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-start gap-3 flex-1">
@@ -91,7 +91,7 @@ const EventCard = ({ event, participation, onParticipationChange, isUpdating, ge
                   disabled={isUpdating}
                   className="text-xs"
                 >
-                  <CheckCircle className="w-4 h-4 ml-1" />
+                  <CheckCircle className="w-4 h-4 ms-1" />
                   {genderedTexts.participating}
                 </Button>
                 <Button
@@ -101,7 +101,7 @@ const EventCard = ({ event, participation, onParticipationChange, isUpdating, ge
                   disabled={isUpdating}
                   className="text-xs"
                 >
-                  <XCircle className="w-4 h-4 ml-1" />
+                  <XCircle className="w-4 h-4 ms-1" />
                   {genderedTexts.notParticipating}
                 </Button>
               </div>
@@ -121,7 +121,7 @@ const EventCard = ({ event, participation, onParticipationChange, isUpdating, ge
           <div className="mt-3 pt-3 border-t border-gray-200">
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="text-xs">
-                <CheckCircle className="w-3 h-3 ml-1" />
+                <CheckCircle className="w-3 h-3 ms-1" />
                 תגובתך: {participation.status === 'participating' ? genderedTexts.participating : genderedTexts.notParticipating}
               </Badge>
             </div>
@@ -270,7 +270,7 @@ export default function EventsTimeline({ user }) {
         <CardContent className="text-center py-8">
           <p className="text-slate-600 mb-4">{error}</p>
           <Button onClick={loadData} variant="outline">
-            <RefreshCw className="w-4 h-4 ml-2" />
+            <RefreshCw className="w-4 h-4 ms-2" />
             נסה שוב
           </Button>
         </CardContent>
@@ -324,7 +324,7 @@ export default function EventsTimeline({ user }) {
             </TabsList>
             <TabsContent value="upcoming" className="mt-4">
               <ScrollArea className="h-[calc(100vh-350px)]">
-                <div className="space-y-4 pl-2">
+                <div className="space-y-4 ps-2">
                   {categorizedEvents.upcoming.length > 0 ? (
                     <AnimatePresence>
                       {categorizedEvents.upcoming.map((event, index) => (
@@ -356,7 +356,7 @@ export default function EventsTimeline({ user }) {
             </TabsContent>
             <TabsContent value="past" className="mt-4">
               <ScrollArea className="h-[calc(100vh-350px)]">
-                <div className="space-y-4 pl-2">
+                <div className="space-y-4 ps-2">
                   {categorizedEvents.past.length > 0 ? (
                     <AnimatePresence>
                       {categorizedEvents.past.map((event, index) => (

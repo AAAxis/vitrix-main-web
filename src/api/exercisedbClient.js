@@ -509,8 +509,9 @@ export function mapExerciseDBToExerciseDefinition(exercisedbExercise) {
   // RapidAPI format: {exerciseId, name, imageUrl, ...}
   // v2.exercisedb.dev format: {id, name, bodyParts, equipments, ...}
 
-  // Get exercise ID (different field names in different APIs)
-  const exerciseId = exercisedbExercise.exerciseId || exercisedbExercise.id || '';
+  // Get exercise ID (different field names in different APIs; use ?? so 0 is preserved)
+  const exerciseId = exercisedbExercise.exerciseId ?? exercisedbExercise.id ?? '';
+  const exerciseIdStr = exerciseId !== '' && exerciseId != null ? String(exerciseId) : '';
 
   // Get exercise name
   const exerciseName = exercisedbExercise.name || '';
@@ -526,6 +527,37 @@ export function mapExerciseDBToExerciseDefinition(exercisedbExercise) {
       // Relative path, construct full URL
       imageUrl = `https://cdn.exercisedb.dev/images/${exercisedbExercise.imageUrl}`;
     }
+  }
+  // Also try legacy 'image' field
+  if (!imageUrl && exercisedbExercise.image) {
+    if (exercisedbExercise.image.startsWith('http')) {
+      imageUrl = exercisedbExercise.image;
+    } else {
+      imageUrl = `https://v2.exercisedb.dev/images/${exercisedbExercise.image}`;
+    }
+  }
+
+  // Get GIF URL - ExerciseDB often provides animated gifs; prefer for display
+  let gifUrl = '';
+  if (exercisedbExercise.gifUrl) {
+    if (exercisedbExercise.gifUrl.startsWith('http')) {
+      gifUrl = exercisedbExercise.gifUrl;
+    } else {
+      // Prefer CDN (same as images/videos) - often works better in web
+      gifUrl = `https://cdn.exercisedb.dev/gifs/${exercisedbExercise.gifUrl}`;
+    }
+  }
+  // Fallback: some APIs use different base for gifs
+  if (!gifUrl && exercisedbExercise.gif) {
+    if (exercisedbExercise.gif.startsWith('http')) {
+      gifUrl = exercisedbExercise.gif;
+    } else {
+      gifUrl = `https://cdn.exercisedb.dev/gifs/${exercisedbExercise.gif}`;
+    }
+  }
+  // Fallback: when API doesn't return gifUrl (e.g. RapidAPI list), use image endpoint (proxy on web adds key)
+  if (!gifUrl && exerciseIdStr) {
+    gifUrl = `https://exercisedb.p.rapidapi.com/image?exerciseId=${encodeURIComponent(exerciseIdStr)}&resolution=180`;
   }
 
   // Get video URL
@@ -595,8 +627,9 @@ export function mapExerciseDBToExerciseDefinition(exercisedbExercise) {
     video_url: videoUrl,
     default_weight: 0,
     // Store ExerciseDB metadata for reference
-    exercisedb_id: exerciseId,
+    exercisedb_id: exerciseIdStr || exerciseId,
     exercisedb_image_url: imageUrl,
+    exercisedb_gif_url: gifUrl,
     exercisedb_target_muscles: translatedTargetMuscles,
     exercisedb_secondary_muscles: translatedSecondaryMuscles,
     exercisedb_variations: exercisedbExercise.variations || [],

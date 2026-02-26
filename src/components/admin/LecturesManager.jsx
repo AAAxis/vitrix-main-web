@@ -269,7 +269,7 @@ export default function LecturesManager() {
                     <p className="text-gray-600">ניהול והעלאה של הרצאות וידאו למתאמנים</p>
                 </div>
                 <Button onClick={() => setIsDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4 me-2" />
                     הוסף הרצאה חדשה
                 </Button>
             </div>
@@ -828,7 +828,7 @@ export default function LecturesManager() {
                                 ביטול
                             </Button>
                             <Button type="submit" disabled={isSaving}>
-                                {isSaving && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                                {isSaving && <Loader2 className="w-4 h-4 animate-spin me-2" />}
                                 {editingLecture ? 'עדכן הרצאה' : 'הוסף הרצאה'}
                             </Button>
                         </DialogFooter>

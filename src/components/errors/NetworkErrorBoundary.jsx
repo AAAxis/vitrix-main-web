@@ -59,7 +59,7 @@ class NetworkErrorBoundary extends Component {
                   onClick={() => window.location.reload()} 
                   className="w-full bg-red-500 hover:bg-red-600 text-white"
                 >
-                  <RotateCw className="w-4 h-4 ml-2" />
+                  <RotateCw className="w-4 h-4 ms-2" />
                   רענן דף
                 </Button>
                 

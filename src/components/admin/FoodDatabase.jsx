@@ -249,7 +249,7 @@ export default function FoodDatabase() {
                         </div>
                         <div className="flex gap-2">
                             <Button onClick={() => handleOpenDialog()}>
-                                <Plus className="w-4 h-4 mr-2" />
+                                <Plus className="w-4 h-4 me-2" />
                                 הוסף מזון
                             </Button>
                         </div>
@@ -261,12 +261,12 @@ export default function FoodDatabase() {
                         <div>
                             <Label>חיפוש</Label>
                             <div className="relative">
-                                <Search className="absolute right-3 top-3 w-4 h-4 text-gray-400" />
+                                <Search className="absolute end-3 top-3 w-4 h-4 text-gray-400" />
                                 <Input
                                     placeholder="חפש לפי שם..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pr-10"
+                                    className="pe-10"
                                 />
                             </div>
                         </div>
@@ -321,19 +321,19 @@ export default function FoodDatabase() {
                                         <div className="grid grid-cols-2 gap-2 text-sm mb-4">
                                             <div>
                                                 <span className="text-gray-600">קלוריות:</span>
-                                                <span className="font-semibold mr-1">{item.calories_per_100g}</span>
+                                                <span className="font-semibold me-1">{item.calories_per_100g}</span>
                                             </div>
                                             <div>
                                                 <span className="text-gray-600">חלבון:</span>
-                                                <span className="font-semibold mr-1">{item.protein_per_100g}g</span>
+                                                <span className="font-semibold me-1">{item.protein_per_100g}g</span>
                                             </div>
                                             <div>
                                                 <span className="text-gray-600">פחמימות:</span>
-                                                <span className="font-semibold mr-1">{item.carbs_per_100g}g</span>
+                                                <span className="font-semibold me-1">{item.carbs_per_100g}g</span>
                                             </div>
                                             <div>
                                                 <span className="text-gray-600">שומן:</span>
-                                                <span className="font-semibold mr-1">{item.fat_per_100g}g</span>
+                                                <span className="font-semibold me-1">{item.fat_per_100g}g</span>
                                             </div>
                                         </div>
                                         <div className="text-xs text-gray-500 mb-3">
@@ -346,7 +346,7 @@ export default function FoodDatabase() {
                                                 onClick={() => handleOpenDialog(item)}
                                                 className="flex-1"
                                             >
-                                                <Edit className="w-3 h-3 mr-1" />
+                                                <Edit className="w-3 h-3 me-1" />
                                                 ערוך
                                             </Button>
                                             <Button
@@ -516,7 +516,7 @@ export default function FoodDatabase() {
                         <Button onClick={handleSave} disabled={isSaving}>
                             {isSaving ? (
                                 <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    <Loader2 className="w-4 h-4 me-2 animate-spin" />
                                     שומר...
                                 </>
                             ) : (

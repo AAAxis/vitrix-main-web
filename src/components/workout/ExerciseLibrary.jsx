@@ -92,18 +92,22 @@ export default function ExerciseLibrary() {
         }
     };
 
-    // Helper to get image URL from ExerciseDB exercise
-    const getExerciseDBImageUrl = (exercise) => {
+    // Helper to get media URL from ExerciseDB exercise (prefer GIF when available)
+    const getExerciseDBMediaUrl = (exercise) => {
+        if (exercise.gifUrl) {
+            if (exercise.gifUrl.startsWith('http')) return exercise.gifUrl;
+            return `https://v2.exercisedb.dev/gifs/${exercise.gifUrl}`;
+        }
+        if (exercise.gif) {
+            if (exercise.gif.startsWith('http')) return exercise.gif;
+            return `https://v2.exercisedb.dev/gifs/${exercise.gif}`;
+        }
         if (exercise.imageUrl) {
-            if (exercise.imageUrl.startsWith('http')) {
-                return exercise.imageUrl;
-            }
+            if (exercise.imageUrl.startsWith('http')) return exercise.imageUrl;
             return `https://cdn.exercisedb.dev/images/${exercise.imageUrl}`;
         }
         if (exercise.image) {
-            if (exercise.image.startsWith('http')) {
-                return exercise.image;
-            }
+            if (exercise.image.startsWith('http')) return exercise.image;
             return `https://cdn.exercisedb.dev/images/${exercise.image}`;
         }
         return null;
@@ -239,31 +243,35 @@ export default function ExerciseLibrary() {
             // Fetch exercise data from ExerciseDB API
             const exerciseData = await getExerciseById(exercise.exercisedb_id);
             
-            // Extract image URL from ExerciseDB response
-            let imageUrl = null;
+            // Extract image/GIF URL from ExerciseDB response (prefer GIF when available)
+            let mediaUrl = null;
             if (exerciseData) {
-                // Handle different API response formats
-                if (exerciseData.imageUrl) {
-                    if (exerciseData.imageUrl.startsWith('http')) {
-                        imageUrl = exerciseData.imageUrl;
-                    } else {
-                        imageUrl = `https://cdn.exercisedb.dev/images/${exerciseData.imageUrl}`;
-                    }
-                } else if (exerciseData.image) {
-                    if (exerciseData.image.startsWith('http')) {
-                        imageUrl = exerciseData.image;
-                    } else {
-                        imageUrl = `https://cdn.exercisedb.dev/images/${exerciseData.image}`;
-                    }
+                if (exerciseData.gifUrl) {
+                    mediaUrl = exerciseData.gifUrl.startsWith('http')
+                        ? exerciseData.gifUrl
+                        : `https://v2.exercisedb.dev/gifs/${exerciseData.gifUrl}`;
+                } else if (exerciseData.gif) {
+                    mediaUrl = exerciseData.gif.startsWith('http')
+                        ? exerciseData.gif
+                        : `https://v2.exercisedb.dev/gifs/${exerciseData.gif}`;
+                }
+                if (!mediaUrl && exerciseData.imageUrl) {
+                    mediaUrl = exerciseData.imageUrl.startsWith('http')
+                        ? exerciseData.imageUrl
+                        : `https://cdn.exercisedb.dev/images/${exerciseData.imageUrl}`;
+                } else if (!mediaUrl && exerciseData.image) {
+                    mediaUrl = exerciseData.image.startsWith('http')
+                        ? exerciseData.image
+                        : `https://cdn.exercisedb.dev/images/${exerciseData.image}`;
                 }
             }
 
             // Cache the result
-            if (imageUrl) {
-                setExerciseImagesCache(prev => new Map(prev).set(exercise.id, imageUrl));
+            if (mediaUrl) {
+                setExerciseImagesCache(prev => new Map(prev).set(exercise.id, mediaUrl));
             }
             
-            return imageUrl;
+            return mediaUrl;
         } catch (error) {
             console.warn(`Failed to fetch image for exercise ${exercise.exercisedb_id}:`, error);
             // Cache null to avoid repeated failed requests
@@ -326,33 +334,31 @@ export default function ExerciseLibrary() {
                         {/* Firebase Exercises Tab */}
                         <TabsContent value="firebase" className="space-y-4 mt-4">
                     <div className="relative mb-4">
-                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Search className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                         <Input
                             type="text"
                             placeholder="חיפוש תרגיל..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pr-10"
+                            className="pe-10"
                         />
                     </div>
                     
                     <ScrollArea className="h-[500px]">
                         <div className="space-y-4">
                             {filteredExercises.map((exercise) => {
-                                // Get image URL from cache (fetched live from ExerciseDB)
-                                const getImageUrl = (ex) => {
-                                    // First check cache (live fetched from ExerciseDB)
+                                // Get media URL: prefer GIF, then image (from cache or stored)
+                                const getMediaUrl = (ex) => {
                                     if (exerciseImagesCache.has(ex.id)) {
                                         return exerciseImagesCache.get(ex.id);
                                     }
-                                    // Fallback to stored image URL if available (for backward compatibility)
+                                    if (ex.exercisedb_gif_url) {
+                                        if (ex.exercisedb_gif_url.startsWith('http')) return ex.exercisedb_gif_url;
+                                        return `https://v2.exercisedb.dev/gifs/${ex.exercisedb_gif_url}`;
+                                    }
                                     if (ex.exercisedb_image_url) {
-                                        if (ex.exercisedb_image_url.startsWith('http')) {
-                                            return ex.exercisedb_image_url;
-                                        }
-                                        if (ex.exercisedb_image_url.includes('cdn.exercisedb.dev')) {
-                                            return ex.exercisedb_image_url;
-                                        }
+                                        if (ex.exercisedb_image_url.startsWith('http')) return ex.exercisedb_image_url;
+                                        if (ex.exercisedb_image_url.includes('cdn.exercisedb.dev')) return ex.exercisedb_image_url;
                                         return `https://v2.exercisedb.dev/images/${ex.exercisedb_image_url}`;
                                     }
                                     return null;
@@ -368,7 +374,7 @@ export default function ExerciseLibrary() {
                                     return null;
                                 };
 
-                                const imageUrl = getImageUrl(exercise);
+                                const mediaUrl = getMediaUrl(exercise);
                                 const videoUrl = getVideoUrl(exercise);
 
                                 return (
@@ -381,9 +387,9 @@ export default function ExerciseLibrary() {
                                         <div className="flex items-start gap-4 mb-3">
                                             {/* Thumbnail Image/Video - Always show placeholder if no image */}
                                             <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
-                                                {imageUrl ? (
+                                                {mediaUrl ? (
                                                     <img
-                                                        src={imageUrl}
+                                                        src={mediaUrl}
                                                         alt={exercise.name_he}
                                                         className="w-full h-full object-cover"
                                                         onError={(e) => {
@@ -443,7 +449,7 @@ export default function ExerciseLibrary() {
                                                 </div>
                                                 {/* Media indicators */}
                                                 <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
-                                                    {imageUrl && (
+                                                    {mediaUrl && (
                                                         <span className="flex items-center gap-1">
                                                             <ImageIcon className="w-3 h-3" />
                                                             תמונה
@@ -578,14 +584,14 @@ export default function ExerciseLibrary() {
                                 {/* Search Input */}
                                 {exerciseDBSearchType === 'name' && (
                                     <div className="relative">
-                                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                                        <Search className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                                         <Input
                                             type="text"
                                             placeholder="חפש תרגיל ב-ExerciseDB..."
                                             value={exerciseDBSearchTerm}
                                             onChange={(e) => setExerciseDBSearchTerm(e.target.value)}
                                             onKeyDown={(e) => e.key === 'Enter' && handleExerciseDBSearch()}
-                                            className="pr-10"
+                                            className="pe-10"
                                         />
                                     </div>
                                 )}
@@ -623,12 +629,12 @@ export default function ExerciseLibrary() {
                                 >
                                     {isLoadingExerciseDB ? (
                                         <>
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            <Loader2 className="w-4 h-4 me-2 animate-spin" />
                                             מחפש...
                                         </>
                                     ) : (
                                         <>
-                                            <Search className="w-4 h-4 mr-2" />
+                                            <Search className="w-4 h-4 me-2" />
                                             חפש ב-ExerciseDB
                                         </>
                                     )}
@@ -644,7 +650,7 @@ export default function ExerciseLibrary() {
                                 <ScrollArea className="h-[500px]">
                                     <div className="space-y-4">
                                         {exerciseDBExercises.map((exercise, index) => {
-                                            const imageUrl = getExerciseDBImageUrl(exercise);
+                                            const mediaUrl = getExerciseDBMediaUrl(exercise);
                                             const videoUrl = getExerciseDBVideoUrl(exercise);
                                             const exerciseId = exercise.exerciseId || exercise.id || `ex-${index}`;
                                             const exerciseName = exercise.name || 'Unknown Exercise';
@@ -659,9 +665,9 @@ export default function ExerciseLibrary() {
                                                     <div className="flex items-start gap-4 mb-3">
                                                         {/* Image */}
                                                         <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
-                                                            {imageUrl ? (
+                                                            {mediaUrl ? (
                                                                 <img
-                                                                    src={imageUrl}
+                                                                    src={mediaUrl}
                                                                     alt={exerciseName}
                                                                     className="w-full h-full object-cover"
                                                                     onError={(e) => {
@@ -695,7 +701,7 @@ export default function ExerciseLibrary() {
                                                                 </Button>
                                                             </div>
                                                             <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
-                                                                {imageUrl && (
+                                                                {mediaUrl && (
                                                                     <span className="flex items-center gap-1">
                                                                         <ImageIcon className="w-3 h-3" />
                                                                         תמונה
@@ -735,16 +741,16 @@ export default function ExerciseLibrary() {
                     <div className="py-4 space-y-4">
                         {/* Image/Video Display */}
                         {(() => {
-                            const getImageUrl = (ex) => {
-                                // First check cache (live fetched from ExerciseDB)
+                            const getMediaUrl = (ex) => {
                                 if (exerciseImagesCache.has(ex.id)) {
                                     return exerciseImagesCache.get(ex.id);
                                 }
-                                // Fallback to stored image URL if available
+                                if (ex?.exercisedb_gif_url) {
+                                    if (ex.exercisedb_gif_url.startsWith('http')) return ex.exercisedb_gif_url;
+                                    return `https://v2.exercisedb.dev/gifs/${ex.exercisedb_gif_url}`;
+                                }
                                 if (ex?.exercisedb_image_url) {
-                                    if (ex.exercisedb_image_url.startsWith('http')) {
-                                        return ex.exercisedb_image_url;
-                                    }
+                                    if (ex.exercisedb_image_url.startsWith('http')) return ex.exercisedb_image_url;
                                     return `https://v2.exercisedb.dev/images/${ex.exercisedb_image_url}`;
                                 }
                                 return null;
@@ -760,7 +766,7 @@ export default function ExerciseLibrary() {
                                 return null;
                             };
 
-                            const imageUrl = getImageUrl(selectedExercise);
+                            const mediaUrl = getMediaUrl(selectedExercise);
                             const videoUrl = getVideoUrl(selectedExercise);
                             
                             // Fetch image for selected exercise if not in cache
@@ -770,10 +776,10 @@ export default function ExerciseLibrary() {
                                 }
                             }, [selectedExercise]);
 
-                            if (imageUrl || videoUrl) {
+                            if (mediaUrl || videoUrl) {
                                 return (
                                     <div className="space-y-3">
-                                        {imageUrl && (
+                                        {mediaUrl && (
                                             <div>
                                                 <h4 className="font-semibold mb-2 text-slate-800 flex items-center gap-2">
                                                     <ImageIcon className="w-4 h-4" />
@@ -781,7 +787,7 @@ export default function ExerciseLibrary() {
                                                 </h4>
                                                 <div className="rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
                                                     <img
-                                                        src={imageUrl}
+                                                        src={mediaUrl}
                                                         alt={selectedExercise?.name_he}
                                                         className="w-full h-auto max-h-96 object-contain"
                                                         onError={(e) => {

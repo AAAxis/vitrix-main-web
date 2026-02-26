@@ -138,7 +138,7 @@ export default function WeightReminderComponent({ user }) {
     <div className="space-y-4">
       {/* Weekly Reminder */}
       {showReminder && reminder && (
-        <Card className="border-l-4 border-orange-500 bg-orange-50">
+        <Card className="border-s-4 border-orange-500 bg-orange-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-orange-800">
               <Bell className="w-5 h-5" />
@@ -150,7 +150,7 @@ export default function WeightReminderComponent({ user }) {
               <p className="text-orange-700">{reminder.message}</p>
               <div className="flex items-center gap-2">
                 <Badge variant="outline" className="text-orange-600 border-orange-600">
-                  <Calendar className="w-4 h-4 mr-1" />
+                  <Calendar className="w-4 h-4 me-1" />
                   {reminder.days_since_last_update} ימים מהעדכון האחרון
                 </Badge>
               </div>
@@ -159,7 +159,7 @@ export default function WeightReminderComponent({ user }) {
                   onClick={() => window.location.href = '/Progress'}
                   className="bg-orange-600 hover:bg-orange-700 text-white"
                 >
-                  <Scale className="w-4 h-4 mr-2" />
+                  <Scale className="w-4 h-4 me-2" />
                   עדכן משקל עכשיו
                 </Button>
                 <Button variant="outline" onClick={dismissReminder}>
@@ -173,7 +173,7 @@ export default function WeightReminderComponent({ user }) {
 
       {/* Monthly Summary */}
       {showMonthlySummary && monthlySummary && (
-        <Card className="border-l-4 border-blue-500 bg-blue-50">
+        <Card className="border-s-4 border-blue-500 bg-blue-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-blue-800">
               <Target className="w-5 h-5" />

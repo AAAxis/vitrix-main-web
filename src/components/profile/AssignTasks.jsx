@@ -427,7 +427,7 @@ export default function AssignTasks() {
                                     className={`w-full justify-start text-left font-normal ${!programStartDate && "text-muted-foreground"}`}
                                     disabled={isLoading}
                                 >
-                                    <CalendarIcon className="ml-2 h-4 w-4" />
+                                    <CalendarIcon className="ms-2 h-4 w-4" />
                                     {programStartDate ? format(programStartDate, "PPP", { locale: he }) : <span>בחר תאריך</span>}
                                 </Button>
                             </PopoverTrigger>
@@ -494,7 +494,7 @@ export default function AssignTasks() {
                                     className="bg-purple-600 hover:bg-purple-700 text-white"
                                 >
                                     {isLoading ? (
-                                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                                        <Loader2 className="w-4 h-4 animate-spin me-2" />
                                     ) : null}
                                     הפעל
                                 </Button>

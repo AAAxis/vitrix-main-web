@@ -745,7 +745,7 @@ export default function SharedMealsViewer() {
     return (
       <div className="flex justify-center items-center py-12">
         <Loader2 className="w-8 h-8 animate-spin text-slate-500" />
-        <p className="mr-4 text-slate-600">טוען נתונים...</p>
+        <p className="me-4 text-slate-600">טוען נתונים...</p>
       </div>
     );
   }
@@ -757,7 +757,7 @@ export default function SharedMealsViewer() {
           <AlertTriangle className="w-6 h-6 text-red-600 mx-auto mb-2" />
           <p className="text-red-600 mb-4">{error}</p>
           <Button onClick={loadData} variant="outline">
-            <RefreshCw className="w-4 h-4 ml-2" />
+            <RefreshCw className="w-4 h-4 ms-2" />
             נסה שוב
           </Button>
         </CardContent>
@@ -772,7 +772,7 @@ export default function SharedMealsViewer() {
       {/* Main User Albums Grid - Mobile Optimized */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {groupedMedia.map((group) => (
-          <Card key={group.user.email} className={`cursor-pointer hover:shadow-lg transition-all duration-300 bg-white ${group.hasUnread ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-blue-500'}`}>
+          <Card key={group.user.email} className={`cursor-pointer hover:shadow-lg transition-all duration-300 bg-white ${group.hasUnread ? 'border-s-4 border-l-red-500' : 'border-s-4 border-l-blue-500'}`}>
             <CardHeader className="p-4 sm:p-6 pb-3">
               <div className="flex items-center gap-3">
                 <div className="relative">
@@ -784,7 +784,7 @@ export default function SharedMealsViewer() {
                     </div>
                   )}
                   {group.hasUnread && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                    <div className="absolute -top-1 -end-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
                       <Bell className="w-2 h-2 text-white" />
                     </div>
                   )}
@@ -809,7 +809,7 @@ export default function SharedMealsViewer() {
                 className="w-full text-sm"
                 variant={group.hasUnread ? "default" : "outline"}
               >
-                <Eye className="w-4 h-4 mr-2" />
+                <Eye className="w-4 h-4 me-2" />
                 {group.hasUnread ? 'צפה בחדש' : 'צפה בתמונות'}
               </Button>
             </CardContent>
@@ -847,7 +847,7 @@ export default function SharedMealsViewer() {
               
               <TabsContent value="meals" className="flex-1 mt-0">
                 <ScrollArea className="h-[60vh] sm:h-[70vh]">
-                  <div className="space-y-4 pr-2">
+                  <div className="space-y-4 pe-2">
                     {groupedMealsForAlbum && groupedMealsForAlbum.length > 0 ? (
                       groupedMealsForAlbum.map((dateGroup) => {
                         const displayDate = dateGroup.displayDate; // "יום ראשון, 01/01/2023"
@@ -1030,11 +1030,11 @@ export default function SharedMealsViewer() {
                                                                         className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
                                                                         disabled={isDeleting}
                                                                     >
-                                                                        <Trash2 className="ml-2 h-4 w-4" />
+                                                                        <Trash2 className="ms-2 h-4 w-4" />
                                                                         <span>
                                                                           {isDeleting ? (
                                                                             <span className="flex items-center">
-                                                                              <Loader2 className="w-4 h-4 animate-spin ml-2" />
+                                                                              <Loader2 className="w-4 h-4 animate-spin ms-2" />
                                                                               מוחק...
                                                                             </span>
                                                                           ) : (
@@ -1080,7 +1080,7 @@ export default function SharedMealsViewer() {
                                                             {/* Main Nutrition Grid */}
                                                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
                                                                 {/* Calories */}
-                                                                <div className="text-center bg-white rounded-lg p-3 border-l-4 border-red-400 shadow-sm">
+                                                                <div className="text-center bg-white rounded-lg p-3 border-s-4 border-red-400 shadow-sm">
                                                                     <div className="font-bold text-red-600 text-base sm:text-lg">
                                                                         {meal.estimated_calories || '0'}
                                                                     </div>
@@ -1089,7 +1089,7 @@ export default function SharedMealsViewer() {
                                                                 </div>
                                                                 
                                                                 {/* Carbohydrates */}
-                                                                <div className="text-center bg-white rounded-lg p-3 border-l-4 border-blue-400 shadow-sm">
+                                                                <div className="text-center bg-white rounded-lg p-3 border-s-4 border-blue-400 shadow-sm">
                                                                     <div className="font-bold text-blue-600 text-base sm:text-lg">
                                                                         {meal.carbs_grams || '0'}
                                                                     </div>
@@ -1098,7 +1098,7 @@ export default function SharedMealsViewer() {
                                                                 </div>
                                                                 
                                                                 {/* Protein */}
-                                                                <div className="text-center bg-white rounded-lg p-3 border-l-4 border-orange-400 shadow-sm">
+                                                                <div className="text-center bg-white rounded-lg p-3 border-s-4 border-orange-400 shadow-sm">
                                                                     <div className="font-bold text-orange-600 text-base sm:text-lg">
                                                                         {meal.protein_grams || '0'}
                                                                     </div>
@@ -1107,7 +1107,7 @@ export default function SharedMealsViewer() {
                                                                 </div>
                                                                 
                                                                 {/* Fat */}
-                                                                <div className="text-center bg-white rounded-lg p-3 border-l-4 border-purple-400 shadow-sm">
+                                                                <div className="text-center bg-white rounded-lg p-3 border-s-4 border-purple-400 shadow-sm">
                                                                     <div className="font-bold text-purple-600 text-base sm:text-lg">
                                                                         {meal.fat_grams || '0'}
                                                                     </div>
@@ -1257,7 +1257,7 @@ export default function SharedMealsViewer() {
               
               <TabsContent value="water" className="flex-1 mt-0">
                 <ScrollArea className="h-[60vh] sm:h-[70vh]">
-                  <div className="space-y-4 pr-2">
+                  <div className="space-y-4 pe-2">
                     {selectedUserAlbum?.waterPhotos && selectedUserAlbum.waterPhotos.length > 0 ? (
                       <>
                         {/* Daily water summary */}

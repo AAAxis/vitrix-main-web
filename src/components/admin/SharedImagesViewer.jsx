@@ -128,7 +128,7 @@ export default function SharedImagesViewer() {
                                     alt="Latest shared image"
                                     className="w-full h-48 object-cover rounded-lg"
                                 />
-                                <div className="absolute bottom-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
+                                <div className="absolute bottom-2 start-2 bg-black/70 text-white px-2 py-1 rounded text-xs">
                                     {formatDateTime(latestImage.created_date || latestImage.photo_date)}
                                 </div>
                             </div>
@@ -282,7 +282,7 @@ export default function SharedImagesViewer() {
                         </DialogTitle>
                     </DialogHeader>
 
-                    <ScrollArea className="h-[70vh] pr-4">
+                    <ScrollArea className="h-[70vh] pe-4">
                         <div className="space-y-4">
                             <AnimatePresence>
                                 {modalData.map((item, index) => (
@@ -363,7 +363,7 @@ export default function SharedImagesViewer() {
                                                             <>
                                                                 <div>
                                                                     <Label className="text-sm font-semibold">סוג תמונה:</Label>
-                                                                    <Badge className="mr-2">{item.photo_type}</Badge>
+                                                                    <Badge className="me-2">{item.photo_type}</Badge>
                                                                 </div>
                                                                 {item.description && (
                                                                     <div>

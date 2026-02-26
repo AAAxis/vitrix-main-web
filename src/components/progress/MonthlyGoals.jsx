@@ -147,7 +147,7 @@ export default function MonthlyGoals() {
                 const daysUntilTarget = getDaysUntilTarget(goal.target_date);
                 
                 return (
-                  <Card key={goal.id} className="border-l-4 border-purple-400 bg-gradient-to-r from-purple-50 to-white">
+                  <Card key={goal.id} className="border-s-4 border-purple-400 bg-gradient-to-r from-purple-50 to-white">
                     <CardContent className="p-4">
                       <div className="flex justify-between items-start mb-3">
                         <div className="flex items-center gap-3">

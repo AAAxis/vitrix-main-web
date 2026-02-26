@@ -10,7 +10,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from '@/components/ui/pagination';
 import { UploadFile } from '@/api/integrations';
 import { 
@@ -66,6 +65,7 @@ export default function RecipeAccessManager() {
   });
   const [newIngredient, setNewIngredient] = useState('');
   const [newTag, setNewTag] = useState('');
+  const [recipeImageErrors, setRecipeImageErrors] = useState(new Set());
 
   useEffect(() => {
     loadData();
@@ -79,7 +79,8 @@ export default function RecipeAccessManager() {
         User.listForStaff(currentUser)
       ]);
       setRecipes(recipesData);
-      setUsers(usersData.filter(u => u.role !== 'admin' && u.role !== 'coach' && u.role !== 'trainer'));
+      setUsers(usersData.filter(u => u.role !== 'admin' && u.role !== 'trainer'));
+      setRecipeImageErrors(new Set());
     } catch (error) {
       console.error('Error loading data:', error);
     } finally {
@@ -325,7 +326,7 @@ export default function RecipeAccessManager() {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600 ml-2" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600 ms-2" />
           <span>טוען נתונים...</span>
         </CardContent>
       </Card>
@@ -334,308 +335,196 @@ export default function RecipeAccessManager() {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="access" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="access" className="flex items-center gap-2">
-            <Lock className="w-4 h-4" />
-            בקרת גישה
-          </TabsTrigger>
-          <TabsTrigger value="manage" className="flex items-center gap-2">
-            <ChefHat className="w-4 h-4" />
-            ניהול מתכונים
-          </TabsTrigger>
-        </TabsList>
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <ChefHat className="w-5 h-5" />
+              ניהול מתכונים ובקרת גישה
+            </CardTitle>
+            <Button onClick={() => handleOpenRecipeDialog()} className="flex items-center gap-2">
+              <Plus className="w-4 h-4" />
+              הוסף מתכון חדש
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="relative">
+            <Search className="absolute end-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              placeholder="חיפוש מתכון..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pe-10"
+            />
+          </div>
 
-        {/* Access Control Tab */}
-        <TabsContent value="access" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Lock className="w-5 h-5" />
-                בקרת גישה למתכונים
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  placeholder="חיפוש מתכון..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pr-10"
-                />
-              </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
+            <p className="text-blue-800">
+              💡 <strong>מתכונים ציבוריים</strong> - נגישים לכל המשתמשים
+            </p>
+            <p className="text-blue-800">
+              🔒 <strong>מתכונים פרטיים</strong> - נגישים רק למי שיצר אותם
+            </p>
+          </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm">
-                <p className="text-blue-800">
-                  💡 <strong>מתכונים ציבוריים</strong> - נגישים לכל המשתמשים
-                </p>
-                <p className="text-blue-800">
-                  🔒 <strong>מתכונים פרטיים</strong> - נגישים רק למי שיצר אותם
-                </p>
-              </div>
-
-              <ScrollArea className="h-[500px]">
-                <div className="space-y-2">
-                  {paginatedRecipes.map(recipe => (
-                    <div
-                      key={recipe.id}
-                      className="p-4 border rounded-lg bg-white hover:bg-slate-50 transition-colors"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold text-slate-800">{recipe.name}</h3>
-                            <Badge variant={recipe.is_public ? "default" : "secondary"}>
-                              {recipe.is_public ? 'ציבורי' : 'פרטי'}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-slate-600">{recipe.category}</p>
-                          {recipe.creator_email && (
-                            <p className="text-xs text-slate-500 mt-1">
-                              נוצר על ידי: {recipe.creator_email}
-                            </p>
-                          )}
-                        </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => toggleRecipeAccess(recipe.id, recipe.is_public)}
-                          className="flex items-center gap-2"
-                        >
-                          {recipe.is_public ? (
-                            <>
-                              <Lock className="w-4 h-4" />
-                              הפוך לפרטי
-                            </>
-                          ) : (
-                            <>
-                              <Unlock className="w-4 h-4" />
-                              הפוך לציבורי
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </ScrollArea>
-
-              <div className="bg-slate-50 rounded-lg p-4 space-y-3">
-                <div>
-                <p className="text-sm text-slate-600">
-                  <strong>סה"כ מתכונים:</strong> {recipes.length}
-                </p>
-                <p className="text-sm text-slate-600">
-                  <strong>ציבוריים:</strong> {recipes.filter(r => r.is_public).length}
-                </p>
-                <p className="text-sm text-slate-600">
-                  <strong>פרטיים:</strong> {recipes.filter(r => !r.is_public).length}
-                  </p>
-                </div>
-                
-                {totalPages > 1 && (
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setCurrentPage(prev => Math.max(1, prev - 1));
-                          }}
-                          href="#"
-                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                          <span>הקודם</span>
-                        </PaginationPrevious>
-                      </PaginationItem>
-                      
-                      {getPageNumbers().map((page, index) => (
-                        <PaginationItem key={index}>
-                          {page === 'ellipsis' ? (
-                            <PaginationEllipsis />
-                          ) : (
-                            <PaginationLink
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setCurrentPage(page);
-                              }}
-                              href="#"
-                              isActive={currentPage === page}
-                              className="cursor-pointer"
-                            >
-                              {page}
-                            </PaginationLink>
-                          )}
-                        </PaginationItem>
-                      ))}
-                      
-                      <PaginationItem>
-                        <PaginationNext 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setCurrentPage(prev => Math.min(totalPages, prev + 1));
-                          }}
-                          href="#"
-                          className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                        >
-                          <span>הבא</span>
-                          <ChevronLeft className="h-4 w-4" />
-                        </PaginationNext>
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                )}
-                
-                <p className="text-xs text-slate-500 text-center">
-                  מציג {startIndex + 1}-{Math.min(endIndex, filteredRecipes.length)} מתוך {filteredRecipes.length} מתכונים
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Recipe Management Tab */}
-        <TabsContent value="manage" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <ChefHat className="w-5 h-5" />
-                  ניהול מתכונים
-                </CardTitle>
-                <Button onClick={() => handleOpenRecipeDialog()} className="flex items-center gap-2">
-                  <Plus className="w-4 h-4" />
-                  הוסף מתכון חדש
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="relative">
-                <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <Input
-                  placeholder="חיפוש מתכון..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pr-10"
-                />
-              </div>
-
-              <ScrollArea className="h-[500px]">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {paginatedRecipes.map(recipe => (
-                    <Card key={recipe.id} className="overflow-hidden">
-                      {recipe.image_url && (
-                        <div className="h-48 bg-slate-200 overflow-hidden">
-                          <img
-                            src={recipe.image_url}
-                            alt={recipe.name}
-                            className="w-full h-full object-cover"
-                          />
+          <ScrollArea className="h-[500px]">
+            <div className="space-y-2">
+              {paginatedRecipes.map(recipe => (
+                <div
+                  key={recipe.id}
+                  className="p-4 border rounded-lg bg-white hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-slate-100 border border-slate-200">
+                      {recipe.image_url && !recipeImageErrors.has(recipe.id) ? (
+                        <img
+                          src={recipe.image_url}
+                          alt={recipe.name}
+                          className="w-full h-full object-cover"
+                          onError={() => setRecipeImageErrors(prev => new Set(prev).add(recipe.id))}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400">
+                          <ChefHat className="w-8 h-8" />
                         </div>
                       )}
-                      <CardContent className="p-4">
-                        <div className="flex items-start justify-between mb-2">
-                          <h3 className="font-semibold text-slate-800">{recipe.name}</h3>
-                          <Badge variant={recipe.is_public ? "default" : "secondary"}>
-                            {recipe.is_public ? 'ציבורי' : 'פרטי'}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-slate-600 mb-2">{recipe.category}</p>
-                        <div className="flex gap-2 text-xs text-slate-500 mb-3">
-                          {recipe.prep_time && <span>⏱️ {recipe.prep_time} דק'</span>}
-                          {recipe.servings && <span>👥 {recipe.servings} מנות</span>}
-                          {recipe.calories_per_serving && <span>🔥 {recipe.calories_per_serving} קק"ל</span>}
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleOpenRecipeDialog(recipe)}
-                            className="flex-1"
-                          >
-                            <Edit className="w-4 h-4 ml-1" />
-                            ערוך
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDeleteRecipe(recipe.id, recipe.name)}
-                            className="text-red-600 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-semibold text-slate-800">{recipe.name}</h3>
+                        <Badge variant={recipe.is_public ? "default" : "secondary"}>
+                          {recipe.is_public ? 'ציבורי' : 'פרטי'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-slate-600">{recipe.category}</p>
+                      {recipe.creator_email && (
+                        <p className="text-xs text-slate-500 mt-1">
+                          נוצר על ידי: {recipe.creator_email}
+                        </p>
+                      )}
+                      <div className="flex gap-2 text-xs text-slate-500 mt-1">
+                        {recipe.prep_time && <span>⏱️ {recipe.prep_time} דק'</span>}
+                        {recipe.servings && <span>👥 {recipe.servings} מנות</span>}
+                        {recipe.calories_per_serving && <span>🔥 {recipe.calories_per_serving} קק"ל</span>}
+                      </div>
+                    </div>
+                    <div className="flex gap-2 flex-shrink-0 flex-wrap">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => toggleRecipeAccess(recipe.id, recipe.is_public)}
+                        className="flex items-center gap-1"
+                      >
+                        {recipe.is_public ? (
+                          <>
+                            <Lock className="w-4 h-4" />
+                            הפוך לפרטי
+                          </>
+                        ) : (
+                          <>
+                            <Unlock className="w-4 h-4" />
+                            הפוך לציבורי
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenRecipeDialog(recipe)}
+                        className="flex items-center gap-1"
+                      >
+                        <Edit className="w-4 h-4" />
+                        ערוך
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteRecipe(recipe.id, recipe.name)}
+                        className="text-red-600 hover:bg-red-50 flex items-center gap-1"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+
+          <div className="bg-slate-50 rounded-lg p-4 space-y-3">
+            <div>
+              <p className="text-sm text-slate-600">
+                <strong>סה"כ מתכונים:</strong> {recipes.length}
+              </p>
+              <p className="text-sm text-slate-600">
+                <strong>ציבוריים:</strong> {recipes.filter(r => r.is_public).length}
+              </p>
+              <p className="text-sm text-slate-600">
+                <strong>פרטיים:</strong> {recipes.filter(r => !r.is_public).length}
+              </p>
+            </div>
+
+            {totalPages > 1 && (
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage(prev => Math.max(1, prev - 1));
+                      }}
+                      href="#"
+                      className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                      <span>הקודם</span>
+                    </PaginationPrevious>
+                  </PaginationItem>
+
+                  {getPageNumbers().map((page, index) => (
+                    <PaginationItem key={index}>
+                      {page === 'ellipsis' ? (
+                        <PaginationEllipsis />
+                      ) : (
+                        <PaginationLink
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(page);
+                          }}
+                          href="#"
+                          isActive={currentPage === page}
+                          className="cursor-pointer"
+                        >
+                          {page}
+                        </PaginationLink>
+                      )}
+                    </PaginationItem>
                   ))}
-                </div>
-              </ScrollArea>
-              
-              {totalPages > 1 && (
-                <div className="mt-4 space-y-2">
-                  <Pagination>
-                    <PaginationContent>
-                      <PaginationItem>
-                        <PaginationPrevious 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setCurrentPage(prev => Math.max(1, prev - 1));
-                          }}
-                          href="#"
-                          className={currentPage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                          <span>הקודם</span>
-                        </PaginationPrevious>
-                      </PaginationItem>
-                      
-                      {getPageNumbers().map((page, index) => (
-                        <PaginationItem key={index}>
-                          {page === 'ellipsis' ? (
-                            <PaginationEllipsis />
-                          ) : (
-                            <PaginationLink
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setCurrentPage(page);
-                              }}
-                              href="#"
-                              isActive={currentPage === page}
-                              className="cursor-pointer"
-                            >
-                              {page}
-                            </PaginationLink>
-                          )}
-                        </PaginationItem>
-                      ))}
-                      
-                      <PaginationItem>
-                        <PaginationNext 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setCurrentPage(prev => Math.min(totalPages, prev + 1));
-                          }}
-                          href="#"
-                          className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
-                        >
-                          <span>הבא</span>
-                          <ChevronLeft className="h-4 w-4" />
-                        </PaginationNext>
-                      </PaginationItem>
-                    </PaginationContent>
-                  </Pagination>
-                  
-                  <p className="text-xs text-slate-500 text-center">
-                    מציג {startIndex + 1}-{Math.min(endIndex, filteredRecipes.length)} מתוך {filteredRecipes.length} מתכונים
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCurrentPage(prev => Math.min(totalPages, prev + 1));
+                      }}
+                      href="#"
+                      className={currentPage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                    >
+                      <span>הבא</span>
+                      <ChevronLeft className="h-4 w-4" />
+                    </PaginationNext>
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+
+            <p className="text-xs text-slate-500 text-center">
+              מציג {startIndex + 1}-{Math.min(endIndex, filteredRecipes.length)} מתוך {filteredRecipes.length} מתכונים
+            </p>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Recipe Dialog */}
       <Dialog open={isRecipeDialogOpen} onOpenChange={setIsRecipeDialogOpen}>
@@ -903,12 +792,12 @@ export default function RecipeAccessManager() {
             >
               {isSavingRecipe ? (
                 <>
-                  <Loader2 className="w-4 h-4 ml-2 animate-spin" />
+                  <Loader2 className="w-4 h-4 ms-2 animate-spin" />
                   שומר...
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4 ml-2" />
+                  <Save className="w-4 h-4 ms-2" />
                   {editingRecipe ? 'עדכן מתכון' : 'צור מתכון'}
                 </>
               )}

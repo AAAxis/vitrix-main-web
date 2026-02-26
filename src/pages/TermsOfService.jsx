@@ -69,7 +69,7 @@ export default function TermsOfService() {
               <p className="text-slate-700 leading-relaxed mb-4">
                 Vitrix היא אפליקציה לניהול חדר כושר המספקת:
               </p>
-              <ul className="list-disc list-inside space-y-2 text-slate-700 mr-4">
+              <ul className="list-disc list-inside space-y-2 text-slate-700 me-4">
                 <li>ניהול מנוי לחדר כושר</li>
                 <li>תוכניות אימון מותאמות אישית</li>
                 <li>מעקב אחר התקדמות ואימונים</li>
@@ -91,7 +91,7 @@ export default function TermsOfService() {
             <CardContent className="space-y-4">
               <div>
                 <h3 className="font-semibold text-slate-800 mb-2">דרישות הרשמה:</h3>
-                <ul className="list-disc list-inside space-y-1 text-slate-700 mr-4">
+                <ul className="list-disc list-inside space-y-1 text-slate-700 me-4">
                   <li>עליך להיות לפחות בן 18 (או גיל הרוב במדינתך)</li>
                   <li>עליך לספק מידע מדויק ומעודכן</li>
                   <li>עליך לשמור על סודיות פרטי הכניסה שלך</li>
@@ -118,7 +118,7 @@ export default function TermsOfService() {
             <CardContent className="space-y-4">
               <div>
                 <h3 className="font-semibold text-slate-800 mb-2">מותר:</h3>
-                <ul className="list-disc list-inside space-y-1 text-slate-700 mr-4">
+                <ul className="list-disc list-inside space-y-1 text-slate-700 me-4">
                   <li>שימוש באפליקציה למטרות אישיות וחוקיות</li>
                   <li>שיתוף תוכן שלך עם מאמנים מורשים</li>
                   <li>שימוש בתכונות כפי שהן מוצעות</li>
@@ -126,7 +126,7 @@ export default function TermsOfService() {
               </div>
               <div>
                 <h3 className="font-semibold text-slate-800 mb-2">אסור:</h3>
-                <ul className="list-disc list-inside space-y-1 text-slate-700 mr-4">
+                <ul className="list-disc list-inside space-y-1 text-slate-700 me-4">
                   <li>שימוש באפליקציה למטרות בלתי חוקיות</li>
                   <li>ניסיון לפרוץ או לפגוע באבטחת האפליקציה</li>
                   <li>העלאת תוכן פוגעני, אלים או לא חוקי</li>

@@ -22,22 +22,23 @@ const ExerciseCard = memo(({ exercise, partIndex, exerciseIndex, onSetChange, on
         setIsPickerOpen(true);
     };
 
-    // Helper function to get image URL from exercise
-    const getImageUrl = (ex) => {
+    // Helper: prefer GIF then image
+    const getMediaUrl = (ex) => {
+        if (ex?.exercisedb_gif_url) {
+            if (ex.exercisedb_gif_url.startsWith('http')) return ex.exercisedb_gif_url;
+            return `https://v2.exercisedb.dev/gifs/${ex.exercisedb_gif_url}`;
+        }
         if (ex?.exercisedb_image_url) {
-            if (ex.exercisedb_image_url.startsWith('http')) {
-                return ex.exercisedb_image_url;
-            }
+            if (ex.exercisedb_image_url.startsWith('http')) return ex.exercisedb_image_url;
             return `https://v2.exercisedb.dev/images/${ex.exercisedb_image_url}`;
         }
-        // Also check for cdn.exercisedb.dev format
         if (ex?.exercisedb_image_url && ex.exercisedb_image_url.includes('cdn.exercisedb.dev')) {
             return ex.exercisedb_image_url;
         }
         return null;
     };
 
-    const imageUrl = getImageUrl(exercise);
+    const imageUrl = getMediaUrl(exercise);
 
     const SetRow = ({ set, setIndex }) => {
         const isTimeBased = set.duration_seconds > 0;
@@ -77,7 +78,7 @@ const ExerciseCard = memo(({ exercise, partIndex, exerciseIndex, onSetChange, on
                                 onSave: (newValue) => onSetChange(partIndex, exerciseIndex, setIndex, 'duration_seconds', newValue),
                                 min: 5, max: 300, step: 5, unit: 'שניות'
                             })}>
-                                <Clock className="w-4 h-4 mr-2" />
+                                <Clock className="w-4 h-4 me-2" />
                                 {set.duration_seconds || 0} שניות
                             </Button>
                         </div>
@@ -91,7 +92,7 @@ const ExerciseCard = memo(({ exercise, partIndex, exerciseIndex, onSetChange, on
                                     onSave: (newValue) => onSetChange(partIndex, exerciseIndex, setIndex, 'weight', newValue),
                                     min: 0, max: 200, step: 0.5, unit: 'ק"ג'
                                 })}>
-                                    <Weight className="w-4 h-4 mr-2" />
+                                    <Weight className="w-4 h-4 me-2" />
                                     {set.weight || 0} ק"ג
                                 </Button>
                             </div>
@@ -103,7 +104,7 @@ const ExerciseCard = memo(({ exercise, partIndex, exerciseIndex, onSetChange, on
                                     onSave: (newValue) => onSetChange(partIndex, exerciseIndex, setIndex, 'repetitions', newValue),
                                     min: 1, max: 50, step: 1, unit: 'חזרות'
                                 })}>
-                                    <Repeat className="w-4 h-4 mr-2" />
+                                    <Repeat className="w-4 h-4 me-2" />
                                     {set.repetitions || 0} חזרות
                                 </Button>
                             </div>

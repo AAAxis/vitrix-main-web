@@ -441,7 +441,7 @@ export default function CoachMeasurementsView({ user }) {
                 </DialogDescription>
               </DialogHeader>
               
-              <ScrollArea className="max-h-[70vh] pr-4">
+              <ScrollArea className="max-h-[70vh] pe-4">
                 <div className="space-y-6">
                   
                   {/* Basic Info */}

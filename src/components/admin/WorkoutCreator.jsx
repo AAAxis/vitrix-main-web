@@ -710,12 +710,12 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
         </div>
         <div className="flex gap-2">
             <Button variant="outline" onClick={resetForm} size="sm" className="text-xs sm:text-sm">
-                <Plus className="w-4 h-4 ml-2" />אימון חדש
+                <Plus className="w-4 h-4 ms-2" />אימון חדש
             </Button>
              <Dialog open={isDuplicateDialogOpen} onOpenChange={setIsDuplicateDialogOpen}>
                 <DialogTrigger asChild>
                     <Button variant="outline" size="sm" className="text-xs sm:text-sm">
-                        <Copy className="w-4 h-4 ml-2" />שכפל
+                        <Copy className="w-4 h-4 ms-2" />שכפל
                     </Button>
                 </DialogTrigger>
                 <DialogContent dir="rtl" className="w-[95vw] max-w-lg max-h-[80vh] overflow-y-auto">
@@ -723,7 +723,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                         <DialogTitle>שכפל אימון קיים</DialogTitle>
                     </DialogHeader>
                     <ScrollArea className="max-h-[60vh] w-full">
-                        <div className="space-y-4 pr-4">
+                        <div className="space-y-4 pe-4">
                             {existingWorkouts.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)).map(workout => (
                                 <Card key={workout.id} className="cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => duplicateWorkout(workout)}>
                                     <CardContent className="p-4">
@@ -732,7 +732,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                                                 <h4 className="font-semibold text-sm sm:text-base truncate">{workout.workout_title}</h4>
                                                 <p className="text-xs sm:text-sm text-slate-600 line-clamp-2">{workout.workout_description}</p>
                                             </div>
-                                            <Badge className={`ml-2 text-xs ${statusColors[workout.status || 'Draft']}`}>
+                                            <Badge className={`ms-2 text-xs ${statusColors[workout.status || 'Draft']}`}>
                                                 {workout.status || 'Draft'}
                                             </Badge>
                                         </div>
@@ -781,7 +781,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                             <span className="truncate">
                               {templates && templates.length > 0 ? 'בחר תבנית לטעינה...' : 'אין תבניות זמינות'}
                             </span>
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-[--radix-popover-trigger-width] max-w-[400px] p-0">
@@ -800,7 +800,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                                       }}
                                       className="text-sm cursor-pointer"
                                     >
-                                      <Check className={cn("mr-2 h-4 w-4 opacity-0")} />
+                                      <Check className={cn("me-2 h-4 w-4 opacity-0")} />
                                       <div className="flex-1">
                                         <div className="font-medium">{template.template_name || template.workout_title || 'תבנית ללא שם'}</div>
                                         {template.workout_description && (
@@ -843,7 +843,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                     className="text-sm"
                   />
                   <ScrollArea className="h-[300px] sm:h-[400px] xl:h-[70vh] mt-4">
-                    <div className="space-y-2 pr-2">
+                    <div className="space-y-2 pe-2">
                       {filteredExercises.map(ex => (
                         <div key={ex.id} className="p-3 rounded-md hover:bg-slate-100 flex justify-between items-center">
                           <div className="flex-1 min-w-0">
@@ -1023,7 +1023,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                                                     users.find(u => u.email === workoutData.target_user_email)?.name || workoutData.target_user_email :
                                                     "בחר מתאמן..."}
                                             </span>
-                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                            <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-[--radix-popover-trigger-width] max-w-[300px] p-0">
@@ -1041,7 +1041,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                                                             }}
                                                             className="text-sm"
                                                         >
-                                                            <Check className={cn("mr-2 h-4 w-4", workoutData.target_user_email === u.email ? "opacity-100" : "opacity-0")} />
+                                                            <Check className={cn("me-2 h-4 w-4", workoutData.target_user_email === u.email ? "opacity-100" : "opacity-0")} />
                                                             <span className="truncate">{u.name} ({u.email})</span>
                                                         </CommandItem>
                                                     ))}
@@ -1095,7 +1095,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                         size="sm"
                         className="text-xs"
                       >
-                        <Send className="w-4 h-4 ml-2" />שלח מיד
+                        <Send className="w-4 h-4 ms-2" />שלח מיד
                       </Button>
                       <Button
                         variant={sendType === 'scheduled' ? 'default' : 'outline'}
@@ -1103,7 +1103,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                         size="sm"
                         className="text-xs"
                       >
-                        <Calendar className="w-4 h-4 ml-2" />תזמן
+                        <Calendar className="w-4 h-4 ms-2" />תזמן
                       </Button>
                     </div>
                     {sendType === 'scheduled' && (
@@ -1124,14 +1124,14 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                       size="sm"
                       className="text-xs flex-1 sm:flex-none"
                     >
-                      <Save className="w-4 h-4 ml-2" />
+                      <Save className="w-4 h-4 ms-2" />
                       {isSaving ? 'שומר...' : 'שמור טיוטה'}
                     </Button>
 
                     <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
                         <DialogTrigger asChild>
                             <Button variant="outline" size="sm" className="text-xs flex-1 sm:flex-none">
-                                <Save className="w-4 h-4 ml-2" />שמור כתבנית
+                                <Save className="w-4 h-4 ms-2" />שמור כתבנית
                             </Button>
                         </DialogTrigger>
                         <DialogContent dir="rtl" className="w-[95vw] max-w-md">
@@ -1167,7 +1167,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                         className="bg-blue-600 hover:bg-blue-700 text-xs flex-1 sm:flex-none"
                         size="sm"
                       >
-                        <Calendar className="w-4 h-4 ml-2" />
+                        <Calendar className="w-4 h-4 ms-2" />
                         {isSaving ? 'שומר...' : 'תזמן שליחה'}
                       </Button>
                     ) : (
@@ -1177,7 +1177,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                         className="bg-green-600 hover:bg-green-700 text-xs flex-1 sm:flex-none"
                         size="sm"
                       >
-                        <Send className="w-4 h-4 ml-2" />
+                        <Send className="w-4 h-4 ms-2" />
                         {isSending ? 'שולח...' : 'שלח אימון'}
                       </Button>
                     )}
@@ -1246,7 +1246,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
                   <DialogFooter className="gap-2 p-4 sm:p-6">
                     <Button variant="outline" onClick={() => setViewedWorkout(null)} size="sm">סגור</Button>
                     <Button onClick={() => handleEditWorkout(viewedWorkout)} size="sm">
-                      <Edit className="w-4 h-4 ml-2" />
+                      <Edit className="w-4 h-4 ms-2" />
                       ערוך / שלח מחדש
                     </Button>
                   </DialogFooter>
@@ -1338,7 +1338,7 @@ export default function WorkoutCreator({ templateToLoad, onTemplateLoaded, user:
       };
 
       const [usersData, groupsData, exercisesData, templatesData, workoutsData] = await Promise.all([
-        loadWithRetry(() => User.listForStaff(currentUser).then(us => us.filter(u => u.role !== 'admin' && u.role !== 'coach' && u.role !== 'trainer')), 'Users'),
+        loadWithRetry(() => User.listForStaff(currentUser).then(us => us.filter(u => u.role !== 'admin' && u.role !== 'trainer')), 'Users'),
         loadWithRetry(() => UserGroup.list(), 'UserGroups'),
         loadWithRetry(() => ExerciseDefinition.list(), 'ExerciseDefinitions'),
         loadWithRetry(() => WorkoutTemplate.list('-created_date'), 'WorkoutTemplates'),
@@ -1637,12 +1637,12 @@ ${exercisesList.map(ex => `- ${ex.name_he} (${ex.category}, ${ex.muscle_group}, 
               >
                 {isLoadingData ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white me-2"></div>
                     מנסה שוב...
                   </>
                 ) : (
                   <>
-                    <RefreshCw className="w-4 h-4 ml-2" />
+                    <RefreshCw className="w-4 h-4 ms-2" />
                     נסה שוב ({retryCount > 0 ? `ניסיון ${retryCount + 1}` : 'ניסיון ראשון'})
                   </>
                 )}
@@ -1768,9 +1768,9 @@ ${exercisesList.map(ex => `- ${ex.name_he} (${ex.category}, ${ex.muscle_group}, 
                     className="flex-1"
                   >
                     {isAnalyzing ? (
-                      <><Loader2 className="w-4 h-4 ml-2 animate-spin" /> מנתח...</>
+                      <><Loader2 className="w-4 h-4 ms-2 animate-spin" /> מנתח...</>
                     ) : (
-                      <><Wand2 className="w-4 h-4 ml-2" /> נתח עם AI</>
+                      <><Wand2 className="w-4 h-4 ms-2" /> נתח עם AI</>
                     )}
                   </Button>
                 </div>
@@ -1876,9 +1876,9 @@ ${exercisesList.map(ex => `- ${ex.name_he} (${ex.category}, ${ex.muscle_group}, 
                         className="flex-1"
                       >
                         {isSavingText ? (
-                          <><Loader2 className="w-4 h-4 ml-2 animate-spin" /> שומר...</>
+                          <><Loader2 className="w-4 h-4 ms-2 animate-spin" /> שומר...</>
                         ) : (
-                          <><Save className="w-4 h-4 ml-2" /> שמור כתבנית</>
+                          <><Save className="w-4 h-4 ms-2" /> שמור כתבנית</>
                         )}
                       </Button>
                       
@@ -1886,7 +1886,7 @@ ${exercisesList.map(ex => `- ${ex.name_he} (${ex.category}, ${ex.muscle_group}, 
                         onClick={handleSendAnalyzedWorkout}
                         className="flex-1"
                       >
-                        <Send className="w-4 h-4 ml-2" />
+                        <Send className="w-4 h-4 ms-2" />
                         שלח למתאמנים
                       </Button>
                     </div>

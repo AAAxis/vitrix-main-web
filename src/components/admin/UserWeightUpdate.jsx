@@ -38,7 +38,7 @@ export default function UserWeightUpdate() {
             setStatus('loading');
             try {
                 const allUsers = await User.list();
-                setUsers(allUsers.filter(u => u.role !== 'admin' && u.role !== 'coach'));
+                setUsers(allUsers.filter(u => u.role !== 'admin'));
                 setStatus('');
             } catch (err) {
                 setStatus('error');
@@ -209,7 +209,7 @@ export default function UserWeightUpdate() {
                         </div>
                         
                         <Button onClick={handleSaveMeasurement} disabled={status === 'saving'}>
-                            {status === 'saving' ? <><Loader2 className="w-4 h-4 animate-spin mr-2"/>שומר...</> : <><Save className="w-4 h-4 mr-2"/>שמור מדידה</>}
+                            {status === 'saving' ? <><Loader2 className="w-4 h-4 animate-spin me-2"/>שומר...</> : <><Save className="w-4 h-4 me-2"/>שמור מדידה</>}
                         </Button>
                         
                         {statusMessage && (

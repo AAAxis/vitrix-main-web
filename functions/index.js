@@ -650,3 +650,71 @@ exports.health = onRequest(async (req, res) => {
     version: '2.0.0',
   });
 });
+
+// Proxy ExerciseDB images/GIFs for web (avoids CORS). No auth required - only allows known ExerciseDB origins.
+const EXERCISE_MEDIA_ORIGINS = [
+  'https://cdn.exercisedb.dev',
+  'https://v2.exercisedb.dev',
+  'https://v2.exercisedb.io',
+  'https://exercisedb.p.rapidapi.com',
+];
+
+exports.exerciseImageProxy = onRequest(async (req, res) => {
+  // CORS: allow web app origins
+  res.set('Access-Control-Allow-Origin', '*');
+  if (req.method === 'OPTIONS') {
+    res.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+    res.set('Access-Control-Allow-Headers', 'Content-Type');
+    res.status(204).send('');
+    return;
+  }
+  if (req.method !== 'GET') {
+    res.status(405).send('Method not allowed');
+    return;
+  }
+
+  const rawUrl = req.query.url;
+  if (!rawUrl || typeof rawUrl !== 'string') {
+    res.status(400).send('Missing url');
+    return;
+  }
+  let targetUrl;
+  try {
+    targetUrl = decodeURIComponent(rawUrl);
+  } catch {
+    res.status(400).send('Invalid url');
+    return;
+  }
+  const allowed = EXERCISE_MEDIA_ORIGINS.some(origin => targetUrl.startsWith(origin));
+  if (!allowed) {
+    res.status(403).send('URL not allowed');
+    return;
+  }
+
+  const isRapidAPI = targetUrl.startsWith('https://exercisedb.p.rapidapi.com/');
+  const apiKey = process.env.EXERCISEDB_RAPIDAPI_KEY || process.env.VITE_EXERCISEDB_RAPIDAPI_KEY || '19a9c82334msh8f9441d42ac9c20p1eb287jsnf6c9f6f8eb4b';
+  const fetchOptions = {
+    headers: {Accept: 'image/*'},
+    redirect: 'follow',
+  };
+  if (isRapidAPI) {
+    fetchOptions.headers['x-rapidapi-host'] = 'exercisedb.p.rapidapi.com';
+    fetchOptions.headers['x-rapidapi-key'] = apiKey;
+  }
+
+  try {
+    const response = await fetch(targetUrl, fetchOptions);
+    if (!response.ok) {
+      res.status(response.status).send('Upstream error');
+      return;
+    }
+    const contentType = response.headers.get('content-type') || 'image/gif';
+    const buffer = Buffer.from(await response.arrayBuffer());
+    res.set('Content-Type', contentType);
+    res.set('Cache-Control', 'public, max-age=86400');
+    res.send(buffer);
+  } catch (err) {
+    console.error('Exercise image proxy error:', err);
+    res.status(502).send('Proxy error');
+  }
+});

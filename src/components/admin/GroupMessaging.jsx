@@ -645,12 +645,12 @@ export default function GroupMessaging({ groups }) {
                             >
                                 {isSending ? (
                                     <>
-                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white me-2"></div>
                                         שולח הודעה...
                                     </>
                                 ) : (
                                     <>
-                                        <Send className="w-4 h-4 mr-2" />
+                                        <Send className="w-4 h-4 me-2" />
                                         שלח הודעה
                                     </>
                                 )}
@@ -667,7 +667,7 @@ export default function GroupMessaging({ groups }) {
                                 </TabsList>
                                 <TabsContent value="sent" className="space-y-4 pt-4">
                                     {messages.length > 0 ? (
-                                        <ScrollArea className="h-[calc(100vh-250px)] pr-4"> {/* Adjust height as needed */}
+                                        <ScrollArea className="h-[calc(100vh-250px)] pe-4"> {/* Adjust height as needed */}
                                             <div className="space-y-4">
                                                 <AnimatePresence>
                                                     {messages.map((message, index) => { // Removed slice(0,10) to show all
@@ -746,7 +746,7 @@ export default function GroupMessaging({ groups }) {
                                                                                 )}
                                                                             </div>
                                                                         </div>
-                                                                        <div className="space-y-2 max-h-32 overflow-y-auto pr-2">
+                                                                        <div className="space-y-2 max-h-32 overflow-y-auto pe-2">
                                                                             {message.read_receipts
                                                                                 .sort((a, b) => new Date(b.read_timestamp || 0) - new Date(a.read_timestamp || 0))
                                                                                 .map((receipt, idx) => (

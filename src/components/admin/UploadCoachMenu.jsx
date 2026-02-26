@@ -23,7 +23,7 @@ export default function UploadCoachMenu() {
     const fetchData = async () => {
         try {
             const users = await User.list();
-            setAllUsers(users.filter(u => u.role !== 'admin' && u.role !== 'coach')); // Don't show admins/coaches
+            setAllUsers(users.filter(u => u.role !== 'admin')); // Don't show admins
             
             // Load recent menus for display
             const menus = await CoachMenu.list();
@@ -123,7 +123,7 @@ export default function UploadCoachMenu() {
               accept="image/*,.pdf" 
               onChange={handleFileChange} 
               disabled={isUploading} 
-              className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+              className="file:me-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
             />
             {file && (
               <p className="text-sm text-green-600 flex items-center gap-1">
@@ -157,12 +157,12 @@ export default function UploadCoachMenu() {
           >
             {isUploading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
                 מעלה תפריט...
               </>
             ) : (
               <>
-                <UploadCloud className="mr-2 h-4 w-4" />
+                <UploadCloud className="me-2 h-4 w-4" />
                 העלה וקשר למתאמן
               </>
             )}

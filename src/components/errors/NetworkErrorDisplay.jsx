@@ -131,12 +131,12 @@ export default function NetworkErrorDisplay({ onRetry }) {
               >
                 {isRetrying ? (
                   <>
-                    <RotateCw className="w-4 h-4 ml-2 animate-spin" />
+                    <RotateCw className="w-4 h-4 ms-2 animate-spin" />
                     מנסה שוב...
                   </>
                 ) : (
                   <>
-                    <RotateCw className="w-4 h-4 ml-2" />
+                    <RotateCw className="w-4 h-4 ms-2" />
                     {!isOnline ? 'המתן לחיבור לאינטרנט' : 'נסה שוב'}
                   </>
                 )}
@@ -147,7 +147,7 @@ export default function NetworkErrorDisplay({ onRetry }) {
                 variant="outline"
                 className="w-full"
               >
-                <RefreshCw className="w-4 h-4 ml-2" />
+                <RefreshCw className="w-4 h-4 ms-2" />
                 רענן דף
               </Button>
 
@@ -157,7 +157,7 @@ export default function NetworkErrorDisplay({ onRetry }) {
                   variant="outline"
                   className="w-full border-red-200 text-red-600 hover:bg-red-50"
                 >
-                  <AlertTriangle className="w-4 h-4 ml-2" />
+                  <AlertTriangle className="w-4 h-4 ms-2" />
                   נקה Cache ורענן
                 </Button>
               )}

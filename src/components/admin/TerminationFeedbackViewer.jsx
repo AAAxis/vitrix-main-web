@@ -72,7 +72,7 @@ const FeedbackListItem = ({ feedback, onSelect, onDeleteRequest }) => {
                     <Separator className="my-3"/>
                     <div className="flex justify-between items-center text-sm">
                          <div className="flex items-center gap-2 text-slate-600">
-                            <Calendar className="w-4 h-4 ml-1"/>
+                            <Calendar className="w-4 h-4 ms-1"/>
                             <span>{format(new Date(feedback.submitted_at), 'dd/MM/yy HH:mm')}</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -82,7 +82,7 @@ const FeedbackListItem = ({ feedback, onSelect, onDeleteRequest }) => {
                     </div>
                 </div>
             </DialogTrigger>
-            <div className="absolute top-2 left-2">
+            <div className="absolute top-2 start-2">
                 <Button variant="ghost" size="icon" className="w-8 h-8 text-slate-400 hover:text-red-500 hover:bg-red-50" onClick={(e) => { e.stopPropagation(); onDeleteRequest(feedback); }}>
                     <Trash2 className="w-4 h-4" />
                 </Button>
@@ -197,7 +197,7 @@ export default function TerminationFeedbackViewer() {
             <div className="py-2">
                 <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">{label}</p>
                 {isQuote ? (
-                     <p className="text-slate-800 italic border-l-4 border-slate-200 pl-3 mt-1">"{value}"</p>
+                     <p className="text-slate-800 italic border-s-4 border-slate-200 ps-3 mt-1">"{value}"</p>
                 ) : (
                     <p className="text-slate-800">{Array.isArray(value) ? value.join(', ') : value}</p>
                 )}
@@ -228,12 +228,12 @@ export default function TerminationFeedbackViewer() {
             </CardHeader>
             <CardContent>
                 <div className="mb-4 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <Input
                         placeholder="חיפוש לפי שם או אימייל..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
+                        className="ps-10"
                     />
                 </div>
 
@@ -340,7 +340,7 @@ export default function TerminationFeedbackViewer() {
                                                                         <span className="font-semibold text-blue-600">{w.answer}</span>
                                                                     </div>
                                                                     {w.details && (
-                                                                        <div className="mt-2 text-sm text-slate-500 italic p-2 bg-slate-100 rounded-md border-r-4 border-slate-300 pr-3">
+                                                                        <div className="mt-2 text-sm text-slate-500 italic p-2 bg-slate-100 rounded-md border-e-4 border-slate-300 pe-3">
                                                                             <strong>פירוט:</strong> {w.details}
                                                                         </div>
                                                                     )}
@@ -367,7 +367,7 @@ export default function TerminationFeedbackViewer() {
                                                 <div>
                                                     <p className="text-sm font-semibold text-slate-600 mb-1">אישור פרסום:</p>
                                                     <Badge variant={selectedFeedback.publish_permission ? 'default' : 'destructive'} className={selectedFeedback.publish_permission ? 'bg-green-100 border-green-300 text-green-700' : 'bg-red-100 border-red-300 text-red-700'}>
-                                                        {selectedFeedback.publish_permission ? <><CheckCircle className="w-4 h-4 ml-1" /> ניתן לפרסום</> : <><XCircle className="w-4 h-4 ml-1" /> לא לפרסום</>}
+                                                        {selectedFeedback.publish_permission ? <><CheckCircle className="w-4 h-4 ms-1" /> ניתן לפרסום</> : <><XCircle className="w-4 h-4 ms-1" /> לא לפרסום</>}
                                                     </Badge>
                                                 </div>
                                             </CardContent>
@@ -401,7 +401,7 @@ export default function TerminationFeedbackViewer() {
                                 onClick={handleDelete}
                                 disabled={isDeleting}
                             >
-                                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin ml-2" /> : 'מחק'}
+                                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin ms-2" /> : 'מחק'}
                             </Button>
                         </AlertDialogFooter>
                     </AlertDialogContent>

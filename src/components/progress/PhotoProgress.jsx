@@ -164,7 +164,7 @@ export default function PhotoProgress() {
           }}>
             <DialogTrigger asChild>
                 <Button>
-                    <Plus className="w-4 h-4 mr-2" />
+                    <Plus className="w-4 h-4 me-2" />
                     הוסף תמונה
                 </Button>
             </DialogTrigger>
@@ -193,7 +193,7 @@ export default function PhotoProgress() {
                  <div className="space-y-2">
                      <Label>העלאת תמונה</Label>
                      <Input type="file" accept="image/*" onChange={handleFileChange} />
-                     {isUploading && <div className="flex items-center"><Loader2 className="w-4 h-4 animate-spin mr-2" /> <span>מעלה...</span></div>}
+                     {isUploading && <div className="flex items-center"><Loader2 className="w-4 h-4 animate-spin me-2" /> <span>מעלה...</span></div>}
                      {previewUrl && <img src={previewUrl} alt="תצוגה מקדימה" className="mt-2 rounded-lg max-h-48" />}
                      {uploadError && <p className="text-red-500 text-sm mt-2">{uploadError}</p>}
                  </div>

@@ -50,7 +50,7 @@ const FullscreenVideoPlayer = ({ videoUrl, onClose }) => {
         <div className="relative w-full h-full">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-50 w-12 h-12 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-all"
+            className="absolute top-4 end-4 z-50 w-12 h-12 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-all"
             aria-label="Close video player"
           >
             <X className="w-8 h-8" />
@@ -181,7 +181,7 @@ export default function LecturesViewer() {
     return (
       <div className="flex justify-center items-center py-12">
         <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
-        <span className="mr-3 text-slate-600">טוען ספריית הרצאות...</span>
+        <span className="me-3 text-slate-600">טוען ספריית הרצאות...</span>
       </div>
     );
   }
@@ -194,7 +194,7 @@ export default function LecturesViewer() {
           <h3 className="text-xl font-semibold text-red-700 mb-2">שגיאה בטעינת ההרצאות</h3>
           <p className="text-red-600 mb-4">{error}</p>
           <Button onClick={loadData} variant="outline" className="border-red-300 text-red-700 hover:bg-red-50">
-            <Clock className="w-4 h-4 mr-2" />
+            <Clock className="w-4 h-4 me-2" />
             נסה שוב
           </Button>
         </CardContent>
@@ -262,7 +262,7 @@ export default function LecturesViewer() {
                     </div>
                   )}
                   
-                  <div className="absolute top-3 right-3">
+                  <div className="absolute top-3 end-3">
                     <Badge className={`${lectureStatus.color} font-medium shadow-sm`}>
                       {lectureStatus.label}
                     </Badge>
@@ -274,7 +274,7 @@ export default function LecturesViewer() {
                       onClick={() => handleWatchLecture(lecture)}
                       className="bg-white/90 text-purple-700 hover:bg-white border-0 shadow-lg backdrop-blur-sm"
                     >
-                      <PlayCircle className="w-6 h-6 ml-2" />
+                      <PlayCircle className="w-6 h-6 ms-2" />
                       צפה עכשיו
                     </Button>
                   </div>

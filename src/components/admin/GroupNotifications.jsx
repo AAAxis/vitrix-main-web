@@ -61,8 +61,8 @@ export default function GroupNotifications() {
   const loadGroupUsers = async () => {
     try {
       const users = await User.filter({ group_names: { $in: [selectedGroup] } });
-      // Filter out admins and coaches
-      const traineeUsers = users.filter(u => u.role !== 'admin' && u.role !== 'coach');
+      // Filter out admins and trainers
+      const traineeUsers = users.filter(u => u.role !== 'admin' && u.role !== 'trainer');
       setGroupUsers(traineeUsers);
     } catch (error) {
       console.error('Error loading group users:', error);
@@ -224,7 +224,7 @@ export default function GroupNotifications() {
                         <Users className="w-4 h-4" />
                         <span>{group.name}</span>
                         {selectedGroup === group.name && (
-                          <Badge variant="secondary" className="mr-2">
+                          <Badge variant="secondary" className="me-2">
                             {userCount} חברים
                           </Badge>
                         )}
@@ -294,12 +294,12 @@ export default function GroupNotifications() {
               >
                 {isSendingNotification ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 me-2 animate-spin" />
                     שולח התראות...
                   </>
                 ) : (
                   <>
-                    <Send className="w-4 h-4 mr-2" />
+                    <Send className="w-4 h-4 me-2" />
                     שלח התראות Push לכל חברי הקבוצה
                   </>
                 )}
@@ -339,12 +339,12 @@ export default function GroupNotifications() {
               >
                 {isSendingEmail ? (
                   <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    <Loader2 className="w-4 h-4 me-2 animate-spin" />
                     שולח אימיילים...
                   </>
                 ) : (
                   <>
-                    <Send className="w-4 h-4 mr-2" />
+                    <Send className="w-4 h-4 me-2" />
                     שלח אימיילים לכל חברי הקבוצה
                   </>
                 )}

@@ -52,7 +52,7 @@ export default function UserInvitation() {
     }
   };
 
-  // Function to load coaches (system admin: all admin/coach/trainer; trainer: only self)
+  // Function to load coaches (system admin: all admin/trainer; trainer: only self)
   const loadCoaches = async () => {
     setIsLoadingCoaches(true);
     try {
@@ -70,7 +70,7 @@ export default function UserInvitation() {
         return;
       }
       const allUsers = await User.list();
-      const adminUsers = allUsers.filter(u => (u.role === 'admin' || u.role === 'coach' || u.role === 'trainer') && u.email && u.name);
+      const adminUsers = allUsers.filter(u => (u.role === 'admin' || u.role === 'trainer') && u.email && u.name);
       setCoaches(adminUsers);
     } catch (error) {
       console.error('Error loading coaches:', error);
@@ -254,7 +254,7 @@ export default function UserInvitation() {
                         ? "טוען מאמנים..." 
                         : "בחר מאמן מהרשימה"}
                     </span>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" dir="rtl">
@@ -271,7 +271,7 @@ export default function UserInvitation() {
                           >
                             <Check
                               className={cn(
-                                "mr-2 h-4 w-4",
+                                "me-2 h-4 w-4",
                                 selectedCoach?.email === coach.email ? "opacity-100" : "opacity-0"
                               )}
                             />
@@ -299,7 +299,7 @@ export default function UserInvitation() {
             )}
 
             <Button type="submit" disabled={isLoading} className="w-full">
-              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isLoading ? <Loader2 className="me-2 h-4 w-4 animate-spin" /> : null}
               {isLoading ? 'שולח...' : 'שלח הזמנה'}
             </Button>
           </form>
@@ -385,7 +385,7 @@ function MobileInviteLinkGenerator({ coaches, isLoadingCoaches }) {
                   ? "טוען מאמנים..." 
                   : "בחר מאמן מהרשימה"}
               </span>
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-[--radix-popover-trigger-width] p-0" dir="rtl">
@@ -402,7 +402,7 @@ function MobileInviteLinkGenerator({ coaches, isLoadingCoaches }) {
                     >
                       <Check
                         className={cn(
-                          "mr-2 h-4 w-4",
+                          "me-2 h-4 w-4",
                           selectedCoach?.email === coach.email ? "opacity-100" : "opacity-0"
                         )}
                       />
@@ -439,7 +439,7 @@ function MobileInviteLinkGenerator({ coaches, isLoadingCoaches }) {
             >
               {copiedLink ? (
                 <>
-                  <Check className="mr-2 h-4 w-4" />
+                  <Check className="me-2 h-4 w-4" />
                   הקישור הועתק!
                 </>
               ) : (

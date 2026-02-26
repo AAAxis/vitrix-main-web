@@ -291,12 +291,12 @@ export default function MealPlanner({ user, onUpdateMeals }) {
                             <div>
                                 <Label>חיפוש</Label>
                                 <div className="relative">
-                                    <Search className="absolute right-3 top-3 w-4 h-4 text-gray-400" />
+                                    <Search className="absolute end-3 top-3 w-4 h-4 text-gray-400" />
                                     <Input
                                         placeholder="חפש מזון..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="pr-10"
+                                        className="pe-10"
                                     />
                                 </div>
                             </div>
@@ -476,12 +476,12 @@ export default function MealPlanner({ user, onUpdateMeals }) {
                                 >
                                     {isSaving ? (
                                         <>
-                                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                            <Loader2 className="w-4 h-4 me-2 animate-spin" />
                                             מוסיף...
                                         </>
                                     ) : (
                                         <>
-                                            <Plus className="w-4 h-4 mr-2" />
+                                            <Plus className="w-4 h-4 me-2" />
                                             הוסף לתפריט
                                         </>
                                     )}
