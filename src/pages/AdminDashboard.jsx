@@ -586,13 +586,13 @@ export default function AdminDashboard({ activeTab: externalActiveTab, setActive
                     <div className={`w-12 h-12 flex-shrink-0 rounded-lg flex items-center justify-center text-2xl p-2 bg-gradient-to-br ${category.color}`}>
                       {category.icon}
                     </div>
-                    <div className="flex-grow">
-                      <div className="flex justify-between items-start">
+                    <div className="flex-grow min-w-0" dir="rtl">
+                      <div className="flex justify-between items-start gap-2">
                         <CardTitle className="text-base font-bold text-slate-800">
                           {category.title}
                         </CardTitle>
                         {isExpanded && (
-                          <Badge variant="outline" className="text-blue-600 border-blue-400">
+                          <Badge variant="outline" className="text-blue-600 border-blue-400 flex-shrink-0">
                             פעיל
                           </Badge>
                         )}

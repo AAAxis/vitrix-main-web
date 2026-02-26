@@ -357,9 +357,9 @@ export default function AssignTasks() {
 
             {assignMode === 'individual' ? (
                 <div className="space-y-2">
-                    <Label htmlFor="user-select">בחר מתאמן להפעלה</Label>
+                    <Label htmlFor="user-select" className="text-end block title-rtl">בחר מתאמן להפעלה</Label>
                     <Select onValueChange={handleUserSelect} disabled={showPinInput || isLoading}>
-                        <SelectTrigger id="user-select">
+                        <SelectTrigger id="user-select" className="text-end">
                             <SelectValue placeholder="בחר מתאמן..." />
                         </SelectTrigger>
                         <SelectContent>
@@ -379,9 +379,9 @@ export default function AssignTasks() {
                 </div>
             ) : (
                 <div className="space-y-2">
-                    <Label htmlFor="group-select">בחר קבוצה להפעלה</Label>
+                    <Label htmlFor="group-select" className="text-end block title-rtl">בחר קבוצה להפעלה</Label>
                     <Select onValueChange={handleGroupSelect} disabled={showPinInput || isLoading}>
-                        <SelectTrigger id="group-select">
+                        <SelectTrigger id="group-select" className="text-end">
                             <SelectValue placeholder="בחר קבוצה..." />
                         </SelectTrigger>
                         <SelectContent>

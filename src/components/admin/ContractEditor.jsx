@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Loader2, Save, AlertCircle } from 'lucide-react';
+import { Loader2, Save } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -79,50 +79,49 @@ export default function ContractEditor() {
     }
 
     return (
-        <ScrollArea className="h-[70vh]">
-            <div className="space-y-4 p-1">
-                <Alert>
-                    <AlertCircle className="h-4 w-4" />
+        <ScrollArea className="h-[70vh]" dir="rtl">
+            <div className="space-y-4 p-1 text-end w-full" dir="rtl">
+                <Alert className="text-end title-rtl desc-rtl" dir="rtl">
                     <AlertTitle>הנחיות עריכה</AlertTitle>
-                    <AlertDescription>
+                    <AlertDescription className="text-end">
                         כדי להתאים טקסט למין המשתמש, השתמש בתחביר הבא: <strong>[MALE]טקסט לזכר[FEMALE]טקסט לנקבה[/MALE]</strong>.
                         <br/>
                         בתיבת "סעיפי התחייבות", כל שורה חדשה תייצג סעיף נפרד בחוזה.
                     </AlertDescription>
                 </Alert>
 
-                {error && <div className="text-sm text-red-500 bg-red-50 p-2 rounded">{error}</div>}
-                {success && <div className="text-sm text-green-500 bg-green-50 p-2 rounded">{success}</div>}
+                {error && <div className="text-sm text-red-500 bg-red-50 p-2 rounded text-end" dir="rtl">{error}</div>}
+                {success && <div className="text-sm text-green-500 bg-green-50 p-2 rounded text-end" dir="rtl">{success}</div>}
 
                 <div className="space-y-2">
-                    <Label htmlFor="title">כותרת ראשית</Label>
-                    <Input id="title" value={contract.title || ''} onChange={handleInputChange} />
+                    <Label htmlFor="title" className="text-end block title-rtl">כותרת ראשית</Label>
+                    <Input id="title" value={contract.title || ''} onChange={handleInputChange} className="text-end" dir="rtl" />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="instructions">הוראות פתיחה</Label>
-                    <Input id="instructions" value={contract.instructions || ''} onChange={handleInputChange} />
+                    <Label htmlFor="instructions" className="text-end block title-rtl">הוראות פתיחה</Label>
+                    <Input id="instructions" value={contract.instructions || ''} onChange={handleInputChange} className="text-end" dir="rtl" />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="intro_paragraph">פסקת פתיחה</Label>
-                    <Textarea id="intro_paragraph" value={contract.intro_paragraph || ''} onChange={handleInputChange} />
+                    <Label htmlFor="intro_paragraph" className="text-end block title-rtl">פסקת פתיחה</Label>
+                    <Textarea id="intro_paragraph" value={contract.intro_paragraph || ''} onChange={handleInputChange} className="text-end" dir="rtl" />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="commitment_header">כותרת סעיפי התחייבות</Label>
-                    <Input id="commitment_header" value={contract.commitment_header || ''} onChange={handleInputChange} />
+                    <Label htmlFor="commitment_header" className="text-end block title-rtl">כותרת סעיפי התחייבות</Label>
+                    <Input id="commitment_header" value={contract.commitment_header || ''} onChange={handleInputChange} className="text-end" dir="rtl" />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="commitments">סעיפי התחייבות (כל סעיף בשורה)</Label>
-                    <Textarea id="commitments" value={contract.commitments || ''} onChange={handleInputChange} rows={8} />
+                    <Label htmlFor="commitments" className="text-end block title-rtl">סעיפי התחייבות (כל סעיף בשורה)</Label>
+                    <Textarea id="commitments" value={contract.commitments || ''} onChange={handleInputChange} rows={8} className="text-end" dir="rtl" />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="success_paragraph">פסקת "הצלחה"</Label>
-                    <Textarea id="success_paragraph" value={contract.success_paragraph || ''} onChange={handleInputChange} />
+                    <Label htmlFor="success_paragraph" className="text-end block title-rtl">פסקת "הצלחה"</Label>
+                    <Textarea id="success_paragraph" value={contract.success_paragraph || ''} onChange={handleInputChange} className="text-end" dir="rtl" />
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="partnership_paragraph">פסקת "שותפות"</Label>
-                    <Textarea id="partnership_paragraph" value={contract.partnership_paragraph || ''} onChange={handleInputChange} />
+                    <Label htmlFor="partnership_paragraph" className="text-end block title-rtl">פסקת "שותפות"</Label>
+                    <Textarea id="partnership_paragraph" value={contract.partnership_paragraph || ''} onChange={handleInputChange} className="text-end" dir="rtl" />
                 </div>
-                <Button onClick={handleSave} disabled={isSaving} className="w-full">
+                <Button onClick={handleSave} disabled={isSaving} className="w-full justify-center" dir="rtl">
                     {isSaving ? <><Loader2 className="w-4 h-4 me-2 animate-spin" /> שומר...</> : <><Save className="w-4 h-4 me-2" /> שמור שינויים</>}
                 </Button>
             </div>

@@ -69,8 +69,6 @@ import { format, addDays, parseISO, addWeeks, startOfWeek, endOfWeek } from 'dat
 import { he } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const TASK_RESET_CODE = "1010";
-
 const predefinedTasksMale = [
     {
         week: 1,
@@ -253,7 +251,6 @@ export default function WeeklyTaskManager() {
     const [selectedUser, setSelectedUser] = useState(''); // Stores email string for assign tab
     const [selectedGroup, setSelectedGroup] = useState('');
     const [newStartDate, setNewStartDate] = useState(new Date()); // Date object for setting new booster start date
-    const [resetCode, setResetCode] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isProcessing, setIsProcessing] = useState(false);
     const [feedback, setFeedback] = useState({ type: '', message: '' });
@@ -379,11 +376,6 @@ export default function WeeklyTaskManager() {
     };
 
     const handleResetTasks = async () => {
-        if (resetCode !== TASK_RESET_CODE) {
-            showFeedback('error', 'קוד איפוס שגוי.');
-            return;
-        }
-
         const targetUsers = getTargetUsers();
         if (targetUsers.length === 0) {
             showFeedback('error', 'יש לבחור מתאמן או קבוצה.');
@@ -410,7 +402,6 @@ export default function WeeklyTaskManager() {
             }
 
             showFeedback('success', 'משימות הבוסטר אופסו בהצלחה.');
-            setResetCode('');
             await loadData();
         } catch (error) {
             console.error('Error resetting tasks:', error);
@@ -926,43 +917,43 @@ export default function WeeklyTaskManager() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6" dir="rtl">
             {feedback.message && (
-                <Alert className={`${feedback.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-                    <AlertTriangle className={`h-4 w-4 ${feedback.type === 'success' ? 'text-green-600' : 'text-red-600'}`} />
+                <Alert className={`text-end ${feedback.type === 'success' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
+                    <AlertTriangle className={`h-4 w-4 shrink-0 ${feedback.type === 'success' ? 'text-green-600' : 'text-red-600'}`} />
                     <AlertDescription className={feedback.type === 'success' ? 'text-green-700' : 'text-red-700'}>
                         {feedback.message}
                     </AlertDescription>
                 </Alert>
             )}
 
-            <Card className="muscle-glass border-0 shadow-lg">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                        <Target className="w-5 h-5 text-purple-600" />
+            <Card className="muscle-glass border-0 shadow-lg text-end">
+                <CardHeader className="text-end">
+                    <CardTitle className="flex items-center gap-2 justify-start">
+                        <Target className="w-5 h-5 text-purple-600 shrink-0" />
                         ניהול משימות שבועיות - תוכנית בוסטר
                     </CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-start w-full block">
                         ניהול מתקדם של משימות שבועיות עבור מתאמנים בתוכנית הבוסטר
                     </CardDescription>
                 </CardHeader>
             </Card>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3"> {/* Changed to 3 for new tab */}
-                    <TabsTrigger value="assign">הקצאת משימות</TabsTrigger>
-                    <TabsTrigger value="freeze-unfreeze-control">הקפאה והפשרה</TabsTrigger> {/* New Tab */}
-                    <TabsTrigger value="overview">סקירה נוכחית</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-3 text-end">
+                    <TabsTrigger value="assign" className="text-end">הקצאת משימות</TabsTrigger>
+                    <TabsTrigger value="freeze-unfreeze-control" className="text-end">הקפאה והפשרה</TabsTrigger>
+                    <TabsTrigger value="overview" className="text-end">סקירה נוכחית</TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="assign" className="mt-6 space-y-6">
-                    <Card className="muscle-glass border-0 shadow-lg">
+                <TabsContent value="assign" className="mt-6 space-y-6 text-end">
+                    <Card className="muscle-glass border-0 shadow-lg text-end">
                         <CardContent className="space-y-6">
                             <div className="space-y-4 p-4 bg-slate-50 rounded-lg">
                                 <h4 className="font-semibold text-slate-700">בחירת יעד</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <Label>סוג יעד</Label>
+                                        <Label className="text-end block">סוג יעד</Label>
                                         <Select value={targetType} onValueChange={setTargetType}>
                                             <SelectTrigger>
                                                 <SelectValue />
@@ -974,10 +965,10 @@ export default function WeeklyTaskManager() {
                                         </Select>
                                     </div>
                                     <div>
-                                        <Label>בחר {targetType === 'user' ? 'מתאמן' : 'קבוצה'}</Label>
+                                        <Label className="text-end block title-rtl">בחר {targetType === 'user' ? 'מתאמן' : 'קבוצה'}</Label>
                                         {targetType === 'user' ? (
                                             <Select value={selectedUser} onValueChange={setSelectedUser}>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="text-end" dir="rtl">
                                                     <SelectValue placeholder="בחר מתאמן..." />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -995,7 +986,7 @@ export default function WeeklyTaskManager() {
                                             </Select>
                                         ) : (
                                             <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-                                                <SelectTrigger>
+                                                <SelectTrigger className="text-end" dir="rtl">
                                                     <SelectValue placeholder="בחר קבוצה..." />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -1011,7 +1002,7 @@ export default function WeeklyTaskManager() {
                                 </div>
 
                                 {getTargetUsers().length > 0 && (
-                                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                                    <div className="mt-4 p-3 bg-blue-50 rounded-lg text-end">
                                         <h5 className="font-medium text-blue-800 mb-2">מתאמנים נבחרים ({getTargetUsers().length}):</h5>
                                         <div className="flex flex-wrap gap-2">
                                             {getTargetUsers().map(user => {
@@ -1027,23 +1018,23 @@ export default function WeeklyTaskManager() {
                                 )}
                             </div>
 
-                            <div className="space-y-4 p-4 border rounded-lg">
-                                <h4 className="font-semibold flex items-center gap-2">
-                                    <Calendar1 className="w-5 h-5 text-green-600" />
+                            <div className="space-y-4 p-4 border rounded-lg text-end" dir="rtl">
+                                <h4 className="font-semibold flex items-center gap-2 justify-center title-rtl">
+                                    <Calendar1 className="w-5 h-5 text-green-600 shrink-0" />
                                     קביעת תאריך התחלה חדש
                                 (מגדיר תאריכי משימות לכל 12 השבועות)
                                 </h4>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div>
-                                        <Label>תאריך התחלה חדש</Label>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                                    <div className="space-y-2">
+                                        <Label className="text-end block title-rtl">תאריך התחלה חדש</Label>
                                         <Popover>
                                             <PopoverTrigger asChild>
-                                                <Button variant="outline" className="w-full justify-start">
-                                                    <Calendar1 className="me-2 h-4 w-4" />
+                                                <Button variant="outline" className="w-full justify-end text-end" dir="rtl">
+                                                    <Calendar1 className="me-2 h-4 w-4 shrink-0" />
                                                     {format(newStartDate, 'dd/MM/yyyy')}
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0">
+                                            <PopoverContent className="w-auto p-0" dir="rtl" align="end">
                                                 <Calendar
                                                     mode="single"
                                                     selected={newStartDate}
@@ -1053,11 +1044,12 @@ export default function WeeklyTaskManager() {
                                             </PopoverContent>
                                         </Popover>
                                     </div>
-                                    <div className="flex items-end">
+                                    <div>
                                         <Button
                                             onClick={handleSetStartDate}
                                             disabled={isProcessing || getTargetUsers().length === 0}
-                                            className="w-full bg-green-600 hover:bg-green-700"
+                                            className="w-full bg-green-600 hover:bg-green-700 justify-end"
+                                            dir="rtl"
                                         >
                                             {isProcessing ? (
                                                 <>
@@ -1079,9 +1071,9 @@ export default function WeeklyTaskManager() {
 
                     <Separator />
 
-                    <div className="space-y-4 p-4 border rounded-lg">
-                        <h4 className="font-semibold flex items-center gap-2">
-                            <Power className="w-5 h-5 text-blue-600" />
+                    <div className="space-y-4 p-4 border rounded-lg text-end">
+                        <h4 className="font-semibold flex items-center gap-2 justify-end">
+                            <Power className="w-5 h-5 text-blue-600 shrink-0" />
                             הפעלה/ביטול משימות שבועיות
                         </h4>
                         <p className="text-sm text-slate-600">
@@ -1110,16 +1102,16 @@ export default function WeeklyTaskManager() {
 
                     <Separator />
 
-                    <div className="space-y-4 p-4 border rounded-lg">
-                        <h4 className="font-semibold flex items-center gap-2">
-                            <Settings className="w-5 h-5 text-indigo-600" />
+                    <div className="space-y-4 p-4 border rounded-lg text-end">
+                        <h4 className="font-semibold flex items-center gap-2 justify-end">
+                            <Settings className="w-5 h-5 text-indigo-600 shrink-0" />
                             הקצאת שבועות ספציפיים
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
-                                <Label>מתאמן</Label>
+                                <Label className="text-end block title-rtl">מתאמן</Label>
                                 <Select value={selectedUserEmailForAssignment} onValueChange={setSelectedUserEmailForAssignment}>
-                                    <SelectTrigger>
+                                    <SelectTrigger className="text-end" dir="rtl">
                                         <SelectValue placeholder="בחר מתאמן..." />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -1132,7 +1124,7 @@ export default function WeeklyTaskManager() {
                                 </Select>
                             </div>
                             <div>
-                                <Label>שבועות להקצאה</Label>
+                                <Label className="text-end block">שבועות להקצאה</Label>
                                 <div className="border rounded-lg p-4 bg-white max-h-64 overflow-y-auto">
                                     <div className="flex items-center gap-2 mb-3 pb-2 border-b">
                                         <Button
@@ -1221,41 +1213,38 @@ export default function WeeklyTaskManager() {
                                 </div>
                             </div>
                             <div>
-                                <Label>היסט (שבועות)</Label>
+                                <Label className="text-end block">היסט (שבועות)</Label>
                                 <Input
                                     type="number"
                                     placeholder="אופסט בשבועות"
                                     value={weekOffset}
                                     onChange={(e) => setWeekOffset(Number(e.target.value))}
+                                    className="text-end"
                                 />
                             </div>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                            <div className="flex items-end">
-                                <Button
-                                    onClick={handleAssignTasks}
-                                    disabled={isProcessing || !selectedUserEmailForAssignment || weeksToAssign.length === 0}
-                                    className="w-full bg-indigo-600 hover:bg-indigo-700"
-                                >
-                                    {isProcessing ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 me-2 animate-spin" />
-                                            מקצה...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <CheckCircle2 className="w-4 h-4 me-2" />
-                                            הקצה שבועות למתאמן
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="mt-4">
+                            <Button
+                                onClick={handleAssignTasks}
+                                disabled={isProcessing || !selectedUserEmailForAssignment || weeksToAssign.length === 0}
+                                className="w-full bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center gap-2"
+                            >
+                                {isProcessing ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 me-2 animate-spin" />
+                                        מקצה...
+                                    </>
+                                ) : (
+                                    <>
+                                        <CheckCircle2 className="w-4 h-4 me-2" />
+                                        הקצה שבועות למתאמן
+                                    </>
+                                )}
+                            </Button>
                             <Button
                                 onClick={handleApplyTemplateToAll}
                                 disabled={isProcessing || weeksToAssign.length === 0}
-                                className="w-full bg-purple-600 hover:bg-purple-700 flex items-center gap-2"
+                                className="w-full bg-purple-600 hover:bg-purple-700 flex items-center justify-center gap-2"
                             >
                                 {isProcessing ? (
                                     <>
@@ -1274,44 +1263,33 @@ export default function WeeklyTaskManager() {
 
                     <Separator />
 
-                    <div className="space-y-4 p-4 border border-orange-300 bg-orange-50 rounded-lg">
-                        <h4 className="font-semibold flex items-center gap-2 text-orange-700">
-                            <RotateCcw className="w-5 h-5" />
+                    <div className="space-y-4 p-4 border border-orange-300 bg-orange-50 rounded-lg text-end">
+                        <h4 className="font-semibold flex items-center gap-2 text-orange-700 justify-end">
+                            <RotateCcw className="w-5 h-5 shrink-0" />
                             איפוס מלא של משימות שבועיות
                         </h4>
                         <p className="text-orange-600 text-sm">
                             זהירות: פעולה זו תאפס את כל משימות הבוסטר למצב ההתחלתי עבור היעד הנבחר.
                         </p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <Label>קוד איפוס</Label>
-                                <Input
-                                    type="password"
-                                    placeholder="הכנס קוד איפוס"
-                                    value={resetCode}
-                                    onChange={(e) => setResetCode(e.target.value)}
-                                />
-                            </div>
-                            <div className="flex items-end">
-                                <Button
-                                    variant="destructive"
-                                    onClick={handleResetTasks}
-                                    disabled={isProcessing || !resetCode || getTargetUsers().length === 0}
-                                    className="w-full flex items-center gap-2"
-                                >
-                                    {isProcessing ? (
-                                        <>
-                                            <Loader2 className="w-4 h-4 animate-spin" />
-                                            מאפס...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <RefreshCcw className="w-4 h-4" />
-                                            אפס את כל המשימות
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
+                        <div>
+                            <Button
+                                variant="destructive"
+                                onClick={handleResetTasks}
+                                disabled={isProcessing || getTargetUsers().length === 0}
+                                className="w-full flex items-center gap-2"
+                            >
+                                {isProcessing ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        מאפס...
+                                    </>
+                                ) : (
+                                    <>
+                                        <RefreshCcw className="w-4 h-4" />
+                                        אפס את כל המשימות
+                                    </>
+                                )}
+                            </Button>
                         </div>
                     </div>
 
@@ -1319,7 +1297,7 @@ export default function WeeklyTaskManager() {
                         <>
                             <Separator />
                             <div className="space-y-4">
-                                <h4 className="font-semibold flex items-center gap-2">
+                                <h4 className="font-semibold flex items-center gap-2 justify-end">
                                     <CheckCircle2 className="w-5 h-5 text-purple-600" />
                                     סקירת משימות נוכחית (יעד נבחר)
                                 </h4>
@@ -1374,35 +1352,36 @@ export default function WeeklyTaskManager() {
                 </TabsContent>
 
                 {/* New Freeze/Unfreeze Control Tab Content */}
-                <TabsContent value="freeze-unfreeze-control" className="mt-6 space-y-6">
-                    <Card className="muscle-glass border-0 shadow-lg">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Shield className="w-5 h-5 text-teal-600" />
+                <TabsContent value="freeze-unfreeze-control" className="mt-6 space-y-6" dir="rtl">
+                    <Card className="muscle-glass border-0 shadow-lg text-end">
+                        <CardHeader className="text-end" dir="rtl">
+                            <CardTitle className="flex items-center gap-2 justify-center title-rtl">
+                                <Shield className="w-5 h-5 text-teal-600 shrink-0" />
                                 ניהול הקפאה והפשרת משימות
                             </CardTitle>
-                            <CardDescription>
+                            <CardDescription className="text-end desc-rtl">
                                 הקפאת משימות תסמן אותן כמוקפאות ותמנע מהן להופיע כפעילות למתאמן. הפשרה תעדכן את תאריכי המשימות בהתאם לתאריך ההתחלה החדש.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             {/* Unfreeze Section */}
-                            <div className="space-y-4 p-4 border border-green-300 bg-green-50 rounded-lg">
-                                <h4 className="font-semibold flex items-center gap-2 text-green-700">
-                                    <Play className="w-5 h-5" />
+                            <div className="space-y-4 p-4 border border-green-300 bg-green-50 rounded-lg text-end" dir="rtl">
+                                <h4 className="font-semibold flex items-center gap-2 text-green-700 justify-center title-rtl">
+                                    <Play className="w-5 h-5 shrink-0" />
                                     הפשרת משימות (הפעלה מחדש)
                                 </h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <Label>בחר מתאמן</Label>
+                                        <Label className="text-end block title-rtl">בחר מתאמן</Label>
                                         <Popover open={openUnfreezeUserSelector} onOpenChange={setOpenUnfreezeUserSelector}>
                                             <PopoverTrigger asChild>
                                                 <Button
                                                     variant="outline"
                                                     role="combobox"
                                                     aria-expanded={openUnfreezeUserSelector}
-                                                    className="w-full justify-between"
+                                                    className="w-full justify-between text-end"
                                                     disabled={isUnfreezingOperation || isFreezingOperation}
+                                                    dir="rtl"
                                                 >
                                                     {selectedUserObjectForUnfreeze
                                                         ? selectedUserObjectForUnfreeze.name
@@ -1410,12 +1389,12 @@ export default function WeeklyTaskManager() {
                                                     <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                                            <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 text-end" align="end" dir="rtl">
                                                 <Command>
-                                                    <CommandInput placeholder="חיפוש משתמש..." />
+                                                    <CommandInput placeholder="חיפוש משתמש..." className="text-end" />
                                                     <CommandList>
-                                                        <CommandEmpty>לא נמצא משתמש.</CommandEmpty>
-                                                        <CommandGroup>
+                                                        <CommandEmpty className="text-end">לא נמצא משתמש.</CommandEmpty>
+                                                        <CommandGroup className="text-end">
                                                             {usersWithBoosterEnabled.map((user) => (
                                                                 <CommandItem
                                                                     key={user.email}
@@ -1424,9 +1403,10 @@ export default function WeeklyTaskManager() {
                                                                         setSelectedUserObjectForUnfreeze(user);
                                                                         setOpenUnfreezeUserSelector(false);
                                                                     }}
+                                                                    className="text-end justify-end"
                                                                 >
                                                                     <Check
-                                                                        className={`me-2 h-4 w-4 ${selectedUserObjectForUnfreeze?.email === user.email ? "opacity-100" : "opacity-0"}`}
+                                                                        className={`me-2 h-4 w-4 shrink-0 ${selectedUserObjectForUnfreeze?.email === user.email ? "opacity-100" : "opacity-0"}`}
                                                                     />
                                                                     {user.name} ({user.email})
                                                                 </CommandItem>
@@ -1438,20 +1418,22 @@ export default function WeeklyTaskManager() {
                                         </Popover>
                                     </div>
                                     <div>
-                                        <Label>תאריך התחלה להפשרה (תאריכים יחושבו מחדש)</Label>
+                                        <Label className="text-end block title-rtl">תאריך התחלה להפשרה (תאריכים יחושבו מחדש)</Label>
                                         <Input
                                             type="date"
                                             value={unfreezeStartDateInput}
                                             onChange={(e) => setUnfreezeStartDateInput(e.target.value)}
                                             disabled={isUnfreezingOperation || isFreezingOperation}
-                                            className="text-right"
+                                            className="text-end"
+                                            dir="rtl"
                                         />
                                     </div>
                                 </div>
                                 <Button
                                     onClick={() => handleUnfreezeTasks(selectedUserObjectForUnfreeze, unfreezeStartDateInput)}
                                     disabled={isUnfreezingOperation || isFreezingOperation || !selectedUserObjectForUnfreeze || !unfreezeStartDateInput}
-                                    className="w-full bg-green-600 hover:bg-green-700 flex items-center gap-2"
+                                    className="w-full bg-green-600 hover:bg-green-700 flex items-center gap-2 justify-center"
+                                    dir="rtl"
                                 >
                                     {isUnfreezingOperation ? (
                                         <>
@@ -1468,24 +1450,22 @@ export default function WeeklyTaskManager() {
                             </div>
 
                             {/* Freeze Section */}
-                            <div className="space-y-4 p-4 border border-orange-300 bg-orange-50 rounded-lg">
-                                <h4 className="font-semibold flex items-center gap-2 text-orange-700">
-                                    <Pause className="w-5 h-5" />
+                            <div className="space-y-4 p-4 border border-orange-300 bg-orange-50 rounded-lg text-end" dir="rtl">
+                                <h4 className="font-semibold flex items-center gap-2 text-orange-700 justify-center title-rtl">
+                                    <Pause className="w-5 h-5 shrink-0" />
                                     הקפאת משימות
                                 </h4>
-                                <p className="text-orange-600 text-sm">
-                                    פעולה זו תקפיא את כל המשימות העתידיות של המתאמן. המשימות יוסתרו מהמשתמש עד להפעלה מחדש.
-                                </p>
                                 <div>
-                                    <Label>בחר מתאמן</Label>
+                                    <Label className="text-end block title-rtl">בחר מתאמן</Label>
                                     <Popover open={openFreezeUserSelector} onOpenChange={setOpenFreezeUserSelector}>
                                         <PopoverTrigger asChild>
                                             <Button
                                                 variant="outline"
                                                 role="combobox"
                                                 aria-expanded={openFreezeUserSelector}
-                                                className="w-full justify-between"
+                                                className="w-full justify-between text-end"
                                                 disabled={isFreezingOperation || isUnfreezingOperation}
+                                                dir="rtl"
                                             >
                                                 {selectedUserObjectForFreeze
                                                     ? selectedUserObjectForFreeze.name
@@ -1493,12 +1473,12 @@ export default function WeeklyTaskManager() {
                                                 <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
+                                        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 text-end" align="end" dir="rtl">
                                             <Command>
-                                                <CommandInput placeholder="חיפוש משתמש..." />
+                                                <CommandInput placeholder="חיפוש משתמש..." className="text-end" />
                                                 <CommandList>
-                                                    <CommandEmpty>לא נמצא משתמש.</CommandEmpty>
-                                                    <CommandGroup>
+                                                    <CommandEmpty className="text-end">לא נמצא משתמש.</CommandEmpty>
+                                                    <CommandGroup className="text-end">
                                                         {usersWithBoosterEnabled.map((user) => (
                                                             <CommandItem
                                                                 key={user.email}
@@ -1507,9 +1487,10 @@ export default function WeeklyTaskManager() {
                                                                     setSelectedUserObjectForFreeze(user);
                                                                     setOpenFreezeUserSelector(false);
                                                                 }}
+                                                                className="text-end justify-end"
                                                             >
                                                                 <Check
-                                                                    className={`me-2 h-4 w-4 ${selectedUserObjectForFreeze?.email === user.email ? "opacity-100" : "opacity-0"}`}
+                                                                    className={`me-2 h-4 w-4 shrink-0 ${selectedUserObjectForFreeze?.email === user.email ? "opacity-100" : "opacity-0"}`}
                                                                 />
                                                                 {user.name} ({user.email})
                                                             </CommandItem>
@@ -1524,8 +1505,9 @@ export default function WeeklyTaskManager() {
                                     <AlertDialogTrigger asChild>
                                         <Button 
                                             variant="destructive" 
-                                            className="w-full flex items-center gap-2"
+                                            className="w-full flex items-center gap-2 justify-center"
                                             disabled={isFreezingOperation || isUnfreezingOperation || !selectedUserObjectForFreeze}
+                                            dir="rtl"
                                         >
                                             {isFreezingOperation ? (
                                                 <>
@@ -1562,11 +1544,11 @@ export default function WeeklyTaskManager() {
 
 
                 <TabsContent value="overview" className="mt-6">
-                    <div className="space-y-4">
-                        <Card className="muscle-glass border-0 shadow-lg">
+                    <div className="space-y-4" dir="rtl">
+                        <Card className="muscle-glass border-0 shadow-lg text-end">
                             <CardContent className="p-6">
-                                <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2">
-                                    <BarChart className="w-5 h-5 text-blue-600" />
+                                <h3 className="text-lg font-semibold text-slate-800 mb-4 flex items-center gap-2 justify-center title-rtl">
+                                    <BarChart className="w-5 h-5 text-blue-600 shrink-0" />
                                     סיכום כללי - מתאמנים בבוסטר
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -1605,29 +1587,30 @@ export default function WeeklyTaskManager() {
                                         key={user.email} 
                                         className="cursor-pointer hover:shadow-lg transition-all duration-200 muscle-glass border-s-4"
                                         style={{
-                                            borderLeftColor: user.taskStats.completionPercentage >= 75 ? '#22c55e' :
+                                            borderInlineStartWidth: '4px',
+                                            borderInlineStartColor: user.taskStats.completionPercentage >= 75 ? '#22c55e' :
                                                            user.taskStats.completionPercentage >= 50 ? '#f59e0b' :
                                                            user.taskStats.completionPercentage >= 25 ? '#ef4444' : '#64748b'
                                         }}
                                         onClick={() => handleUserTasksView(user)}
                                     >
-                                        <CardHeader className="pb-4">
-                                            <div className="flex items-center gap-3">
+                                        <CardHeader className="pb-4 text-end">
+                                            <div className="flex items-center gap-3 flex-row-reverse">
+                                                <div className="flex-1 text-end min-w-0">
+                                                    <CardTitle className="text-lg">{user.name}</CardTitle>
+                                                    <p className="text-sm text-slate-500 truncate">{user.email}</p>
+                                                </div>
                                                 {user.profile_image_url ? (
                                                     <img 
                                                         src={user.profile_image_url} 
                                                         alt={user.name} 
-                                                        className="w-10 h-10 rounded-full object-cover"
+                                                        className="w-10 h-10 rounded-full object-cover shrink-0"
                                                     />
                                                 ) : (
-                                                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center shrink-0">
                                                         <UserIcon className="w-5 h-5 text-slate-500" />
                                                     </div>
                                                 )}
-                                                <div className="flex-1">
-                                                    <CardTitle className="text-lg">{user.name}</CardTitle>
-                                                    <p className="text-sm text-slate-500 truncate">{user.email}</p>
-                                                </div>
                                                 <Badge 
                                                     className={
                                                         user.taskStats.completionPercentage >= 75 ? 'bg-green-100 text-green-800' :

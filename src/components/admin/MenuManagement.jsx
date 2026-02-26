@@ -714,10 +714,10 @@ export default function MenuManagement() {
                     <div className="space-y-4">
                         {!selectedUser && (
                             <div>
-                                <Label htmlFor="user-select">בחר מתאמן *</Label>
+                                <Label htmlFor="user-select" className="text-end block title-rtl">בחר מתאמן *</Label>
                                 {/* Replaced native select with shadcn/ui Select component */}
                                 <Select value={selectedUser} onValueChange={setSelectedUser}>
-                                    <SelectTrigger className="w-full mt-1">
+                                    <SelectTrigger className="w-full mt-1 text-end">
                                         <SelectValue placeholder="בחר מתאמן..." />
                                     </SelectTrigger>
                                     <SelectContent>

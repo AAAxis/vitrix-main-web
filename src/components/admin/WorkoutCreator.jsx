@@ -628,7 +628,7 @@ const ManualWorkoutBuilder = ({ templateToLoad, onTemplateLoaded, user, users, g
 
   const renderWorkoutPart = (partKey) => (
     <div>
-      <h3 className="text-base font-semibold mb-3 text-center">{partLabels[partKey]}</h3>
+      <h3 className="text-base font-semibold mb-3 !text-center">{partLabels[partKey]}</h3>
       <div>
         <AnimatePresence>
           {workoutData[partKey].map((exercise, index) => (

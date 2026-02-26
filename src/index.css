@@ -155,4 +155,26 @@ button:focus-visible {
   body {
     @apply bg-background text-foreground;
   }
+  /* RTL: mirror all headings and titles when inside dir="rtl" */
+  [dir="rtl"] h1,
+  [dir="rtl"] h2,
+  [dir="rtl"] h3,
+  [dir="rtl"] h4,
+  [dir="rtl"] h5,
+  [dir="rtl"] h6 {
+    @apply text-end;
+  }
+  [dir="rtl"] .title-rtl {
+    direction: rtl;
+    text-align: start;
+  }
+  [dir="rtl"] .title-rtl-header {
+    direction: rtl;
+    text-align: start;
+  }
+  /* RTL: list subtitles/descriptions (e.g. card descriptions, quick action descriptions) */
+  [dir="rtl"] .desc-rtl {
+    direction: rtl;
+    text-align: start;
+  }
 }

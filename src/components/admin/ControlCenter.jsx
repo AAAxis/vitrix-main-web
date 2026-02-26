@@ -49,14 +49,14 @@ import { useNavigate } from 'react-router-dom';
 import InviteLinkCard from '@/components/admin/InviteLinkCard';
 
 const StatCard = ({ title, value, icon: Icon, description }) => (
-    <Card>
+    <Card dir="rtl">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 px-3 pt-3 sm:px-4">
             <CardTitle className="text-xs sm:text-sm font-medium">{title}</CardTitle>
             <Icon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent className="px-3 pb-3 sm:px-4">
             <div className="text-xl sm:text-2xl font-bold">{value}</div>
-            <p className="text-xs text-muted-foreground truncate">{description}</p>
+            <p className="text-xs text-muted-foreground truncate desc-rtl">{description}</p>
         </CardContent>
     </Card>
 );
@@ -66,9 +66,10 @@ const QuickActionCard = ({ title, icon: Icon, color, onClick, description }) => 
         variant="outline"
         className={`h-20 sm:h-24 flex flex-col items-center justify-center gap-1 text-center p-1 border-2 transition-all duration-200 hover:scale-105 hover:shadow-md ${color} w-full`}
         onClick={onClick}
+        dir="rtl"
     >
         <Icon className="w-5 h-5" />
-        <div>
+        <div className="title-rtl desc-rtl">
             <div className="font-semibold text-xs leading-tight">{title}</div>
             {description && <div className="text-xs opacity-70 mt-1 hidden sm:block">{description}</div>}
         </div>

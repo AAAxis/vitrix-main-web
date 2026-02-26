@@ -341,7 +341,7 @@ export default function WorkoutTemplatesManager() {
               {/* Part 1 */}
               {selectedTemplate.part_1_exercises?.length > 0 && (
                 <div>
-                  <h4 className="font-bold text-blue-800 mb-3">חלק 1 - תרגילים ראשיים</h4>
+                  <h4 className="font-bold text-blue-800 mb-3 !text-center">חלק 1 - תרגילים ראשיים</h4>
                   <div className="space-y-2">
                     {selectedTemplate.part_1_exercises.map((ex, idx) => (
                       <div key={idx} className="bg-blue-50 rounded-lg p-3">
@@ -374,7 +374,7 @@ export default function WorkoutTemplatesManager() {
               {/* Part 2 */}
               {selectedTemplate.part_2_exercises?.length > 0 && (
                 <div>
-                  <h4 className="font-bold text-green-800 mb-3">חלק 2 - תרגילים מתקדמים</h4>
+                  <h4 className="font-bold text-green-800 mb-3 !text-center">חלק 2 - תרגילים מתקדמים</h4>
                   <div className="space-y-2">
                     {selectedTemplate.part_2_exercises.map((ex, idx) => (
                       <div key={idx} className="bg-green-50 rounded-lg p-3">
@@ -407,7 +407,7 @@ export default function WorkoutTemplatesManager() {
               {/* Part 3 */}
               {selectedTemplate.part_3_exercises?.length > 0 && (
                 <div>
-                  <h4 className="font-bold text-purple-800 mb-3">חלק 3 - סיום/עצימות</h4>
+                  <h4 className="font-bold text-purple-800 mb-3 !text-center">חלק 3 - סיום/עצימות</h4>
                   <div className="space-y-2">
                     {selectedTemplate.part_3_exercises.map((ex, idx) => (
                       <div key={idx} className="bg-purple-50 rounded-lg p-3">
