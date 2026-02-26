@@ -354,7 +354,16 @@ function GroupEditScreen({ group, trainer, allUsers, isSystemAdmin, onBack, onRe
     try {
       const current = Array.isArray(user.group_names) ? user.group_names : [];
       const next = current.includes(group.name) ? current : [...current, group.name];
-      await User.update(uid, { group_names: next });
+      const payload = { group_names: next };
+      // Set coach + organization logo on trainee so mobile app shows org logo (mobile reads trainee doc)
+      const coachEmail = (trainer?.email || '').trim();
+      if (coachEmail) {
+        payload.coach_email = coachEmail;
+        payload.coach_name = trainer?.name || trainer?.full_name || null;
+        payload.organization_logo_url = trainer?.organization_logo_url ?? null;
+        payload.organization_name = trainer?.organization_name ?? null;
+      }
+      await User.update(uid, payload);
       if (onRefresh) onRefresh();
       if (onMessage) onMessage(`${user.name || user.full_name || user.email} שויך לקבוצה.`);
     } catch (err) {
@@ -966,6 +975,21 @@ export default function TrainerManagement({ onNavigateToTab }) {
       const uid = editingTrainer.uid || editingTrainer.id;
       if (!uid) { setError('לא נמצא מזהה משתמש לעדכון'); return; }
       await User.update(uid, updateData);
+      // Push trainer's organization logo/name to all trainees assigned to this coach (so app shows correct branding)
+      const logoUrl = updateData.organization_logo_url ?? null;
+      const orgName = updateData.organization_name ?? null;
+      const coachEmail = (editingTrainer.email || '').trim().toLowerCase();
+      if (coachEmail && (logoUrl || orgName)) {
+        const traineesOfCoach = (allUsers || []).filter(
+          u => (u.coach_email || '').trim().toLowerCase() === coachEmail && u.role !== 'admin' && u.role !== 'coach' && u.role !== 'trainer'
+        );
+        await Promise.all(traineesOfCoach.map(u => {
+          const payload = {};
+          if (logoUrl != null) payload.organization_logo_url = logoUrl;
+          if (orgName != null) payload.organization_name = orgName;
+          return Object.keys(payload).length ? User.update(u.uid || u.id, payload) : Promise.resolve();
+        }));
+      }
       setMessage('פרטי המאמן עודכנו בהצלחה');
       setEditingTrainer(null);
       loadData();

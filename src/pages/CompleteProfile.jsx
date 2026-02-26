@@ -177,6 +177,21 @@ export default function CompleteProfile() {
                 start_date: new Date().toISOString().split('T')[0]
             };
 
+            // Copy organization logo/name from trainer so mobile app shows it (mobile reads trainee doc)
+            const coachEmail = (formData.coach_email || '').trim();
+            if (coachEmail) {
+                try {
+                    const coachUsers = await User.filter({ email: coachEmail }, null, 1);
+                    const coach = Array.isArray(coachUsers) && coachUsers[0] ? coachUsers[0] : null;
+                    if (coach) {
+                        updateData.organization_logo_url = coach.organization_logo_url ?? null;
+                        updateData.organization_name = coach.organization_name ?? null;
+                    }
+                } catch (e) {
+                    console.warn('Could not sync trainer branding:', e);
+                }
+            }
+
             await User.updateMyUserData(updateData);
             
             // Show success message briefly, then navigate

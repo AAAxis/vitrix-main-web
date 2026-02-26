@@ -242,16 +242,24 @@ export default function UserSettingsManager({
         setError('לא נמצא מזהה משתמש לעדכון');
         return;
       }
-      if (updateData.group_names && updateData.group_names.length > 0) {
+      // Sync organization logo and name from the assigned trainer only (no group – organization branding)
+      if (updateData.coach_email && (updateData.coach_email || '').trim()) {
         try {
-          const allGroups = await UserGroup.list();
-          const firstGroup = (allGroups || []).find(g => g.name === updateData.group_names[0]);
-          updateData.organization_logo_url = firstGroup?.logo_url ?? null;
+          const coachUsers = await User.filter({ email: (updateData.coach_email || '').trim() }, null, 1);
+          const coach = Array.isArray(coachUsers) && coachUsers.length > 0 ? coachUsers[0] : null;
+          if (coach) {
+            updateData.organization_logo_url = coach.organization_logo_url ?? null;
+            updateData.organization_name = coach.organization_name ?? null;
+          } else {
+            updateData.organization_logo_url = null;
+            updateData.organization_name = null;
+          }
         } catch (e) {
-          console.warn('Could not resolve organization logo:', e);
+          console.warn('Could not resolve trainer branding:', e);
         }
-      } else if (updateData.group_names && updateData.group_names.length === 0) {
+      } else {
         updateData.organization_logo_url = null;
+        updateData.organization_name = null;
       }
       await User.update(userIdToUpdate, updateData);
 

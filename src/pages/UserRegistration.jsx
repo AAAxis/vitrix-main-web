@@ -98,6 +98,21 @@ export default function UserRegistration() {
                 status: 'פעיל'
             };
 
+            // Copy organization logo/name from trainer so mobile app shows it (mobile reads trainee doc, not trainer)
+            const coachEmail = (invitation.coachEmail || '').trim();
+            if (coachEmail) {
+                try {
+                    const coachUsers = await User.filter({ email: coachEmail }, null, 1);
+                    const coach = Array.isArray(coachUsers) && coachUsers[0] ? coachUsers[0] : null;
+                    if (coach) {
+                        userData.organization_logo_url = coach.organization_logo_url ?? null;
+                        userData.organization_name = coach.organization_name ?? null;
+                    }
+                } catch (e) {
+                    console.warn('Could not sync trainer branding for invite:', e);
+                }
+            }
+
             await User.updateMyUserData(userData); 
             await Invitation.update(invitation.id, { isUsed: true });
 
