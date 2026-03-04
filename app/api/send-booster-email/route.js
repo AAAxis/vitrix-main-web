@@ -1,78 +1,56 @@
 // API endpoint to send email for booster request
-// Uses Roamjet API (smtp.roamjet.net) same as web app
+// Uses SMTP2GO (same as Vitrix-RN and api/send-booster-email.js)
 
 export async function POST(request) {
   try {
     const requestBody = await request.json();
-    const { 
+    const {
       coachEmail,
       userName,
       userEmail,
       title = '🚀 בקשה להצטרפות לתכנית הבוסטר',
-      message = ''
+      message = '',
     } = requestBody;
 
-    // Validation
     if (!coachEmail) {
-      return Response.json(
-        { error: 'Coach email is required' },
-        { status: 400 }
-      );
+      return Response.json({ error: 'Coach email is required' }, { status: 400 });
     }
 
-    // Use Roamjet API to send email
-    const roamjetProjectId = process.env.ROAMJET_PROJECT_ID || 'eZl22S3z7Pl0oGA01qyH';
-    const roamjetTemplateId = process.env.ROAMJET_TEMPLATE_ID || 'lbbVwGT1BLMw87C3oHbI';
-    
-    // Build email message
-    const emailTitle = title;
-    const emailText = message || `המתאמן/ת ${userName || userEmail} מבקש/ת להצטרף לתכנית הבוסטר.`;
-
-    // Send email via Roamjet API
-    const roamjetUrl = new URL('https://smtp.roamjet.net/api/email/send');
-    roamjetUrl.searchParams.set('email', coachEmail);
-    roamjetUrl.searchParams.set('project_id', roamjetProjectId);
-    roamjetUrl.searchParams.set('template_id', roamjetTemplateId);
-    roamjetUrl.searchParams.set('title', emailTitle);
-    roamjetUrl.searchParams.set('text', emailText);
-
-    console.log('📧 Sending booster request email to:', coachEmail);
-
-    const roamjetRes = await fetch(roamjetUrl.toString(), {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const emailRes = await roamjetRes.json();
-
-    if (roamjetRes.ok) {
-      console.log('✅ Booster request email sent successfully:', emailRes);
-      return Response.json({
-        success: true,
-        messageId: emailRes.messageId || 'sent',
-        email: coachEmail
-      });
-    } else {
-      console.error('❌ Email send failed:', emailRes);
+    const apiKey = process.env.SMTP2GO_API_KEY;
+    if (!apiKey) {
       return Response.json(
-        {
-          success: false,
-          error: emailRes.error || 'Failed to send email'
-        },
+        { success: false, error: 'SMTP2GO_API_KEY not configured' },
         { status: 500 }
       );
     }
 
+    const senderEmail = process.env.SMTP2GO_SENDER_EMAIL || 'rpochtman@simnetiq.store';
+    const senderName = process.env.SMTP2GO_SENDER_NAME || 'Vitrix App';
+    const htmlBody = message || `המתאמן/ת ${userName || userEmail || 'מתאמן'} מבקש/ת להצטרף לתכנית הבוסטר.`;
+
+    const response = await fetch('https://api.smtp2go.com/v3/email/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: apiKey,
+        to: [coachEmail],
+        sender: `${senderName} <${senderEmail}>`,
+        subject: title,
+        html_body: htmlBody,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.data?.succeeded > 0) {
+      return Response.json({ success: true, email: coachEmail });
+    }
+    const err = data.data?.failures?.[0] || data.data?.error || 'Failed to send email';
+    return Response.json({ success: false, error: err }, { status: 500 });
   } catch (error) {
-    console.error('❌ Booster email API error:', error);
+    console.error('Booster email API error:', error);
     return Response.json(
-      {
-        success: false,
-        error: 'Internal server error',
-        details: error.message
-      },
+      { success: false, error: error.message || 'Internal server error' },
       { status: 500 }
     );
   }
