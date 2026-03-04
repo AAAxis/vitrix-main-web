@@ -122,7 +122,41 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Build notification payload for Firebase Cloud Messaging V1 API
+    // Vitrix-RN app stores Expo Push Tokens; FCM API rejects them. Send Expo tokens via Expo Push API.
+    const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+    const expoTokens = tokens.filter(t => typeof t === 'string' && t.startsWith('ExponentPushToken'));
+    const fcmTokens = tokens.filter(t => typeof t === 'string' && !t.startsWith('ExponentPushToken'));
+
+    let expoSuccessCount = 0;
+    let expoFailureCount = 0;
+    if (expoTokens.length > 0) {
+      console.log('📱 Sending to', expoTokens.length, 'Expo push token(s)...');
+      const expoMessages = expoTokens.map(to => ({
+        to,
+        title,
+        body: messageBody,
+        data: { ...data, timestamp: Date.now().toString(), source: 'dashboard' },
+        sound: 'default',
+      }));
+      try {
+        const expoRes = await fetch(EXPO_PUSH_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+          body: JSON.stringify(expoMessages),
+        });
+        const expoResult = await expoRes.json();
+        if (Array.isArray(expoResult.data)) {
+          expoResult.data.forEach(r => { if (r.status === 'ok') expoSuccessCount++; else expoFailureCount++; });
+        }
+        console.log('📱 Expo push result:', expoSuccessCount, 'ok', expoFailureCount, 'failed');
+      } catch (e) {
+        console.error('Expo push error:', e.message);
+        expoFailureCount += expoTokens.length;
+      }
+    }
+
+    // Use FCM only for non-Expo tokens (or topic)
+    const tokensToSend = fcmTokens.length ? fcmTokens : (topic ? null : []);
     // V1 API only supports: notification, data, token/topic at root level
     // Platform-specific options (android/apns) are NOT supported in V1 API
     const message = {
@@ -160,19 +194,19 @@ export default async function handler(req, res) {
         console.log('📡 Sending to topic:', topic);
         response = await messaging.send(message);
         console.log('✅ FCM notification sent to topic:', topic, 'Response:', response);
-      } else {
-        // Send to specific tokens using V1 API
-        console.log('📱 Sending to', tokens.length, 'tokens using V1 API...');
+      } else if (tokensToSend && tokensToSend.length > 0) {
+        // Send to specific FCM tokens (non-Expo only)
+        console.log('📱 Sending to', tokensToSend.length, 'FCM token(s)...');
 
         const results = [];
         let successCount = 0;
         let failureCount = 0;
         const failedTokens = [];
 
-        for (let i = 0; i < tokens.length; i++) {
-          const token = tokens[i];
+        for (let i = 0; i < tokensToSend.length; i++) {
+          const token = tokensToSend[i];
           try {
-            console.log(`📤 Sending to token ${i + 1}/${tokens.length}:`, token.substring(0, 20) + '...');
+            console.log(`📤 Sending to token ${i + 1}/${tokensToSend.length}:`, token.substring(0, 20) + '...');
 
             const individualMessage = {
               ...message,
@@ -197,8 +231,16 @@ export default async function handler(req, res) {
           failureCount,
           results
         };
+      } else {
+        // Only Expo tokens were provided - use Expo results
+        response = {
+          success: true,
+          successCount: expoSuccessCount,
+          failureCount: expoFailureCount,
+          results: []
+        };
       }
-    } else if (FCM_SERVER_KEY) {
+    } else if (FCM_SERVER_KEY && (topic || (tokensToSend && tokensToSend.length > 0))) {
       // Use FCM REST API
       if (topic) {
         // Send to topic using FCM REST API
@@ -225,11 +267,12 @@ export default async function handler(req, res) {
         }
       } else {
         // Send to specific tokens using FCM REST API
-        console.log('📱 Sending to', tokens.length, 'tokens via REST API...');
+        const ids = tokensToSend && tokensToSend.length > 0 ? tokensToSend : [];
+        console.log('📱 Sending to', ids.length, 'FCM token(s) via REST API...');
 
         const fcmMessage = {
           ...message,
-          registration_ids: tokens
+          registration_ids: ids
         };
 
         const fcmResponse = await fetch('https://fcm.googleapis.com/fcm/send', {
@@ -257,19 +300,31 @@ export default async function handler(req, res) {
         }
       }
     } else {
-      // No credentials available
-      console.error('❌ No FCM credentials configured');
-      res.status(500).json({
-        success: false,
-        error: 'FCM credentials not configured',
-        message: 'Either FIREBASE_PRIVATE_KEY + FIREBASE_CLIENT_EMAIL or FCM_SERVER_KEY environment variable is required'
-      });
-      return;
+      // Only Expo tokens and no FCM config - use Expo result
+      if (expoTokens.length > 0) {
+        response = {
+          success: true,
+          successCount: expoSuccessCount,
+          failureCount: expoFailureCount,
+          results: []
+        };
+      } else {
+        // No credentials available
+        console.error('❌ No FCM credentials configured');
+        res.status(500).json({
+          success: false,
+          error: 'FCM credentials not configured',
+          message: 'Either FIREBASE_PRIVATE_KEY + FIREBASE_CLIENT_EMAIL or FCM_SERVER_KEY environment variable is required'
+        });
+        return;
+      }
     }
 
-    // Calculate final stats
-    const successCount = response.successCount || (response.success ? 1 : 0);
-    const failureCount = response.failureCount || 0;
+    // Calculate final stats (include Expo counts)
+    const fcmSuccess = response.successCount || (response.success ? 1 : 0);
+    const fcmFailure = response.failureCount || 0;
+    const successCount = fcmSuccess + expoSuccessCount;
+    const failureCount = fcmFailure + expoFailureCount;
     const totalCount = successCount + failureCount;
 
     console.log('📊 Final FCM stats:', {
