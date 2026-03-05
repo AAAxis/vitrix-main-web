@@ -186,6 +186,7 @@ export default function CompleteProfile() {
                     if (coach) {
                         updateData.organization_logo_url = coach.organization_logo_url ?? null;
                         updateData.organization_name = coach.organization_name ?? null;
+                        updateData.program_name = coach.program_name ?? null;
                     }
                 } catch (e) {
                     console.warn('Could not sync trainer branding:', e);

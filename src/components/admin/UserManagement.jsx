@@ -728,6 +728,7 @@ export default function UserManagement({ initialUserEmail, startInEditMode, admi
                   {warningLevel === 'critical' && <div className="flex items-center gap-1 text-red-600"><AlertTriangle className="w-3 h-3" /><span className="text-xs font-medium">דחוף!</span></div>}
                   {warningLevel === 'warning' && <div className="flex items-center gap-1 text-orange-600"><AlertCircle className="w-3 h-3" /><span className="text-xs font-medium">נדרש</span></div>}
                 </div>
+                {user.email && <p className="text-xs text-slate-500 truncate mt-0.5" title={user.email}>{user.email}</p>}
               </div>
               <ArrowRight className="w-4 h-4 text-slate-300 rotate-180 flex-shrink-0" />
             </div>
@@ -746,11 +747,14 @@ export default function UserManagement({ initialUserEmail, startInEditMode, admi
             <div className="hidden sm:flex items-center gap-4" style={{ direction: 'rtl', textAlign: 'right' }}>
             <AvatarWithUpload user={user} size="md" onImageUpdated={handleImageUpdated} />
             <div className="flex-1 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-slate-800 text-lg">{user.name}</h3>
-                {user.role === 'admin' && <Badge variant="secondary" className="bg-purple-100 text-purple-800 text-xs font-medium">מנהל מערכת</Badge>}
-                {warningLevel === 'critical' && <div className="flex items-center gap-1 text-red-600"><AlertTriangle className="w-4 h-4" /><span className="text-xs font-medium">דחוף!</span></div>}
-                {warningLevel === 'warning' && <div className="flex items-center gap-1 text-orange-600"><AlertCircle className="w-4 h-4" /><span className="text-xs font-medium">נדרש עדכון</span></div>}
+              <div className="flex flex-col gap-0.5">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-semibold text-slate-800 text-lg">{user.name}</h3>
+                  {user.role === 'admin' && <Badge variant="secondary" className="bg-purple-100 text-purple-800 text-xs font-medium">מנהל מערכת</Badge>}
+                  {warningLevel === 'critical' && <div className="flex items-center gap-1 text-red-600"><AlertTriangle className="w-4 h-4" /><span className="text-xs font-medium">דחוף!</span></div>}
+                  {warningLevel === 'warning' && <div className="flex items-center gap-1 text-orange-600"><AlertCircle className="w-4 h-4" /><span className="text-xs font-medium">נדרש עדכון</span></div>}
+                </div>
+                {user.email && <p className="text-sm text-slate-500" title={user.email}>{user.email}</p>}
               </div>
               <div className={`flex items-center gap-1 text-sm font-medium ${weightChange.color}`}>
                 <span className="text-lg">{weightChange.status}</span><span>{weightChange.text}</span>

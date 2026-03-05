@@ -107,6 +107,7 @@ export default function UserRegistration() {
                     if (coach) {
                         userData.organization_logo_url = coach.organization_logo_url ?? null;
                         userData.organization_name = coach.organization_name ?? null;
+                        userData.program_name = coach.program_name ?? null;
                     }
                 } catch (e) {
                     console.warn('Could not sync trainer branding for invite:', e);

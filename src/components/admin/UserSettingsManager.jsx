@@ -250,9 +250,11 @@ export default function UserSettingsManager({
           if (coach) {
             updateData.organization_logo_url = coach.organization_logo_url ?? null;
             updateData.organization_name = coach.organization_name ?? null;
+            updateData.program_name = coach.program_name ?? null;
           } else {
             updateData.organization_logo_url = null;
             updateData.organization_name = null;
+            updateData.program_name = null;
           }
         } catch (e) {
           console.warn('Could not resolve trainer branding:', e);
@@ -260,6 +262,7 @@ export default function UserSettingsManager({
       } else {
         updateData.organization_logo_url = null;
         updateData.organization_name = null;
+        updateData.program_name = null;
       }
       await User.update(userIdToUpdate, updateData);
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { UserGroup, User } from '@/api/entities';
 import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
+import { groupsForStaff } from '@/lib/groupUtils';
 import { sendGroupEmail } from '@/api/integrations';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

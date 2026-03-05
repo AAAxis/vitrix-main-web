@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Search, Edit, Save, User as UserIcon, Users, Loader2, Shield, ShieldCheck,
   ChevronRight, Phone, Mail, Calendar, UserPlus, UserMinus, Activity,
-  Snowflake, XCircle, Zap, Utensils, FolderOpen, ArrowRight, Scale, FileText, Camera, Building2, ImageIcon, Link2, Copy, Check, Plus, Trash2
+  Snowflake, XCircle, Zap, Utensils, FolderOpen, ArrowRight, Scale, FileText, Camera, Building2, ImageIcon, Link2, Copy, Check, Plus, Trash2, Rocket
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -355,13 +355,14 @@ function GroupEditScreen({ group, trainer, allUsers, isSystemAdmin, onBack, onRe
       const current = Array.isArray(user.group_names) ? user.group_names : [];
       const next = current.includes(group.name) ? current : [...current, group.name];
       const payload = { group_names: next };
-      // Set coach + organization logo on trainee so mobile app shows org logo (mobile reads trainee doc)
+      // Set coach + organization logo and program name on trainee so mobile app shows org logo and program name (mobile reads trainee doc)
       const coachEmail = (trainer?.email || '').trim();
       if (coachEmail) {
         payload.coach_email = coachEmail;
         payload.coach_name = trainer?.name || trainer?.full_name || null;
         payload.organization_logo_url = trainer?.organization_logo_url ?? null;
         payload.organization_name = trainer?.organization_name ?? null;
+        payload.program_name = trainer?.program_name ?? null;
       }
       await User.update(uid, payload);
       if (onRefresh) onRefresh();
@@ -975,11 +976,12 @@ export default function TrainerManagement({ onNavigateToTab }) {
       const uid = editingTrainer.uid || editingTrainer.id;
       if (!uid) { setError('לא נמצא מזהה משתמש לעדכון'); return; }
       await User.update(uid, updateData);
-      // Push trainer's organization logo/name to all trainees assigned to this coach (so app shows correct branding)
+      // Push trainer's organization logo/name and program name to all trainees assigned to this coach (so app shows correct branding)
       const logoUrl = updateData.organization_logo_url ?? null;
       const orgName = updateData.organization_name ?? null;
+      const programName = updateData.program_name ?? null;
       const coachEmail = (editingTrainer.email || '').trim().toLowerCase();
-      if (coachEmail && (logoUrl || orgName)) {
+      if (coachEmail && (logoUrl || orgName || programName != null)) {
         const traineesOfCoach = (allUsers || []).filter(
           u => (u.coach_email || '').trim().toLowerCase() === coachEmail && u.role !== 'admin' && u.role !== 'coach' && u.role !== 'trainer'
         );
@@ -987,6 +989,7 @@ export default function TrainerManagement({ onNavigateToTab }) {
           const payload = {};
           if (logoUrl != null) payload.organization_logo_url = logoUrl;
           if (orgName != null) payload.organization_name = orgName;
+          if (programName != null) payload.program_name = programName;
           return Object.keys(payload).length ? User.update(u.uid || u.id, payload) : Promise.resolve();
         }));
       }
@@ -1175,6 +1178,11 @@ export default function TrainerManagement({ onNavigateToTab }) {
                         </Button>
                       </div>
                     </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-1.5"><Rocket className="w-4 h-4 text-slate-500" />שם התוכנית</Label>
+                    <Input value={editingTrainer.program_name || ''} onChange={e => setEditingTrainer({ ...editingTrainer, program_name: e.target.value })} placeholder="למשל: בוסטר, תוכנית 12 שבועות" />
+                    <p className="text-xs text-slate-500">שם זה יוצג באפליקציה במקום &quot;בוסטר&quot; (כפתור התקדמות)</p>
                   </div>
                 </div>
               </ScrollArea>
@@ -1409,6 +1417,11 @@ export default function TrainerManagement({ onNavigateToTab }) {
                       </Button>
                     </div>
                   </div>
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5"><Rocket className="w-4 h-4 text-slate-500" />שם התוכנית</Label>
+                  <Input value={editingTrainer.program_name || ''} onChange={e => setEditingTrainer({ ...editingTrainer, program_name: e.target.value })} placeholder="למשל: בוסטר, תוכנית 12 שבועות" />
+                  <p className="text-xs text-slate-500">שם זה יוצג באפליקציה במקום &quot;בוסטר&quot;</p>
                 </div>
               </div>
             </ScrollArea>
