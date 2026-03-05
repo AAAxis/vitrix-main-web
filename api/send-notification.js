@@ -1,7 +1,9 @@
 // Vercel serverless function (for Vercel deployment)
-// Push via Firebase only (no Expo, no extra APNs env).
+// Push: FCM for Android; direct APNs for iOS (when APNS_* env set). No Expo.
 import admin from 'firebase-admin';
 import fs from 'fs';
+import http2 from 'http2';
+import jwt from 'jsonwebtoken';
 
 // Initialize Firebase Admin SDK
 let adminInitialized = false;
@@ -89,6 +91,7 @@ export default async function handler(req, res) {
       title,
       body: messageBody,
       tokens = [],
+      apnsTokens = [],
       topic,
       data = {},
       imageUrl,
@@ -97,15 +100,16 @@ export default async function handler(req, res) {
       templateId
     } = requestBody;
 
-    // No Expo: only send FCM tokens to Firebase.
     const fcmTokens = Array.isArray(tokens)
       ? tokens.filter(t => typeof t === 'string' && !t.startsWith('ExponentPushToken'))
       : [];
+    const apnsTokenList = Array.isArray(apnsTokens) ? apnsTokens.filter(t => typeof t === 'string' && t.length > 0) : [];
 
     console.log('📱 FCM API called with:', {
       title,
       body: messageBody?.substring(0, 50) + '...',
       tokenCount: fcmTokens.length,
+      apnsTokenCount: apnsTokenList.length,
       topic,
       hasImageUrl: !!imageUrl
     });
@@ -119,15 +123,103 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (!fcmTokens.length && !topic) {
-      console.error('❌ Validation failed: Either tokens or topic is required');
+    if (!fcmTokens.length && !topic && !apnsTokenList.length) {
+      console.error('❌ Validation failed: Either tokens, apnsTokens, or topic is required');
       res.status(400).json({
-        error: 'Either tokens or topic is required'
+        error: 'Either tokens, apnsTokens, or topic is required'
       });
       return;
     }
 
-    // Send via Firebase only (FCM)
+    let apnsSuccessCount = 0;
+    let apnsFailureCount = 0;
+
+    // iOS: send via Apple APNs when env is set (same .p8 as in Firebase Console)
+    if (apnsTokenList.length > 0) {
+      const APNS_KEY = process.env.APNS_KEY || process.env.APNS_PRIVATE_KEY;
+      const APNS_KEY_ID = process.env.APNS_KEY_ID;
+      const APNS_TEAM_ID = process.env.APNS_TEAM_ID;
+      const APNS_BUNDLE_ID = process.env.APNS_BUNDLE_ID || process.env.APP_BUNDLE_ID;
+      const apnsProduction = process.env.APNS_PRODUCTION !== 'false';
+
+      if (APNS_KEY && APNS_KEY_ID && APNS_TEAM_ID && APNS_BUNDLE_ID) {
+        const key = APNS_KEY.replace(/\\n/g, '\n');
+        const apnsHost = apnsProduction ? 'api.push.apple.com' : 'api.sandbox.push.apple.com';
+        let apnsJwt = null;
+        const getApnsJwt = () => {
+          const now = Math.floor(Date.now() / 1000);
+          if (apnsJwt && apnsJwt.exp > now + 300) return apnsJwt.token;
+          const token = jwt.sign(
+            { iss: APNS_TEAM_ID, iat: now },
+            key,
+            { algorithm: 'ES256', keyid: APNS_KEY_ID, expiresIn: '1h' }
+          );
+          apnsJwt = { token, exp: now + 3600 };
+          return token;
+        };
+        const apsPayload = {
+          aps: {
+            alert: { title, body: messageBody },
+            sound: 'default',
+            ...(imageUrl && { 'mutable-content': 1 })
+          },
+          ...data,
+          timestamp: Date.now().toString(),
+          source: 'dashboard',
+          notificationTitle: title,
+          notificationBody: messageBody,
+          ...(imageUrl && { imageUrl })
+        };
+        const payloadStr = JSON.stringify(apsPayload);
+
+        for (const deviceToken of apnsTokenList) {
+          try {
+            const auth = getApnsJwt();
+            const path = `/3/device/${deviceToken}`;
+            const response = await new Promise((resolve, reject) => {
+              const client = http2.connect(`https://${apnsHost}`, () => {});
+              const headers = {
+                ':method': 'POST',
+                ':path': path,
+                'apns-topic': APNS_BUNDLE_ID,
+                'apns-push-type': 'alert',
+                'apns-priority': '10',
+                'authorization': `bearer ${auth}`,
+                'content-type': 'application/json',
+                'content-length': Buffer.byteLength(payloadStr, 'utf8')
+              };
+              const req = client.request(headers);
+              req.on('response', (headers) => {
+                const status = headers[':status'];
+                let body = '';
+                req.on('data', (chunk) => { body += chunk; });
+                req.on('end', () => {
+                  client.close();
+                  resolve({ status: parseInt(status, 10), body });
+                });
+              });
+              req.on('error', (err) => {
+                client.close();
+                reject(err);
+              });
+              req.write(payloadStr);
+              req.end();
+            });
+            if (response.status === 200) {
+              apnsSuccessCount++;
+            } else {
+              apnsFailureCount++;
+            }
+          } catch (err) {
+            apnsFailureCount++;
+          }
+        }
+      } else {
+        apnsFailureCount += apnsTokenList.length;
+      }
+    }
+
+    // FCM
     const tokensToSend = fcmTokens.length ? fcmTokens : (topic ? null : []);
     // V1 API only supports: notification, data, token/topic at root level
     // Platform-specific options (android/apns) are NOT supported in V1 API
@@ -206,8 +298,8 @@ export default async function handler(req, res) {
       } else {
         response = {
           success: true,
-          successCount: 0,
-          failureCount: 0,
+          successCount: apnsSuccessCount,
+          failureCount: apnsFailureCount,
           results: []
         };
       }
@@ -271,7 +363,14 @@ export default async function handler(req, res) {
         }
       }
     } else {
-      if (tokensToSend?.length || topic) {
+      if (apnsTokenList.length > 0) {
+        response = {
+          success: true,
+          successCount: apnsSuccessCount,
+          failureCount: apnsFailureCount,
+          results: []
+        };
+      } else if (tokensToSend?.length || topic) {
         response = { success: false, error: 'FCM credentials not configured' };
       } else {
         console.error('❌ No FCM credentials configured');
@@ -284,11 +383,10 @@ export default async function handler(req, res) {
       }
     }
 
-    // Final stats (Firebase only)
     const fcmSuccess = response.successCount ?? (response.success ? 1 : 0);
     const fcmFailure = response.failureCount ?? 0;
-    const successCount = fcmSuccess;
-    const failureCount = fcmFailure;
+    const successCount = fcmSuccess + apnsSuccessCount;
+    const failureCount = fcmFailure + apnsFailureCount;
     const totalCount = successCount + failureCount;
 
     console.log('📊 Final FCM stats:', {
