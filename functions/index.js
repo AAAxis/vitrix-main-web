@@ -674,6 +674,9 @@ exports.sendGroupEmail = onCall(async (request) => {
   let usersSnapshot;
   if (targetUserEmail) {
     usersSnapshot = await db.collection('users').where('email', '==', targetUserEmail).limit(1).get();
+    if (usersSnapshot.empty) {
+      usersSnapshot = await db.collection('users').where('actualEmail', '==', targetUserEmail).limit(1).get();
+    }
   } else {
     usersSnapshot = await db.collection('users').where('group_names', 'array-contains', groupName).get();
   }
@@ -693,7 +696,7 @@ exports.sendGroupEmail = onCall(async (request) => {
   const sender = `${senderName} <${senderEmail}>`;
   for (const userDoc of usersSnapshot.docs) {
     const userData = userDoc.data();
-    const userEmail = userData.email;
+    const userEmail = userData.email || userData.actualEmail || userData.userEmail;
     const userName = userData.name || 'מתאמן/ת';
     if (!userEmail) {
       results.push({ userId: userDoc.id, email: null, name: userName, success: false, error: 'No email address' });

@@ -122,12 +122,17 @@ export async function POST(request) {
 
     // Handle single user email or group email
     if (targetUserEmail) {
-      // Single user email
-      const userQuery = await db.collection('users')
+      // Single user email – try email then actualEmail
+      let userQuery = await db.collection('users')
         .where('email', '==', targetUserEmail)
         .limit(1)
         .get();
-      
+      if (userQuery.empty) {
+        userQuery = await db.collection('users')
+          .where('actualEmail', '==', targetUserEmail)
+          .limit(1)
+          .get();
+      }
       usersSnapshot = userQuery;
     } else {
       // Group email
@@ -167,7 +172,7 @@ export async function POST(request) {
     // Send email to each user
     for (const userDoc of usersSnapshot.docs) {
       const userData = userDoc.data();
-      const userEmail = userData.email;
+      const userEmail = userData.email || userData.actualEmail || userData.userEmail;
       const userName = userData.name || 'מתאמן/ת';
 
       if (!userEmail) {

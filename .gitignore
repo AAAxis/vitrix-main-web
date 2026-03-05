@@ -25,6 +25,10 @@ dist-ssr
 
 .env
 
+# Firebase Functions env (SMTP2GO etc – do not commit)
+functions/.env
+functions/.env.*
+
 # Firebase service account keys (sensitive - never commit!)
 *-*.json
 *service-account*.json
