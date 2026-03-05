@@ -1,5 +1,5 @@
 // Vercel serverless function (for Vercel deployment)
-// Matches admin-app pattern exactly
+// Push via Firebase only (no Expo, no extra APNs env).
 import admin from 'firebase-admin';
 import fs from 'fs';
 
@@ -88,19 +88,24 @@ export default async function handler(req, res) {
     const {
       title,
       body: messageBody,
-      tokens = [], // Array of FCM tokens
-      topic, // Optional: send to topic instead of specific tokens
-      data = {}, // Custom data payload
-      imageUrl, // Optional image URL
-      email, // Optional: email for Roamjet API
-      projectId, // Optional: project_id for Roamjet API
-      templateId // Optional: template_id for Roamjet API
+      tokens = [],
+      topic,
+      data = {},
+      imageUrl,
+      email,
+      projectId,
+      templateId
     } = requestBody;
+
+    // No Expo: only send FCM tokens to Firebase.
+    const fcmTokens = Array.isArray(tokens)
+      ? tokens.filter(t => typeof t === 'string' && !t.startsWith('ExponentPushToken'))
+      : [];
 
     console.log('📱 FCM API called with:', {
       title,
       body: messageBody?.substring(0, 50) + '...',
-      tokenCount: tokens.length,
+      tokenCount: fcmTokens.length,
       topic,
       hasImageUrl: !!imageUrl
     });
@@ -114,7 +119,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    if (!tokens.length && !topic) {
+    if (!fcmTokens.length && !topic) {
       console.error('❌ Validation failed: Either tokens or topic is required');
       res.status(400).json({
         error: 'Either tokens or topic is required'
@@ -122,40 +127,7 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Vitrix-RN app stores Expo Push Tokens; FCM API rejects them. Send Expo tokens via Expo Push API.
-    const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
-    const expoTokens = tokens.filter(t => typeof t === 'string' && t.startsWith('ExponentPushToken'));
-    const fcmTokens = tokens.filter(t => typeof t === 'string' && !t.startsWith('ExponentPushToken'));
-
-    let expoSuccessCount = 0;
-    let expoFailureCount = 0;
-    if (expoTokens.length > 0) {
-      console.log('📱 Sending to', expoTokens.length, 'Expo push token(s)...');
-      const expoMessages = expoTokens.map(to => ({
-        to,
-        title,
-        body: messageBody,
-        data: { ...data, timestamp: Date.now().toString(), source: 'dashboard' },
-        sound: 'default',
-      }));
-      try {
-        const expoRes = await fetch(EXPO_PUSH_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-          body: JSON.stringify(expoMessages),
-        });
-        const expoResult = await expoRes.json();
-        if (Array.isArray(expoResult.data)) {
-          expoResult.data.forEach(r => { if (r.status === 'ok') expoSuccessCount++; else expoFailureCount++; });
-        }
-        console.log('📱 Expo push result:', expoSuccessCount, 'ok', expoFailureCount, 'failed');
-      } catch (e) {
-        console.error('Expo push error:', e.message);
-        expoFailureCount += expoTokens.length;
-      }
-    }
-
-    // Use FCM only for non-Expo tokens (or topic)
+    // Send via Firebase only (FCM)
     const tokensToSend = fcmTokens.length ? fcmTokens : (topic ? null : []);
     // V1 API only supports: notification, data, token/topic at root level
     // Platform-specific options (android/apns) are NOT supported in V1 API
@@ -232,11 +204,10 @@ export default async function handler(req, res) {
           results
         };
       } else {
-        // Only Expo tokens were provided - use Expo results
         response = {
           success: true,
-          successCount: expoSuccessCount,
-          failureCount: expoFailureCount,
+          successCount: 0,
+          failureCount: 0,
           results: []
         };
       }
@@ -300,16 +271,9 @@ export default async function handler(req, res) {
         }
       }
     } else {
-      // Only Expo tokens and no FCM config - use Expo result
-      if (expoTokens.length > 0) {
-        response = {
-          success: true,
-          successCount: expoSuccessCount,
-          failureCount: expoFailureCount,
-          results: []
-        };
+      if (tokensToSend?.length || topic) {
+        response = { success: false, error: 'FCM credentials not configured' };
       } else {
-        // No credentials available
         console.error('❌ No FCM credentials configured');
         res.status(500).json({
           success: false,
@@ -320,11 +284,11 @@ export default async function handler(req, res) {
       }
     }
 
-    // Calculate final stats (include Expo counts)
-    const fcmSuccess = response.successCount || (response.success ? 1 : 0);
-    const fcmFailure = response.failureCount || 0;
-    const successCount = fcmSuccess + expoSuccessCount;
-    const failureCount = fcmFailure + expoFailureCount;
+    // Final stats (Firebase only)
+    const fcmSuccess = response.successCount ?? (response.success ? 1 : 0);
+    const fcmFailure = response.failureCount ?? 0;
+    const successCount = fcmSuccess;
+    const failureCount = fcmFailure;
     const totalCount = successCount + failureCount;
 
     console.log('📊 Final FCM stats:', {

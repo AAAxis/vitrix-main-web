@@ -58,7 +58,7 @@ export const SendEmail = async (emailData) => {
 };
 
 // Send FCM Push Notification to a specific user
-// Uses Vercel serverless function (api/send-notification.js) with FCM REST API (no Admin SDK)
+// Uses Vercel serverless: Firebase only (no Expo). Token already stored by app/Firebase.
 export const SendFCMNotification = async ({ userId, userEmail, title, body, data, imageUrl }) => {
   try {
     if (!title || !body) {
@@ -69,54 +69,46 @@ export const SendFCMNotification = async ({ userId, userEmail, title, body, data
       throw new Error('Either userId or userEmail must be provided');
     }
 
-    // Get FCM tokens from Firestore (using client SDK) - similar to esim-main pattern
     const { db } = await import('./firebaseConfig');
-    const { collection, query, where, getDocs, limit } = await import('firebase/firestore');
-    
+    const { collection, query, where, getDocs, limit, doc, getDoc } = await import('firebase/firestore');
+
     let fcmTokens = [];
-    
+
     if (userId) {
-      // Try to get tokens from fcm_tokens collection
       const tokensQuery = query(
         collection(db, 'fcm_tokens'),
         where('userId', '==', userId),
         where('active', '==', true),
-        limit(10) // Allow multiple tokens per user
+        limit(10)
       );
       const tokensSnapshot = await getDocs(tokensQuery);
-      
       if (!tokensSnapshot.empty) {
-        fcmTokens = tokensSnapshot.docs.map(doc => doc.data().token);
-      } else {
-        // Try to get from user document
-        const { doc, getDoc } = await import('firebase/firestore');
-        const userDoc = await getDoc(doc(db, 'users', userId));
-        if (userDoc.exists()) {
-          const userToken = userDoc.data().fcm_token;
-          if (userToken) {
-            fcmTokens = [userToken];
-          }
+        tokensSnapshot.docs.forEach(d => {
+          const t = d.data().token;
+          if (typeof t === 'string' && !t.startsWith('ExponentPushToken')) fcmTokens.push(t);
+        });
+      }
+      const userRef = doc(db, 'users', userId);
+      const userDoc = await getDoc(userRef);
+      if (userDoc.exists()) {
+        const u = userDoc.data();
+        if (u.fcm_token && typeof u.fcm_token === 'string' && !u.fcm_token.startsWith('ExponentPushToken')) {
+          fcmTokens.push(u.fcm_token);
         }
       }
     } else if (userEmail) {
-      // Get user by email first
       const usersQuery = query(
         collection(db, 'users'),
         where('email', '==', userEmail),
         limit(1)
       );
       const usersSnapshot = await getDocs(usersQuery);
-      
       if (!usersSnapshot.empty) {
         const userDoc = usersSnapshot.docs[0];
         const userData = userDoc.data();
-        
-        // Try to get token from user document
-        if (userData.fcm_token) {
-          fcmTokens = [userData.fcm_token];
+        if (userData.fcm_token && typeof userData.fcm_token === 'string' && !userData.fcm_token.startsWith('ExponentPushToken')) {
+          fcmTokens.push(userData.fcm_token);
         }
-        
-        // Also try fcm_tokens collection
         const tokensQuery = query(
           collection(db, 'fcm_tokens'),
           where('userId', '==', userDoc.id),
@@ -125,34 +117,29 @@ export const SendFCMNotification = async ({ userId, userEmail, title, body, data
         );
         const tokensSnapshot = await getDocs(tokensQuery);
         if (!tokensSnapshot.empty) {
-          fcmTokens = [...fcmTokens, ...tokensSnapshot.docs.map(doc => doc.data().token)];
+          tokensSnapshot.docs.forEach(docSnap => {
+            const t = docSnap.data().token;
+            if (typeof t === 'string' && !t.startsWith('ExponentPushToken')) fcmTokens.push(t);
+          });
         }
       }
     }
 
-    // Remove duplicates
     fcmTokens = [...new Set(fcmTokens)];
 
     if (fcmTokens.length === 0) {
-      throw new Error(`No FCM token found for user: ${userId || userEmail}`);
+      throw new Error(`No push token found for user: ${userId || userEmail}`);
     }
 
-    // Send notification using API route
     const apiUrl = '/api/send-notification';
-    
     const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         title,
-        body, // API expects 'body' field (admin-app pattern)
-        tokens: fcmTokens, // Array of FCM tokens
-        data: {
-          ...(data || {}),
-          sentFrom: 'dashboard' // Match admin-app pattern
-        },
+        body,
+        tokens: fcmTokens,
+        data: { ...(data || {}), sentFrom: 'dashboard' },
         imageUrl,
       }),
     });
@@ -163,10 +150,10 @@ export const SendFCMNotification = async ({ userId, userEmail, title, body, data
     }
 
     const result = await response.json();
-    console.log('✅ FCM notification sent successfully:', result);
+    console.log('✅ Push notification sent:', result);
     return result;
   } catch (error) {
-    console.error('❌ Error sending FCM notification:', error);
+    console.error('❌ Error sending push notification:', error);
     throw error;
   }
 };
