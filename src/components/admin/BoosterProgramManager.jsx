@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { User, WeeklyTask, MonthlyGoal, ProgressPicture, CalorieTracking, UserGroup, WaterTracking, LectureView, WeeklyTaskTemplate, CoachNotification } from '@/api/entities';
 import { useAdminDashboard } from '@/contexts/AdminDashboardContext';
 import { groupsForStaff } from '@/lib/groupUtils';
-import { SendFCMNotification, sendGroupEmail } from '@/api/integrations';
+import { SendFCMNotification } from '@/api/integrations';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -114,7 +114,7 @@ export default function BoosterProgramManager() {
                             console.warn(`Failed to send FCM notification to ${user.email}:`, fcmError);
                         }
 
-                        // Send email notification
+                        // Send email via dashboard API (Vercel/server) – uses SMTP2GO from env, no Firebase needed
                         try {
                             const emailTitle = '🎉 גישה לתוכנית הבוסטר!';
                             const emailMessage = `שלום ${user.name || 'מתאמן/ת'}!
@@ -132,18 +132,22 @@ export default function BoosterProgramManager() {
 בהצלחה,
 צוות Vitrix`;
 
-                            const emailResponse = await sendGroupEmail({
+                            const emailRes = await fetch('/api/send-group-email', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
                                     userEmail: user.email,
                                     title: emailTitle,
                                     message: emailMessage,
-                                });
-                            const emailData = emailResponse || {};
+                                }),
+                            });
+                            const emailData = await emailRes.json().catch(() => ({}));
                             if (emailData.success && emailData.successCount > 0) {
                                 emailCount++;
                             } else if (emailData.success === false && emailData.error) {
                                 console.warn(`Email API error for ${user.email}:`, emailData.error);
                             } else if (emailData.successCount === 0) {
-                                console.warn(`Email not sent for ${user.email}:`, emailData.failureCount ? 'send failed' : 'no users found', emailData);
+                                console.warn(`Email not sent for ${user.email}:`, emailData.error || 'no success count', emailData);
                             }
                         } catch (emailError) {
                             console.warn(`Failed to send email to ${user.email}:`, emailError);
