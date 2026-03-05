@@ -24,7 +24,7 @@ export async function POST(request) {
       );
     }
 
-    const senderEmail = process.env.SMTP2GO_SENDER_EMAIL || 'rpochtman@simnetiq.store';
+    const senderEmail = process.env.SMTP2GO_SENDER_EMAIL || 'result@roamjet.net';
     const senderName = process.env.SMTP2GO_SENDER_NAME || 'Vitrix App';
     const htmlBody = message || `המתאמן/ת ${userName || userEmail || 'מתאמן'} מבקש/ת להצטרף לתכנית הבוסטר.`;
 

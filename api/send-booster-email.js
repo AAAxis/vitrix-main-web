@@ -5,7 +5,7 @@ import fs from 'fs';
 
 const SMTP2GO_API_URL = 'https://api.smtp2go.com/v3/email/send';
 const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
-const SENDER_EMAIL = process.env.SMTP2GO_SENDER_EMAIL || 'rpochtman@simnetiq.store';
+const SENDER_EMAIL = process.env.SMTP2GO_SENDER_EMAIL || 'result@roamjet.net';
 const SENDER_NAME = process.env.SMTP2GO_SENDER_NAME || 'Vitrix App';
 
 let adminInitialized = false;

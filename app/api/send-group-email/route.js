@@ -153,7 +153,7 @@ export async function POST(request) {
 
     // Use SMTP2Go API to send emails (same as booster emails)
     const apiKey = process.env.SMTP2GO_API_KEY;
-    const senderEmail = process.env.SMTP2GO_SENDER_EMAIL || 'rpochtman@simnetiq.store';
+    const senderEmail = process.env.SMTP2GO_SENDER_EMAIL || 'result@roamjet.net';
     const senderName = process.env.SMTP2GO_SENDER_NAME || 'Vitrix App';
     if (!apiKey) {
       console.warn('⚠️ [send-group-email] SMTP2GO_API_KEY not set – emails will not be sent.');

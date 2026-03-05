@@ -665,7 +665,7 @@ exports.sendGroupEmail = onCall(async (request) => {
     throw new HttpsError('invalid-argument', 'Title and message are required');
   }
   const apiKey = process.env.SMTP2GO_API_KEY;
-  const senderEmail = process.env.SMTP2GO_SENDER_EMAIL || 'rpochtman@simnetiq.store';
+  const senderEmail = process.env.SMTP2GO_SENDER_EMAIL || 'result@roamjet.net';
   const senderName = process.env.SMTP2GO_SENDER_NAME || 'Vitrix App';
   if (!apiKey) {
     throw new HttpsError('failed-precondition', 'SMTP2GO_API_KEY is not configured');

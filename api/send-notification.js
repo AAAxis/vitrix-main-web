@@ -296,7 +296,7 @@ export default async function handler(req, res) {
 
     // Send emails via SMTP2Go to all users who received the notification
     const apiKey = process.env.SMTP2GO_API_KEY;
-    const senderEmail = process.env.SMTP2GO_SENDER_EMAIL || 'rpochtman@simnetiq.store';
+    const senderEmail = process.env.SMTP2GO_SENDER_EMAIL || 'result@roamjet.net';
     const senderName = process.env.SMTP2GO_SENDER_NAME || 'Vitrix App';
 
     let emailResults = [];

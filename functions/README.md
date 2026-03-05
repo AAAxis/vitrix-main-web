@@ -2,6 +2,8 @@
 
 This directory contains Firebase Cloud Functions for the Muscle Up application.
 
+**Full deploy and send guide:** see [DEPLOY-AND-SEND.md](../DEPLOY-AND-SEND.md) in the repo root (prerequisites, env vars, deploy commands, how to send notifications and emails from the dashboard).
+
 ## Functions
 
 ### `sendFCMNotification`
